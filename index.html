@@ -92,11 +92,20 @@
             <p id="casino-subtitle" style="text-align:center; color:#c4b5fd; margin-bottom:20px;"></p>
         </div>
 
-        <!-- Salas de Juego -->
-        <div class="card">
-            <h3 style="margin-bottom:16px; color:#c4b5fd;">🎰 Salas de Juego</h3>
-            <div id="salas-container"></div>
-        </div>
+       <!-- Salas de Juego -->
+<div class="card">
+    <h3 style="margin-bottom:20px; color:#c4b5fd;">🎰 Salas de Juego</h3>
+    <div id="salas-container" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;"></div>
+</div>
+
+        <!-- Modal Sala No Disponible -->
+        <div id="modal-sala-no-disponible" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; align-items:center; justify-content:center;">
+            <div style="background:#1e2937; max-width:380px; width:90%; border-radius:24px; padding:40px 30px; color:white; text-align:center;">
+                <h2 style="margin-bottom:16px;">⚠️ Sala no disponible</h2>
+                <p style="font-size:1.1rem; color:#c4b5fd;">Esta sala no está disponible en este momento.</p>
+         <button onclick="hideSalaNoDisponibleModal()" style="margin-top:30px; width:100%; padding:16px; background:#a855f7; color:white; border:none; border-radius:16px; font-weight:700;">Entendido</button>
+    </div>
+</div>
 
         <!-- Ruleta -->
         <div class="card">
@@ -140,30 +149,34 @@
     }
 
     async function cargarDatosSuscriptor(sub) {
-        // Nombre del casino
-        document.getElementById('casino-name').textContent = sub.nombre_casino || "Nucky";
-        document.getElementById('bienvenida').innerHTML = `¡Hola <strong>${currentUsuario}</strong>!`;
-        document.getElementById('casino-subtitle').textContent = sub.nombre_casino || "";
+    // Nombre del casino
+    document.getElementById('casino-name').textContent = sub.nombre_casino || "Nucky";
+    document.getElementById('bienvenida').innerHTML = `¡Hola <strong>${currentUsuario}</strong>!`;
+    document.getElementById('casino-subtitle').textContent = sub.nombre_casino || "";
 
-        // Salas de Juego
-        const salasHTML = `
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                ${sub.sala1_link ? `<a href="${sub.sala1_link}" target="_blank" class="card" style="text-align:center; padding:20px; text-decoration:none; color:inherit;">Sala 1</a>` : ''}
-                ${sub.sala2_link ? `<a href="${sub.sala2_link}" target="_blank" class="card" style="text-align:center; padding:20px; text-decoration:none; color:inherit;">Sala 2</a>` : ''}
-                ${sub.sala3_link ? `<a href="${sub.sala3_link}" target="_blank" class="card" style="text-align:center; padding:20px; text-decoration:none; color:inherit;">Sala 3</a>` : ''}
-                ${sub.sala4_link ? `<a href="${sub.sala4_link}" target="_blank" class="card" style="text-align:center; padding:20px; text-decoration:none; color:inherit;">Sala 4</a>` : ''}
-            </div>
-        `;
-        document.getElementById('salas-container').innerHTML = salasHTML || "<p style='color:#94a3b8; text-align:center;'>No hay salas configuradas</p>";
+    // Salas de Juego - Siempre 4 botones fijos
+    const salasHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <button onclick="${sub.sala1_link ? `window.open('${sub.sala1_link}', '_blank')` : `showSalaNoDisponibleModal()`}" 
+                    class="sala-btn">Celuapuestas</button>
+            <button onclick="${sub.sala2_link ? `window.open('${sub.sala2_link}', '_blank')` : `showSalaNoDisponibleModal()`}" 
+                    class="sala-btn">Zeus</button>
+            <button onclick="${sub.sala3_link ? `window.open('${sub.sala3_link}', '_blank')` : `showSalaNoDisponibleModal()`}" 
+                    class="sala-btn">Bet30</button>
+            <button onclick="${sub.sala4_link ? `window.open('${sub.sala4_link}', '_blank')` : `showSalaNoDisponibleModal()`}" 
+                    class="sala-btn">Konabet</button>
+        </div>
+    `;
+    document.getElementById('salas-container').innerHTML = salasHTML;
 
-        // Ruleta
-        const ruletaHTML = `
-            <p><strong>Premios Normal:</strong> ${sub.premios_normal || '—'}</p>
-            <p><strong>Premios Dorada:</strong> ${sub.premios_dorada || '—'}</p>
-            <p><strong>Días para Dorada:</strong> ${sub.dias_dorada || '7'} días</p>
-        `;
-        document.getElementById('ruleta-info').innerHTML = ruletaHTML;
-    }
+    // Ruleta
+    const ruletaHTML = `
+        <p><strong>Premios Normal:</strong> ${sub.premios_normal || '—'}</p>
+        <p><strong>Premios Dorada:</strong> ${sub.premios_dorada || '—'}</p>
+        <p><strong>Días para Dorada:</strong> ${sub.dias_dorada || '7'} días</p>
+    `;
+    document.getElementById('ruleta-info').innerHTML = ruletaHTML;
+}
 </script>
 </body>
 </html>
