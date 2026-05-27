@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nucky - App Jugadores</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #a855f7;
+            --accent: #c026d3;
+            --dark: #0f172a;
+            --glass: rgba(15, 23, 42, 0.85);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e1133);
+            color: #e0e7ff;
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .casino-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #a855f7, #c026d3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .card {
+            background: var(--glass);
+            border-radius: 24px;
+            padding: 28px;
+            margin: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+        input {
+            width: 100%;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            border-radius: 16px;
+            background: #1e2937;
+            border: 1px solid #64748b;
+            color: white;
+            font-size: 1.1rem;
+        }
+        button {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #a855f7, #c026d3);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1 id="casino-name" class="casino-name">Nucky</h1>
+        <div id="header-logged" style="display:none;">
+            <!-- Aquí irán botones después del login -->
+        </div>
+    </div>
+
+    <!-- PANTALLA DE LOGIN -->
+    <div id="login-screen">
+        <div class="card" style="margin-top:80px;">
+            <h2 style="text-align:center; margin-bottom:24px; color:white;">Iniciar Sesión</h2>
+            <input type="text" id="login-user" placeholder="Usuario">
+            <input type="password" id="login-pass" placeholder="Contraseña">
+            <button onclick="loginJugador()">Ingresar</button>
+        </div>
+    </div>
+
+    <!-- DASHBOARD (se muestra después del login) -->
+    <div id="dashboard" style="display:none;">
+        <div class="card">
+            <h2 id="bienvenida" style="text-align:center; margin-bottom:20px;"></h2>
+            <p style="text-align:center; color:#a5b4fc;">Bienvenido a tu casino</p>
+        </div>
+        <!-- Aquí iremos agregando el resto (ruleta, salas, CBU, etc.) -->
+    </div>
+
+<script>
+    const SUPABASE_URL = "https://vevptiayzleigkjtmyhc.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_VBu6hcwr-NKDyxcOc60wDQ_RFDkKQjd";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentSubscriberId = null;
+    let currentUsuarioId = null;
+
+    async function loginJugador() {
+        const username = document.getElementById('login-user').value.trim();
+        const password = document.getElementById('login-pass').value.trim();
+
+        if (!username || !password) return alert("Usuario y contraseña son obligatorios");
+
+        const { data, error } = await _supabase
+            .from('usuarios')
+            .select('*, suscriptores(id, nombre_casino)')
+            .eq('username', username)
+            .eq('password', password)
+            .single();
+
+        if (error || !data) {
+            return alert("Credenciales incorrectas");
+        }
+
+        currentSubscriberId = data.subscriber_id;
+        currentUsuarioId = data.id;
+
+        // Mostrar dashboard
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('bienvenida').innerHTML = `¡Hola <strong>${username}</strong>!`;
+
+        console.log("✅ Usuario logueado - Suscriptor ID:", currentSubscriberId);
+        // Aquí cargaremos los datos del suscriptor (salas, ruleta, etc.)
+    }
+
+    // Función para cerrar sesión (por ahora)
+    function logoutJugador() {
+        if (confirm("¿Cerrar sesión?")) {
+            location.reload();
+        }
+    }
+</script>
+</body>
+</html>
