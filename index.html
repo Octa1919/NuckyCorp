@@ -128,8 +128,8 @@
             <p id="casino-subtitle" style="text-align:center; color:#c4b5fd; margin-bottom:20px;"></p>
         </div>
 
-        <!-- SALAS DE JUEGO -->
-        <div style="margin-top: 24px;">
+        <!-- SALAS DE JUEGO (ahora dentro de un .card) -->
+        <div class="card" style="margin-top: 24px;">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
                 <i class="fas fa-gamepad" style="color: #c026d3; font-size: 1.35rem;"></i>
                 <h3 style="margin: 0; color: #e0e7ff; font-size: 1.25rem;">Salas de Juego</h3>
@@ -187,12 +187,10 @@
     }
 
     async function cargarDatosSuscriptor(sub) {
-        // Nombre del casino
         document.getElementById('casino-name').textContent = sub.nombre_casino || "Nucky";
         document.getElementById('bienvenida').innerHTML = `¡Hola <strong>${currentUsuario}</strong>!`;
         document.getElementById('casino-subtitle').textContent = sub.nombre_casino || "";
 
-        // Salas de Juego - 4 botones fijos sin contenedor extra
         const salasHTML = `
             <button onclick="${sub.sala1_link ? `window.open('${sub.sala1_link}', '_blank')` : `showSalaNoDisponibleModal()`}" class="sala-btn">Celuapuestas</button>
             <button onclick="${sub.sala2_link ? `window.open('${sub.sala2_link}', '_blank')` : `showSalaNoDisponibleModal()`}" class="sala-btn">Zeus</button>
@@ -202,7 +200,6 @@
 
         document.getElementById('salas-container').innerHTML = salasHTML;
 
-        // Ruleta
         const ruletaHTML = `
             <p><strong>Premios Normal:</strong> ${sub.premios_normal || '—'}</p>
             <p><strong>Premios Dorada:</strong> ${sub.premios_dorada || '—'}</p>
