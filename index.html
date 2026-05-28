@@ -66,8 +66,9 @@
             cursor: pointer;
         }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items:center; justify-content:center; z-index: 1000; }
-     .sala-btn {
-    height: 96px;                    /* Altura fija para que todos sean iguales */
+   .sala-btn {
+    width: 100%;                    /* ← Esto es lo que faltaba */
+    height: 96px;
     padding: 12px 14px;
     font-size: 1.05rem;
     font-weight: 700;
@@ -118,7 +119,7 @@
        <!-- Salas de Juego -->
 <div class="card">
     <h3 style="margin-bottom:20px; color:#c4b5fd;">🎰 Salas de Juego</h3>
-    <div id="salas-container" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;"></div>
+  <div id="salas-container" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; width:100%;">
 </div>
 
         <!-- Modal Sala No Disponible -->
