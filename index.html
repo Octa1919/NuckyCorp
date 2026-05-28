@@ -62,8 +62,14 @@
             gap: 10px;
             transition: all 0.2s ease;
         }
-        .btn-cargar { background: linear-gradient(90deg, #22d3ee, #67e8f9); color: #0f172a; }
-        .btn-retirar { background: linear-gradient(90deg, #f43f5e, #e11d48); color: white; }
+        .btn-cargar {
+            background: linear-gradient(90deg, #10b981, #34d399);
+            color: #0f172a;
+        }
+        .btn-retirar {
+            background: linear-gradient(90deg, #f43f5e, #e11d48);
+            color: white;
+        }
 
         /* Atención Personalizada con luz diagonal */
         .btn-atencion {
@@ -160,7 +166,7 @@
             <p id="casino-subtitle" style="text-align:center; color:#c4b5fd; margin-bottom:20px;"></p>
         </div>
 
-        <!-- BOTONES CARGAR + RETIRAR (en la misma línea) -->
+        <!-- CARGAR + RETIRAR (misma línea) -->
         <div class="card" style="margin-top: 10px;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                 <button onclick="cargarSaldo()" class="btn-accion btn-cargar">
@@ -271,9 +277,8 @@
 
     async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
-        // Aquí iría la consulta real al CBU activo
         const modalContent = document.getElementById('cbu-activo-info');
-        modalContent.innerHTML = `<p style="text-align:center; color:#67e8f9;">CBU activo se cargará aquí cuando configures la tabla cbus.</p>`;
+        modalContent.innerHTML = `<p style="text-align:center; color:#67e8f9;">Aquí aparecerá tu CBU activo.</p>`;
         document.getElementById('modal-cargar-saldo').style.display = 'flex';
     }
 
