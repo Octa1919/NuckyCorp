@@ -66,11 +66,11 @@
             cursor: pointer;
         }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items:center; justify-content:center; z-index: 1000; }
-  .sala-btn {
+ .sala-btn {
     width: 100% !important;
     min-width: 100% !important;
     height: 96px;
-    padding: 12px 14px;
+    padding: 14px 12px;
     font-size: 1.05rem;
     font-weight: 700;
     background: linear-gradient(90deg, #a855f7, #c026d3);
@@ -84,13 +84,13 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    line-height: 1.25;
+    line-height: 1.3;
     box-sizing: border-box;
-    margin: 0;
+    margin: 0 !important;
 }
 
 .sala-btn:active {
-    transform: scale(0.94);
+    transform: scale(0.93);
     box-shadow: 0 4px 15px rgba(168, 85, 247, 0.6);
 }
     </style>
@@ -119,15 +119,15 @@
             <p id="casino-subtitle" style="text-align:center; color:#c4b5fd; margin-bottom:20px;"></p>
         </div>
 
-<!-- SALAS DE JUEGO - VERSIÓN FINAL SIN ESPACIO DERECHO -->
-<div style="margin-top: 20px;">
-    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-        <i class="fas fa-gamepad" style="color: #c026d3; font-size: 1.3rem;"></i>
+<!-- SALAS DE JUEGO - VERSIÓN ULTRA CORREGIDA -->
+<div style="margin-top: 24px;">
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+        <i class="fas fa-gamepad" style="color: #c026d3; font-size: 1.35rem;"></i>
         <h3 style="margin: 0; color: #e0e7ff; font-size: 1.25rem;">Salas de Juego</h3>
     </div>
     
-    <div id="salas-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; padding: 0; margin: 0; box-sizing: border-box;">
-        <!-- Los botones se generan por JavaScript -->
+    <div id="salas-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 100%; padding: 0 !important; margin: 0 !important; box-sizing: border-box;">
+        <!-- Los botones se generan con JavaScript -->
     </div>
 </div>
 
