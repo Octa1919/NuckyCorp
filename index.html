@@ -65,38 +65,47 @@
             font-weight: 700;
             cursor: pointer;
         }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items:center; justify-content:center; z-index: 1000; }
- .sala-btn {
-    width: 100% !important;
-    min-width: 100% !important;
-    height: 96px;
-    padding: 14px 12px;
-    font-size: 1.05rem;
-    font-weight: 700;
-    background: linear-gradient(90deg, #a855f7, #c026d3);
-    color: white;
-    border: none;
-    border-radius: 18px;
-    cursor: pointer;
-    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    line-height: 1.3;
-    box-sizing: border-box;
-    margin: 0 !important;
-}
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); 
+            align-items:center; 
+            justify-content:center; 
+            z-index: 1000; 
+        }
 
-.sala-btn:active {
-    transform: scale(0.93);
-    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.6);
-}
+        /* ==================== BOTONES DE SALAS ==================== */
+        .sala-btn {
+            width: 100% !important;
+            min-width: 100% !important;
+            height: 96px;
+            padding: 14px 12px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #a855f7, #c026d3);
+            color: white;
+            border: none;
+            border-radius: 18px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.3;
+            box-sizing: border-box;
+            margin: 0 !important;
+        }
+        .sala-btn:active {
+            transform: scale(0.93);
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.6);
+        }
     </style>
 </head>
 <body>
-
     <!-- HEADER -->
     <div class="header">
         <h1 id="casino-name" class="casino-name">Nucky</h1>
@@ -119,26 +128,25 @@
             <p id="casino-subtitle" style="text-align:center; color:#c4b5fd; margin-bottom:20px;"></p>
         </div>
 
-<!-- SALAS DE JUEGO - VERSIÓN FINAL (sin espacio a la derecha) -->
-<div style="margin-top: 24px;">
-    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
-        <i class="fas fa-gamepad" style="color: #c026d3; font-size: 1.35rem;"></i>
-        <h3 style="margin: 0; color: #e0e7ff; font-size: 1.25rem;">Salas de Juego</h3>
-    </div>
-    
-    <div id="salas-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; padding: 0 !important; margin: 0 !important; box-sizing: border-box;">
-        <!-- Los botones se generan con JavaScript -->
-    </div>
-</div>
+        <!-- SALAS DE JUEGO -->
+        <div style="margin-top: 24px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+                <i class="fas fa-gamepad" style="color: #c026d3; font-size: 1.35rem;"></i>
+                <h3 style="margin: 0; color: #e0e7ff; font-size: 1.25rem;">Salas de Juego</h3>
+            </div>
+            <div id="salas-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; padding: 0 !important; margin: 0 !important; box-sizing: border-box;">
+                <!-- Los botones se generan con JavaScript -->
+            </div>
+        </div>
 
         <!-- Modal Sala No Disponible -->
-        <div id="modal-sala-no-disponible" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; align-items:center; justify-content:center;">
+        <div id="modal-sala-no-disponible" class="modal" style="display:none;">
             <div style="background:#1e2937; max-width:380px; width:90%; border-radius:24px; padding:40px 30px; color:white; text-align:center;">
                 <h2 style="margin-bottom:16px;">⚠️ Sala no disponible</h2>
                 <p style="font-size:1.1rem; color:#c4b5fd;">Esta sala no está disponible en este momento.</p>
-         <button onclick="hideSalaNoDisponibleModal()" style="margin-top:30px; width:100%; padding:16px; background:#a855f7; color:white; border:none; border-radius:16px; font-weight:700;">Entendido</button>
-    </div>
-</div>
+                <button onclick="hideSalaNoDisponibleModal()" style="margin-top:30px; width:100%; padding:16px; background:#a855f7; color:white; border:none; border-radius:16px; font-weight:700;">Entendido</button>
+            </div>
+        </div>
 
         <!-- Ruleta -->
         <div class="card">
@@ -158,12 +166,11 @@
     async function loginJugador() {
         const username = document.getElementById('login-user').value.trim();
         const password = document.getElementById('login-pass').value.trim();
-
         if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
         const { data, error } = await _supabase
             .from('usuarios')
-            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, whatsapp, instagram, telegram, premios_normal, premios_dorada, dias_dorada)')
+            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada)')
             .eq('username', username)
             .eq('password', password)
             .single();
@@ -173,43 +180,46 @@
         currentSubscriberId = data.subscriber_id;
         currentUsuario = username;
 
-        // Mostrar dashboard
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
 
-        // Cargar datos del suscriptor
         await cargarDatosSuscriptor(data.suscriptores);
     }
 
     async function cargarDatosSuscriptor(sub) {
-    // Nombre del casino
-    document.getElementById('casino-name').textContent = sub.nombre_casino || "Nucky";
-    document.getElementById('bienvenida').innerHTML = `¡Hola <strong>${currentUsuario}</strong>!`;
-    document.getElementById('casino-subtitle').textContent = sub.nombre_casino || "";
+        // Nombre del casino
+        document.getElementById('casino-name').textContent = sub.nombre_casino || "Nucky";
+        document.getElementById('bienvenida').innerHTML = `¡Hola <strong>${currentUsuario}</strong>!`;
+        document.getElementById('casino-subtitle').textContent = sub.nombre_casino || "";
 
-    // Salas de Juego - Siempre 4 botones fijos
-    const salasHTML = `
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-            <button onclick="${sub.sala1_link ? `window.open('${sub.sala1_link}', '_blank')` : `showSalaNoDisponibleModal()`}" 
-                    class="sala-btn">Celuapuestas</button>
-            <button onclick="${sub.sala2_link ? `window.open('${sub.sala2_link}', '_blank')` : `showSalaNoDisponibleModal()`}" 
-                    class="sala-btn">Zeus</button>
-            <button onclick="${sub.sala3_link ? `window.open('${sub.sala3_link}', '_blank')` : `showSalaNoDisponibleModal()`}" 
-                    class="sala-btn">Bet30</button>
-            <button onclick="${sub.sala4_link ? `window.open('${sub.sala4_link}', '_blank')` : `showSalaNoDisponibleModal()`}" 
-                    class="sala-btn">Konabet</button>
-        </div>
-    `;
-    document.getElementById('salas-container').innerHTML = salasHTML;
+        // Salas de Juego - 4 botones fijos sin contenedor extra
+        const salasHTML = `
+            <button onclick="${sub.sala1_link ? `window.open('${sub.sala1_link}', '_blank')` : `showSalaNoDisponibleModal()`}" class="sala-btn">Celuapuestas</button>
+            <button onclick="${sub.sala2_link ? `window.open('${sub.sala2_link}', '_blank')` : `showSalaNoDisponibleModal()`}" class="sala-btn">Zeus</button>
+            <button onclick="${sub.sala3_link ? `window.open('${sub.sala3_link}', '_blank')` : `showSalaNoDisponibleModal()`}" class="sala-btn">Bet30</button>
+            <button onclick="${sub.sala4_link ? `window.open('${sub.sala4_link}', '_blank')` : `showSalaNoDisponibleModal()`}" class="sala-btn">Konabet</button>
+        `;
 
-    // Ruleta
-    const ruletaHTML = `
-        <p><strong>Premios Normal:</strong> ${sub.premios_normal || '—'}</p>
-        <p><strong>Premios Dorada:</strong> ${sub.premios_dorada || '—'}</p>
-        <p><strong>Días para Dorada:</strong> ${sub.dias_dorada || '7'} días</p>
-    `;
-    document.getElementById('ruleta-info').innerHTML = ruletaHTML;
-}
+        document.getElementById('salas-container').innerHTML = salasHTML;
+
+        // Ruleta
+        const ruletaHTML = `
+            <p><strong>Premios Normal:</strong> ${sub.premios_normal || '—'}</p>
+            <p><strong>Premios Dorada:</strong> ${sub.premios_dorada || '—'}</p>
+            <p><strong>Días para Dorada:</strong> ${sub.dias_dorada || '7'} días</p>
+        `;
+        document.getElementById('ruleta-info').innerHTML = ruletaHTML;
+    }
+
+    function showSalaNoDisponibleModal() {
+        document.getElementById('modal-sala-no-disponible').style.display = 'flex';
+    }
+
+    function hideSalaNoDisponibleModal() {
+        document.getElementById('modal-sala-no-disponible').style.display = 'none';
+    }
+
+    window.onload = () => {};
 </script>
 </body>
 </html>
