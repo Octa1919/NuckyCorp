@@ -47,53 +47,32 @@
             border: 1px solid rgba(168, 85, 247, 0.25);
         }
 
-        /* ==================== LOGIN MODAL - MÁS ARMONIOSO Y CENTRADO ==================== */
-        #login-screen .card {
-            margin-top: 90px;
-            max-width: 400px;
-            margin-left: auto;
-            margin-right: auto;
-            padding: 42px 32px;
-        }
-        #login-screen h2 {
-            text-align: center;
-            margin-bottom: 32px;
-            font-size: 1.75rem;
-            color: #e0e7ff;
-            font-weight: 700;
-        }
-        #login-screen input {
-            background: rgba(30, 41, 59, 0.95);
-            border: 2px solid #64748b;
-            color: white;
-            font-size: 1.1rem;
-            padding: 18px 20px;
-            border-radius: 16px;
-            margin-bottom: 18px;
+        /* Botones de acción grandes */
+        .btn-accion {
             width: 100%;
-            transition: border 0.3s;
-        }
-        #login-screen input:focus {
-            border-color: #c026d3;
-            box-shadow: 0 0 0 4px rgba(192, 38, 211, 0.25);
-        }
-        #login-screen button {
-            background: linear-gradient(90deg, #a855f7, #c026d3);
-            color: white;
-            border: none;
             padding: 18px;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 700;
+            border: none;
             border-radius: 18px;
             cursor: pointer;
-            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
             transition: all 0.2s ease;
+            margin-bottom: 12px;
         }
-        #login-screen button:active {
-            transform: scale(0.96);
+        .btn-cargar {
+            background: linear-gradient(90deg, #22d3ee, #67e8f9);
+            color: #0f172a;
+        }
+        .btn-retirar {
+            background: linear-gradient(90deg, #f43f5e, #e11d48);
+            color: white;
         }
 
-        /* BOTÓN ATENCIÓN PERSONALIZADA CON LUZ DIAGONAL */
+        /* Luz diagonal en Atención Personalizada */
         .btn-atencion {
             position: relative;
             overflow: hidden;
@@ -114,7 +93,6 @@
             cursor: pointer;
         }
         .btn-atencion:active { transform: scale(0.95); }
-
         .btn-atencion::before {
             content: '';
             position: absolute;
@@ -173,10 +151,10 @@
         <h1 id="casino-name" class="casino-name">Nucky</h1>
     </div>
 
-    <!-- LOGIN SCREEN -->
+    <!-- LOGIN -->
     <div id="login-screen">
-        <div class="card">
-            <h2>Iniciar Sesión</h2>
+        <div class="card" style="margin-top:80px; max-width:420px; margin-left:auto; margin-right:auto;">
+            <h2 style="text-align:center; margin-bottom:28px;">Iniciar Sesión</h2>
             <input type="text" id="login-user" placeholder="Usuario">
             <input type="password" id="login-pass" placeholder="Contraseña">
             <button onclick="loginJugador()">Ingresar</button>
@@ -188,6 +166,18 @@
         <div class="card">
             <h2 id="bienvenida" style="text-align:center; margin-bottom:8px;"></h2>
             <p id="casino-subtitle" style="text-align:center; color:#c4b5fd; margin-bottom:20px;"></p>
+        </div>
+
+        <!-- NUEVOS BOTONES: Cargar Saldo + Retirar Fondos -->
+        <div class="card" style="margin-top: 10px;">
+            <button onclick="cargarSaldo()" class="btn-accion btn-cargar">
+                <i class="fas fa-wallet"></i>
+                Cargar Saldo
+            </button>
+            <button onclick="abrirChatwoot()" class="btn-accion btn-retirar">
+                <i class="fas fa-money-bill-wave"></i>
+                Retirar Fondos
+            </button>
         </div>
 
         <!-- BOTÓN ATENCIÓN PERSONALIZADA -->
@@ -214,6 +204,15 @@
                 <h2 style="margin-bottom:16px;">⚠️ Sala no disponible</h2>
                 <p style="font-size:1.1rem; color:#c4b5fd;">Esta sala no está disponible en este momento.</p>
                 <button onclick="hideSalaNoDisponibleModal()" style="margin-top:30px; width:100%; padding:16px; background:#a855f7; color:white; border:none; border-radius:16px; font-weight:700;">Entendido</button>
+            </div>
+        </div>
+
+        <!-- Modal Cargar Saldo -->
+        <div id="modal-cargar-saldo" class="modal" style="display:none;">
+            <div style="background:#1e2937; max-width:420px; width:92%; border-radius:24px; padding:30px; color:white; text-align:center;">
+                <h2 style="margin-bottom:20px;">💰 Cargar Saldo</h2>
+                <div id="cbu-activo-info" style="background:#0f172a; padding:20px; border-radius:16px; margin:20px 0; text-align:left;"></div>
+                <button onclick="hideCargarSaldoModal()" style="width:100%; padding:16px; background:#a855f7; color:white; border:none; border-radius:16px; font-weight:700;">Cerrar</button>
             </div>
         </div>
 
@@ -266,7 +265,6 @@
             <button onclick="${sub.sala3_link ? `window.open('${sub.sala3_link}', '_blank')` : `showSalaNoDisponibleModal()`}" class="sala-btn">Bet30</button>
             <button onclick="${sub.sala4_link ? `window.open('${sub.sala4_link}', '_blank')` : `showSalaNoDisponibleModal()`}" class="sala-btn">Konabet</button>
         `;
-
         document.getElementById('salas-container').innerHTML = salasHTML;
 
         const ruletaHTML = `
@@ -277,8 +275,40 @@
         document.getElementById('ruleta-info').innerHTML = ruletaHTML;
     }
 
+    // ==================== NUEVAS FUNCIONES ====================
+    async function cargarSaldo() {
+        if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
+
+        const { data, error } = await _supabase
+            .from('cbus')
+            .select('banco, alias_nombre, cbu')
+            .eq('subscriber_id', currentSubscriberId)
+            .eq('activo', true);
+
+        const modalContent = document.getElementById('cbu-activo-info');
+
+        if (error || !data || data.length === 0) {
+            modalContent.innerHTML = `<p style="color:#f43f5e; text-align:center;">No hay CBU activo en este momento.<br>Por favor contacta a soporte.</p>`;
+        } else {
+            modalContent.innerHTML = data.map(c => `
+                <div style="margin-bottom:12px;">
+                    <strong>${c.alias_nombre}</strong><br>
+                    <small>${c.banco}</small><br>
+                    <strong style="font-size:1.1rem; word-break:break-all;">${c.cbu}</strong>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('modal-cargar-saldo').style.display = 'flex';
+    }
+
+    function hideCargarSaldoModal() {
+        document.getElementById('modal-cargar-saldo').style.display = 'none';
+    }
+
     function abrirChatwoot() {
-        alert("🟢 Atención Personalizada\n\nAquí se abrirá Chatwoot cuando lo configuramos.");
+        alert("🟢 Chatwoot se abrirá aquí cuando lo configuremos completamente.");
+        // Más adelante: if (window.$chatwoot) window.$chatwoot.toggle("open");
     }
 
     function showSalaNoDisponibleModal() {
