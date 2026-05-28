@@ -65,6 +65,28 @@
             font-weight: 700;
             cursor: pointer;
         }
+
+        /* Botón Atención Personalizada */
+        .btn-atencion {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #22d3ee, #67e8f9);
+            color: #0f172a;
+            border: none;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(34, 211, 238, 0.4);
+            transition: all 0.2s ease;
+        }
+        .btn-atencion:active {
+            transform: scale(0.95);
+        }
+
         .modal { 
             display: none; 
             position: fixed; 
@@ -76,7 +98,6 @@
             z-index: 1000; 
         }
 
-        /* ==================== BOTONES DE SALAS ==================== */
         .sala-btn {
             width: 100% !important;
             min-width: 100% !important;
@@ -128,7 +149,15 @@
             <p id="casino-subtitle" style="text-align:center; color:#c4b5fd; margin-bottom:20px;"></p>
         </div>
 
-        <!-- SALAS DE JUEGO (ahora dentro de un .card) -->
+        <!-- BOTÓN ATENCIÓN PERSONALIZADA -->
+        <div class="card" style="margin-top: 10px;">
+            <button onclick="abrirChatwoot()" class="btn-atencion">
+                <i class="fas fa-headset"></i>
+                Atención Personalizada
+            </button>
+        </div>
+
+        <!-- SALAS DE JUEGO -->
         <div class="card" style="margin-top: 24px;">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
                 <i class="fas fa-gamepad" style="color: #c026d3; font-size: 1.35rem;"></i>
@@ -206,6 +235,12 @@
             <p><strong>Días para Dorada:</strong> ${sub.dias_dorada || '7'} días</p>
         `;
         document.getElementById('ruleta-info').innerHTML = ruletaHTML;
+    }
+
+    function abrirChatwoot() {
+        alert("🟢 Atención Personalizada\n\nAquí se abrirá Chatwoot cuando lo configuramos.");
+        // Más adelante reemplazaremos esto por:
+        // if (window.$chatwoot) window.$chatwoot.toggle("open");
     }
 
     function showSalaNoDisponibleModal() {
