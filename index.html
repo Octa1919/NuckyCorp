@@ -47,7 +47,7 @@
             border: 1px solid rgba(168, 85, 247, 0.25);
         }
 
-        /* Botones de acción */
+        /* Botones premium */
         .btn-accion {
             width: 100%;
             padding: 18px;
@@ -63,12 +63,14 @@
             transition: all 0.2s ease;
         }
         .btn-cargar {
-            background: linear-gradient(90deg, #10b981, #34d399);
+            background: linear-gradient(90deg, #eab308, #fcd34d);
             color: #0f172a;
+            box-shadow: 0 8px 25px rgba(234, 179, 8, 0.4);
         }
         .btn-retirar {
-            background: linear-gradient(90deg, #f43f5e, #e11d48);
+            background: linear-gradient(90deg, #be123c, #f43f5e);
             color: white;
+            box-shadow: 0 8px 25px rgba(190, 18, 60, 0.4);
         }
 
         /* Atención Personalizada con luz diagonal */
@@ -278,7 +280,7 @@
     async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
         const modalContent = document.getElementById('cbu-activo-info');
-        modalContent.innerHTML = `<p style="text-align:center; color:#67e8f9;">Aquí aparecerá tu CBU activo.</p>`;
+        modalContent.innerHTML = `<p style="text-align:center; color:#fcd34d;">Aquí aparecerá tu CBU activo.</p>`;
         document.getElementById('modal-cargar-saldo').style.display = 'flex';
     }
 
