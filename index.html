@@ -47,7 +47,15 @@
             border: 1px solid rgba(168, 85, 247, 0.25);
         }
 
-        /* ==================== BOTÓN ATENCIÓN PERSONALIZADA CON LUZ DIAGONAL ==================== */
+        /* LOGIN MODAL */
+        #login-screen .card {
+            margin-top: 80px;
+            max-width: 420px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* BOTÓN ATENCIÓN PERSONALIZADA CON LUZ DIAGONAL */
         .btn-atencion {
             position: relative;
             overflow: hidden;
@@ -67,11 +75,8 @@
             transition: all 0.2s ease;
             cursor: pointer;
         }
-        .btn-atencion:active {
-            transform: scale(0.95);
-        }
+        .btn-atencion:active { transform: scale(0.95); }
 
-        /* Efecto de luz diagonal (shine) */
         .btn-atencion::before {
             content: '';
             position: absolute;
@@ -79,21 +84,11 @@
             left: -75%;
             width: 50%;
             height: 300%;
-            background: linear-gradient(
-                120deg,
-                rgba(255,255,255,0) 30%,
-                rgba(255,255,255,0.9) 50%,
-                rgba(255,255,255,0) 70%
-            );
+            background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0) 70%);
             transform: skewX(-25deg);
             animation: shine 3.5s linear infinite;
         }
-
-        @keyframes shine {
-            100% {
-                left: 125%;
-            }
-        }
+        @keyframes shine { 100% { left: 125%; } }
 
         .modal { 
             display: none; 
@@ -140,7 +135,7 @@
         <h1 id="casino-name" class="casino-name">Nucky</h1>
     </div>
 
-    <!-- LOGIN -->
+    <!-- LOGIN SCREEN -->
     <div id="login-screen">
         <div class="card" style="margin-top:80px; max-width:420px; margin-left:auto; margin-right:auto;">
             <h2 style="text-align:center; margin-bottom:24px;">Iniciar Sesión</h2>
@@ -157,7 +152,7 @@
             <p id="casino-subtitle" style="text-align:center; color:#c4b5fd; margin-bottom:20px;"></p>
         </div>
 
-        <!-- BOTÓN ATENCIÓN PERSONALIZADA CON LUZ DIAGONAL -->
+        <!-- BOTÓN ATENCIÓN PERSONALIZADA -->
         <div class="card" style="margin-top: 10px;">
             <button onclick="abrirChatwoot()" class="btn-atencion">
                 <i class="fas fa-headset"></i>
@@ -247,7 +242,6 @@
 
     function abrirChatwoot() {
         alert("🟢 Atención Personalizada\n\nAquí se abrirá Chatwoot cuando lo configuramos.");
-        // Más adelante: if (window.$chatwoot) window.$chatwoot.toggle("open");
     }
 
     function showSalaNoDisponibleModal() {
