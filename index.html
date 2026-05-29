@@ -105,11 +105,11 @@
         }
         @keyframes shine { 100% { left: 125%; } }
 
-        /* Saludo con líneas separadoras */
+        /* Saludo con líneas separadoras - ESPACIADO REDUCIDO */
         .greeting-separator {
             display: flex;
             align-items: center;
-            margin: 30px 20px;
+            margin: 18px 20px;   /* ← Espacio reducido */
             color: #64748b;
         }
         .greeting-separator::before,
@@ -182,7 +182,7 @@
 
     <!-- DASHBOARD -->
     <div id="dashboard" style="display:none;">
-        <!-- CARGAR + RETIRAR (misma línea) -->
+        <!-- CARGAR + RETIRAR -->
         <div class="card" style="margin-top: 20px;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                 <button onclick="cargarSaldo()" class="btn-accion btn-cargar">
@@ -196,7 +196,7 @@
             </div>
         </div>
 
-        <!-- SALUDO CENTRADO CON LÍNEAS SEPARADORAS -->
+        <!-- SALUDO CON LÍNEAS -->
         <div class="greeting-separator">
             <h2 id="bienvenida" class="greeting-text"></h2>
         </div>
