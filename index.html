@@ -63,6 +63,27 @@
             border: 1px solid rgba(168, 85, 247, 0.25);
         }
 
+        /* Saludo con líneas separadoras */
+        .greeting-separator {
+            display: flex;
+            align-items: center;
+            margin: 18px 20px;
+            color: #64748b;
+        }
+        .greeting-separator::before,
+        .greeting-separator::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #64748b, transparent);
+        }
+        .greeting-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            padding: 0 20px;
+            white-space: nowrap;
+        }
+
         /* Menú lateral */
         #hamburger-menu {
             position: fixed;
@@ -246,7 +267,7 @@
 
     <!-- DASHBOARD -->
     <div id="dashboard" style="display:none;">
-        <!-- Cargar + Retirar -->
+        <!-- CARGAR + RETIRAR -->
         <div class="card" style="margin-top: 20px;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                 <button onclick="cargarSaldo()" class="btn-accion btn-cargar">
@@ -260,12 +281,12 @@
             </div>
         </div>
 
-        <!-- Saludo -->
+        <!-- SALUDO CON LÍNEAS -->
         <div class="greeting-separator">
             <h2 id="bienvenida" class="greeting-text"></h2>
         </div>
 
-        <!-- Atención Personalizada -->
+        <!-- ATENCIÓN PERSONALIZADA -->
         <div class="card" style="margin-top: 10px;">
             <button onclick="abrirChatwoot()" class="btn-atencion">
                 <i class="fas fa-headset"></i>
@@ -273,7 +294,7 @@
             </button>
         </div>
 
-        <!-- Salas de Juego -->
+        <!-- SALAS DE JUEGO -->
         <div class="card" style="margin-top: 24px;">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
                 <i class="fas fa-gamepad" style="color: #c026d3; font-size: 1.35rem;"></i>
@@ -283,7 +304,7 @@
             </div>
         </div>
 
-        <!-- Ruleta VIP -->
+        <!-- RULETA VIP -->
         <div class="card" style="margin-top: 10px;">
             <button onclick="abrirRuleta()" class="btn-ruleta">
                 <i class="fas fa-dice"></i>
@@ -304,7 +325,7 @@
         </div>
     </div>
 
-    <!-- Modales (mantengo los existentes) -->
+    <!-- Modales -->
     <div id="modal-sala-no-disponible" class="modal" style="display:none;">
         <div style="background:#1e2937; max-width:380px; width:90%; border-radius:24px; padding:40px 30px; color:white; text-align:center;">
             <h2 style="margin-bottom:16px;">⚠️ Sala no disponible</h2>
@@ -371,16 +392,23 @@
         menu.style.right = menu.style.right === '0px' ? '-100%' : '0px';
     }
 
-    // Funciones placeholder para el menú
+    // Cerrar menú al tocar fuera
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('hamburger-menu');
+        const hamburgerBtn = document.querySelector('.hamburger');
+        if (menu.style.right === '0px' && !menu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+            menu.style.right = '-100%';
+        }
+    });
+
+    // Funciones del menú
     function abrirPerfil() { alert("👤 Perfil - Se desarrollará más adelante"); toggleHamburgerMenu(); }
     function abrirCronograma() { alert("📅 Cronograma - Se desarrollará más adelante"); toggleHamburgerMenu(); }
     function abrirReferir() { alert("🔗 Referir - Se desarrollará más adelante"); toggleHamburgerMenu(); }
     function abrirChatwoot() { alert("🟢 Chatwoot se abrirá aquí cuando lo configures completamente."); toggleHamburgerMenu(); }
     function instalarApp() { alert("📲 Instalar App - Se desarrollará más adelante"); toggleHamburgerMenu(); }
     function cerrarSesion() {
-        if (confirm("¿Cerrar sesión?")) {
-            location.reload();
-        }
+        if (confirm("¿Cerrar sesión?")) location.reload();
     }
 
     function abrirRuleta() {
