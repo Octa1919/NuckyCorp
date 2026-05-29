@@ -71,7 +71,43 @@
             color: white;
         }
 
-        /* Atención Personalizada con luz diagonal */
+        /* Botón Ruleta - Plateado Diamante Premium */
+        .btn-ruleta {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            padding: 18px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #e2e8f0, #cbd5e1);
+            color: #0f172a;
+            border: 2px solid #94a3b8;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(148, 163, 184, 0.4);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .btn-ruleta:active { transform: scale(0.95); }
+
+        /* Efecto shine plateado */
+        .btn-ruleta::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -75%;
+            width: 50%;
+            height: 300%;
+            background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,0) 70%);
+            transform: skewX(-25deg);
+            animation: shine 3.8s linear infinite;
+        }
+        @keyframes shine { 100% { left: 125%; } }
+
+        /* Atención Personalizada */
         .btn-atencion {
             position: relative;
             overflow: hidden;
@@ -92,39 +128,6 @@
             cursor: pointer;
         }
         .btn-atencion:active { transform: scale(0.95); }
-        .btn-atencion::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -75%;
-            width: 50%;
-            height: 300%;
-            background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0) 70%);
-            transform: skewX(-25deg);
-            animation: shine 3.5s linear infinite;
-        }
-        @keyframes shine { 100% { left: 125%; } }
-
-        /* Saludo con líneas separadoras - ESPACIADO REDUCIDO */
-        .greeting-separator {
-            display: flex;
-            align-items: center;
-            margin: 18px 20px;   /* ← Espacio reducido */
-            color: #64748b;
-        }
-        .greeting-separator::before,
-        .greeting-separator::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(to right, transparent, #64748b, transparent);
-        }
-        .greeting-text {
-            font-size: 1.4rem;
-            font-weight: 600;
-            padding: 0 20px;
-            white-space: nowrap;
-        }
 
         .modal { 
             display: none; 
@@ -196,7 +199,7 @@
             </div>
         </div>
 
-        <!-- SALUDO CON LÍNEAS -->
+        <!-- SALUDO -->
         <div class="greeting-separator">
             <h2 id="bienvenida" class="greeting-text"></h2>
         </div>
@@ -206,6 +209,14 @@
             <button onclick="abrirChatwoot()" class="btn-atencion">
                 <i class="fas fa-headset"></i>
                 Atención Personalizada
+            </button>
+        </div>
+
+        <!-- BOTÓN RULETA - PLATEADO DIAMANTE PREMIUM -->
+        <div class="card" style="margin-top: 10px;">
+            <button onclick="abrirRuleta()" class="btn-ruleta">
+                <i class="fas fa-dice"></i>
+                Ruleta
             </button>
         </div>
 
@@ -219,7 +230,7 @@
             </div>
         </div>
 
-        <!-- Modal Sala No Disponible -->
+        <!-- Modales -->
         <div id="modal-sala-no-disponible" class="modal" style="display:none;">
             <div style="background:#1e2937; max-width:380px; width:90%; border-radius:24px; padding:40px 30px; color:white; text-align:center;">
                 <h2 style="margin-bottom:16px;">⚠️ Sala no disponible</h2>
@@ -228,19 +239,12 @@
             </div>
         </div>
 
-        <!-- Modal Cargar Saldo -->
         <div id="modal-cargar-saldo" class="modal" style="display:none;">
             <div style="background:#1e2937; max-width:420px; width:92%; border-radius:24px; padding:30px; color:white; text-align:center;">
                 <h2 style="margin-bottom:20px;">💰 Cargar Saldo</h2>
                 <div id="cbu-activo-info" style="background:#0f172a; padding:20px; border-radius:16px; margin:20px 0; text-align:left;"></div>
                 <button onclick="hideCargarSaldoModal()" style="width:100%; padding:16px; background:#a855f7; color:white; border:none; border-radius:16px; font-weight:700;">Cerrar</button>
             </div>
-        </div>
-
-        <!-- Ruleta -->
-        <div class="card">
-            <h3 style="margin-bottom:16px; color:#c4b5fd;">🎡 Ruleta</h3>
-            <div id="ruleta-info"></div>
         </div>
     </div>
 
@@ -286,13 +290,11 @@
             <button onclick="${sub.sala4_link ? `window.open('${sub.sala4_link}', '_blank')` : `showSalaNoDisponibleModal()`}" class="sala-btn">Konabet</button>
         `;
         document.getElementById('salas-container').innerHTML = salasHTML;
+    }
 
-        const ruletaHTML = `
-            <p><strong>Premios Normal:</strong> ${sub.premios_normal || '—'}</p>
-            <p><strong>Premios Dorada:</strong> ${sub.premios_dorada || '—'}</p>
-            <p><strong>Días para Dorada:</strong> ${sub.dias_dorada || '7'} días</p>
-        `;
-        document.getElementById('ruleta-info').innerHTML = ruletaHTML;
+    function abrirRuleta() {
+        alert("🎡 Ruleta\n\nAquí se abrirá la ruleta cuando la desarrollemos.");
+        // Más adelante llamaremos a la función real de la ruleta
     }
 
     async function cargarSaldo() {
