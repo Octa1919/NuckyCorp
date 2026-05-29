@@ -63,9 +63,9 @@
             transition: all 0.2s ease;
         }
         .btn-cargar {
-            background: linear-gradient(90deg, #facc15, #eab308);
+            background: linear-gradient(90deg, #0ea5e9, #22d3ee);
             color: #0f172a;
-            box-shadow: 0 8px 25px rgba(250, 204, 21, 0.5);
+            box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4);
         }
         .btn-retirar {
             background: linear-gradient(90deg, #c026d3, #db2777);
@@ -168,8 +168,8 @@
             <p id="casino-subtitle" style="text-align:center; color:#c4b5fd; margin-bottom:20px;"></p>
         </div>
 
-        <!-- CARGAR + RETIRAR (misma línea) -->
-        <div class="card" style="margin-top: 10px;">
+        <!-- CARGAR + RETIRAR (misma línea) - Con borde plateado -->
+        <div class="card" style="margin-top: 10px; border: 2px solid rgba(224, 242, 255, 0.6);">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                 <button onclick="cargarSaldo()" class="btn-accion btn-cargar">
                     <i class="fas fa-wallet"></i>
@@ -280,7 +280,7 @@
     async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
         const modalContent = document.getElementById('cbu-activo-info');
-        modalContent.innerHTML = `<p style="text-align:center; color:#fcd34d;">Aquí aparecerá tu CBU activo.</p>`;
+        modalContent.innerHTML = `<p style="text-align:center; color:#67e8f9;">Aquí aparecerá tu CBU activo.</p>`;
         document.getElementById('modal-cargar-saldo').style.display = 'flex';
     }
 
