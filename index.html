@@ -65,12 +65,10 @@
         .btn-cargar {
             background: linear-gradient(90deg, #0ea5e9, #22d3ee);
             color: #0f172a;
-            box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4);
         }
         .btn-retirar {
             background: linear-gradient(90deg, #c026d3, #db2777);
             color: white;
-            box-shadow: 0 8px 25px rgba(192, 38, 211, 0.4);
         }
 
         /* Atención Personalizada con luz diagonal */
@@ -106,6 +104,27 @@
             animation: shine 3.5s linear infinite;
         }
         @keyframes shine { 100% { left: 125%; } }
+
+        /* Saludo con líneas separadoras */
+        .greeting-separator {
+            display: flex;
+            align-items: center;
+            margin: 30px 20px;
+            color: #64748b;
+        }
+        .greeting-separator::before,
+        .greeting-separator::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #64748b, transparent);
+        }
+        .greeting-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            padding: 0 20px;
+            white-space: nowrap;
+        }
 
         .modal { 
             display: none; 
@@ -163,13 +182,8 @@
 
     <!-- DASHBOARD -->
     <div id="dashboard" style="display:none;">
-        <div class="card">
-            <h2 id="bienvenida" style="text-align:center; margin-bottom:8px;"></h2>
-            <p id="casino-subtitle" style="text-align:center; color:#c4b5fd; margin-bottom:20px;"></p>
-        </div>
-
-        <!-- CARGAR + RETIRAR (misma línea) - Con borde plateado -->
-        <div class="card" style="margin-top: 10px; border: 2px solid rgba(224, 242, 255, 0.6);">
+        <!-- CARGAR + RETIRAR (misma línea) -->
+        <div class="card" style="margin-top: 20px;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                 <button onclick="cargarSaldo()" class="btn-accion btn-cargar">
                     <i class="fas fa-wallet"></i>
@@ -180,6 +194,11 @@
                     Retirar Fondos
                 </button>
             </div>
+        </div>
+
+        <!-- SALUDO CENTRADO CON LÍNEAS SEPARADORAS -->
+        <div class="greeting-separator">
+            <h2 id="bienvenida" class="greeting-text"></h2>
         </div>
 
         <!-- ATENCIÓN PERSONALIZADA -->
@@ -259,7 +278,6 @@
     async function cargarDatosSuscriptor(sub) {
         document.getElementById('casino-name').textContent = sub.nombre_casino || "Nucky";
         document.getElementById('bienvenida').innerHTML = `¡Hola <strong>${currentUsuario}</strong>!`;
-        document.getElementById('casino-subtitle').textContent = sub.nombre_casino || "";
 
         const salasHTML = `
             <button onclick="${sub.sala1_link ? `window.open('${sub.sala1_link}', '_blank')` : `showSalaNoDisponibleModal()`}" class="sala-btn">Celuapuestas</button>
