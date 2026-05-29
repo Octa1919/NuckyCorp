@@ -71,6 +71,40 @@
             color: white;
         }
 
+        /* Atención Personalizada con luz diagonal */
+        .btn-atencion {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            padding: 18px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #22d3ee, #67e8f9);
+            color: #0f172a;
+            border: none;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(34, 211, 238, 0.4);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .btn-atencion:active { transform: scale(0.95); }
+        .btn-atencion::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -75%;
+            width: 50%;
+            height: 300%;
+            background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0) 70%);
+            transform: skewX(-25deg);
+            animation: shine 3.5s linear infinite;
+        }
+        @keyframes shine { 100% { left: 125%; } }
+
         /* Botón Ruleta - Plateado Diamante Premium */
         .btn-ruleta {
             position: relative;
@@ -92,8 +126,6 @@
             cursor: pointer;
         }
         .btn-ruleta:active { transform: scale(0.95); }
-
-        /* Efecto shine plateado */
         .btn-ruleta::before {
             content: '';
             position: absolute;
@@ -106,28 +138,6 @@
             animation: shine 3.8s linear infinite;
         }
         @keyframes shine { 100% { left: 125%; } }
-
-        /* Atención Personalizada */
-        .btn-atencion {
-            position: relative;
-            overflow: hidden;
-            width: 100%;
-            padding: 18px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            background: linear-gradient(90deg, #22d3ee, #67e8f9);
-            color: #0f172a;
-            border: none;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 8px 25px rgba(34, 211, 238, 0.4);
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-        .btn-atencion:active { transform: scale(0.95); }
 
         .modal { 
             display: none; 
@@ -212,14 +222,6 @@
             </button>
         </div>
 
-        <!-- BOTÓN RULETA - PLATEADO DIAMANTE PREMIUM -->
-        <div class="card" style="margin-top: 10px;">
-            <button onclick="abrirRuleta()" class="btn-ruleta">
-                <i class="fas fa-dice"></i>
-                Ruleta
-            </button>
-        </div>
-
         <!-- SALAS DE JUEGO -->
         <div class="card" style="margin-top: 24px;">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
@@ -228,6 +230,14 @@
             </div>
             <div id="salas-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; padding: 0 !important; margin: 0 !important; box-sizing: border-box;">
             </div>
+        </div>
+
+        <!-- BOTÓN RULETA - PLATEADO DIAMANTE PREMIUM (debajo de Salas) -->
+        <div class="card" style="margin-top: 10px;">
+            <button onclick="abrirRuleta()" class="btn-ruleta">
+                <i class="fas fa-dice"></i>
+                Ruleta
+            </button>
         </div>
 
         <!-- Modales -->
@@ -294,7 +304,6 @@
 
     function abrirRuleta() {
         alert("🎡 Ruleta\n\nAquí se abrirá la ruleta cuando la desarrollemos.");
-        // Más adelante llamaremos a la función real de la ruleta
     }
 
     async function cargarSaldo() {
