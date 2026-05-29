@@ -71,7 +71,7 @@
             color: white;
         }
 
-        /* Atención Personalizada con luz diagonal */
+        /* Atención Personalizada */
         .btn-atencion {
             position: relative;
             overflow: hidden;
@@ -105,7 +105,7 @@
         }
         @keyframes shine { 100% { left: 125%; } }
 
-        /* Botón Ruleta - Plateado Diamante Premium */
+        /* Botón Ruleta VIP - Plateado Diamante */
         .btn-ruleta {
             position: relative;
             overflow: hidden;
@@ -138,6 +138,27 @@
             animation: shine 3.8s linear infinite;
         }
         @keyframes shine { 100% { left: 125%; } }
+
+        /* Saludo con líneas separadoras */
+        .greeting-separator {
+            display: flex;
+            align-items: center;
+            margin: 18px 20px;
+            color: #64748b;
+        }
+        .greeting-separator::before,
+        .greeting-separator::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #64748b, transparent);
+        }
+        .greeting-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            padding: 0 20px;
+            white-space: nowrap;
+        }
 
         .modal { 
             display: none; 
@@ -209,7 +230,7 @@
             </div>
         </div>
 
-        <!-- SALUDO -->
+        <!-- SALUDO CON LÍNEAS -->
         <div class="greeting-separator">
             <h2 id="bienvenida" class="greeting-text"></h2>
         </div>
@@ -232,11 +253,11 @@
             </div>
         </div>
 
-        <!-- BOTÓN RULETA - PLATEADO DIAMANTE PREMIUM (debajo de Salas) -->
+        <!-- BOTÓN RULETA VIP -->
         <div class="card" style="margin-top: 10px;">
             <button onclick="abrirRuleta()" class="btn-ruleta">
                 <i class="fas fa-dice"></i>
-                Ruleta
+                Ruleta VIP
             </button>
         </div>
 
@@ -303,7 +324,7 @@
     }
 
     function abrirRuleta() {
-        alert("🎡 Ruleta\n\nAquí se abrirá la ruleta cuando la desarrollemos.");
+        alert("🎡 Ruleta VIP\n\nAquí se abrirá la ruleta cuando la desarrollemos.");
     }
 
     async function cargarSaldo() {
