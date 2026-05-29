@@ -38,6 +38,22 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        .hamburger {
+            font-size: 1.8rem;
+            color: #a855f7;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        /* Línea separadora debajo del header */
+        .header-separator {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #a855f7, transparent);
+            margin: 0 20px;
+        }
+
         .card {
             background: var(--glass);
             border-radius: 24px;
@@ -45,6 +61,35 @@
             margin: 20px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.4);
             border: 1px solid rgba(168, 85, 247, 0.25);
+        }
+
+        /* Menú lateral */
+        #hamburger-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 280px;
+            height: 100%;
+            background: #0f172a;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.6);
+            transition: right 0.4s ease;
+            z-index: 9999;
+            padding-top: 80px;
+        }
+        .menu-item {
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 1.15rem;
+            color: #e0e7ff;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            transition: all 0.2s;
+        }
+        .menu-item:hover {
+            background: rgba(168, 85, 247, 0.15);
+            padding-left: 32px;
         }
 
         /* Botones de acción */
@@ -105,7 +150,7 @@
         }
         @keyframes shine { 100% { left: 125%; } }
 
-        /* Botón Ruleta VIP - Plateado Diamante */
+        /* Ruleta VIP */
         .btn-ruleta {
             position: relative;
             overflow: hidden;
@@ -138,27 +183,6 @@
             animation: shine 3.8s linear infinite;
         }
         @keyframes shine { 100% { left: 125%; } }
-
-        /* Saludo con líneas separadoras */
-        .greeting-separator {
-            display: flex;
-            align-items: center;
-            margin: 18px 20px;
-            color: #64748b;
-        }
-        .greeting-separator::before,
-        .greeting-separator::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(to right, transparent, #64748b, transparent);
-        }
-        .greeting-text {
-            font-size: 1.4rem;
-            font-weight: 600;
-            padding: 0 20px;
-            white-space: nowrap;
-        }
 
         .modal { 
             display: none; 
@@ -202,7 +226,13 @@
     <!-- HEADER -->
     <div class="header">
         <h1 id="casino-name" class="casino-name">Nucky</h1>
+        <button onclick="toggleHamburgerMenu()" class="hamburger">
+            <i class="fas fa-bars"></i>
+        </button>
     </div>
+
+    <!-- Línea separadora -->
+    <div class="header-separator"></div>
 
     <!-- LOGIN -->
     <div id="login-screen">
@@ -216,7 +246,7 @@
 
     <!-- DASHBOARD -->
     <div id="dashboard" style="display:none;">
-        <!-- CARGAR + RETIRAR -->
+        <!-- Cargar + Retirar -->
         <div class="card" style="margin-top: 20px;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                 <button onclick="cargarSaldo()" class="btn-accion btn-cargar">
@@ -230,12 +260,12 @@
             </div>
         </div>
 
-        <!-- SALUDO CON LÍNEAS -->
+        <!-- Saludo -->
         <div class="greeting-separator">
             <h2 id="bienvenida" class="greeting-text"></h2>
         </div>
 
-        <!-- ATENCIÓN PERSONALIZADA -->
+        <!-- Atención Personalizada -->
         <div class="card" style="margin-top: 10px;">
             <button onclick="abrirChatwoot()" class="btn-atencion">
                 <i class="fas fa-headset"></i>
@@ -243,7 +273,7 @@
             </button>
         </div>
 
-        <!-- SALAS DE JUEGO -->
+        <!-- Salas de Juego -->
         <div class="card" style="margin-top: 24px;">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
                 <i class="fas fa-gamepad" style="color: #c026d3; font-size: 1.35rem;"></i>
@@ -253,29 +283,41 @@
             </div>
         </div>
 
-        <!-- BOTÓN RULETA VIP -->
+        <!-- Ruleta VIP -->
         <div class="card" style="margin-top: 10px;">
             <button onclick="abrirRuleta()" class="btn-ruleta">
                 <i class="fas fa-dice"></i>
                 Ruleta VIP
             </button>
         </div>
+    </div>
 
-        <!-- Modales -->
-        <div id="modal-sala-no-disponible" class="modal" style="display:none;">
-            <div style="background:#1e2937; max-width:380px; width:90%; border-radius:24px; padding:40px 30px; color:white; text-align:center;">
-                <h2 style="margin-bottom:16px;">⚠️ Sala no disponible</h2>
-                <p style="font-size:1.1rem; color:#c4b5fd;">Esta sala no está disponible en este momento.</p>
-                <button onclick="hideSalaNoDisponibleModal()" style="margin-top:30px; width:100%; padding:16px; background:#a855f7; color:white; border:none; border-radius:16px; font-weight:700;">Entendido</button>
-            </div>
+    <!-- MENÚ HAMBURGUESA LATERAL -->
+    <div id="hamburger-menu">
+        <div style="padding:0 20px;">
+            <a onclick="toggleHamburgerMenu(); abrirPerfil()" class="menu-item"><i class="fas fa-user"></i> Perfil</a>
+            <a onclick="toggleHamburgerMenu(); abrirCronograma()" class="menu-item"><i class="fas fa-calendar-alt"></i> Cronograma</a>
+            <a onclick="toggleHamburgerMenu(); abrirReferir()" class="menu-item"><i class="fas fa-share"></i> Referir</a>
+            <a onclick="toggleHamburgerMenu(); abrirChatwoot()" class="menu-item"><i class="fas fa-headset"></i> Contacto</a>
+            <a onclick="toggleHamburgerMenu(); instalarApp()" class="menu-item"><i class="fas fa-download"></i> Instalar App</a>
+            <a onclick="toggleHamburgerMenu(); cerrarSesion()" class="menu-item" style="color:#f43f5e;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
         </div>
+    </div>
 
-        <div id="modal-cargar-saldo" class="modal" style="display:none;">
-            <div style="background:#1e2937; max-width:420px; width:92%; border-radius:24px; padding:30px; color:white; text-align:center;">
-                <h2 style="margin-bottom:20px;">💰 Cargar Saldo</h2>
-                <div id="cbu-activo-info" style="background:#0f172a; padding:20px; border-radius:16px; margin:20px 0; text-align:left;"></div>
-                <button onclick="hideCargarSaldoModal()" style="width:100%; padding:16px; background:#a855f7; color:white; border:none; border-radius:16px; font-weight:700;">Cerrar</button>
-            </div>
+    <!-- Modales (mantengo los existentes) -->
+    <div id="modal-sala-no-disponible" class="modal" style="display:none;">
+        <div style="background:#1e2937; max-width:380px; width:90%; border-radius:24px; padding:40px 30px; color:white; text-align:center;">
+            <h2 style="margin-bottom:16px;">⚠️ Sala no disponible</h2>
+            <p style="font-size:1.1rem; color:#c4b5fd;">Esta sala no está disponible en este momento.</p>
+            <button onclick="hideSalaNoDisponibleModal()" style="margin-top:30px; width:100%; padding:16px; background:#a855f7; color:white; border:none; border-radius:16px; font-weight:700;">Entendido</button>
+        </div>
+    </div>
+
+    <div id="modal-cargar-saldo" class="modal" style="display:none;">
+        <div style="background:#1e2937; max-width:420px; width:92%; border-radius:24px; padding:30px; color:white; text-align:center;">
+            <h2 style="margin-bottom:20px;">💰 Cargar Saldo</h2>
+            <div id="cbu-activo-info" style="background:#0f172a; padding:20px; border-radius:16px; margin:20px 0; text-align:left;"></div>
+            <button onclick="hideCargarSaldoModal()" style="width:100%; padding:16px; background:#a855f7; color:white; border:none; border-radius:16px; font-weight:700;">Cerrar</button>
         </div>
     </div>
 
@@ -323,6 +365,24 @@
         document.getElementById('salas-container').innerHTML = salasHTML;
     }
 
+    // ==================== MENÚ HAMBURGUESA ====================
+    function toggleHamburgerMenu() {
+        const menu = document.getElementById('hamburger-menu');
+        menu.style.right = menu.style.right === '0px' ? '-100%' : '0px';
+    }
+
+    // Funciones placeholder para el menú
+    function abrirPerfil() { alert("👤 Perfil - Se desarrollará más adelante"); toggleHamburgerMenu(); }
+    function abrirCronograma() { alert("📅 Cronograma - Se desarrollará más adelante"); toggleHamburgerMenu(); }
+    function abrirReferir() { alert("🔗 Referir - Se desarrollará más adelante"); toggleHamburgerMenu(); }
+    function abrirChatwoot() { alert("🟢 Chatwoot se abrirá aquí cuando lo configures completamente."); toggleHamburgerMenu(); }
+    function instalarApp() { alert("📲 Instalar App - Se desarrollará más adelante"); toggleHamburgerMenu(); }
+    function cerrarSesion() {
+        if (confirm("¿Cerrar sesión?")) {
+            location.reload();
+        }
+    }
+
     function abrirRuleta() {
         alert("🎡 Ruleta VIP\n\nAquí se abrirá la ruleta cuando la desarrollemos.");
     }
@@ -336,10 +396,6 @@
 
     function hideCargarSaldoModal() {
         document.getElementById('modal-cargar-saldo').style.display = 'none';
-    }
-
-    function abrirChatwoot() {
-        alert("🟢 Chatwoot se abrirá aquí cuando lo configures completamente.");
     }
 
     function showSalaNoDisponibleModal() {
