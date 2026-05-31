@@ -306,15 +306,17 @@
     <!-- Línea separadora -->
     <div class="header-separator"></div>
 
-    <!-- LOGIN SCREEN -->
+       <!-- LOGIN -->
     <div id="login-screen">
-        <div class="card" style="margin-top: 100px;">
-            <h2>Iniciar Sesión</h2>
+        <div class="card" style="margin-top:90px; max-width:420px; margin-left:auto; margin-right:auto; padding:42px 32px;">
+            <h2 style="text-align:center; margin-bottom:32px;">Iniciar Sesión</h2>
             <input type="text" id="login-user" placeholder="Usuario">
             <input type="password" id="login-pass" placeholder="Contraseña">
             <button onclick="loginJugador()">Ingresar</button>
             
-            <a onclick="crearCuenta()" class="login-link">Crear cuenta nueva</a>
+            <div style="height: 32px;"></div>   <!-- Espacio adicional entre botón e links -->
+            
+            <a onclick="crearCuenta()" class="login-link" style="margin-top:8px;">Crear cuenta nueva</a>
             <a onclick="recuperarDatos()" class="login-link">Olvidé mis datos</a>
         </div>
     </div>
