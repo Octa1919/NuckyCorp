@@ -350,6 +350,12 @@
     let currentSubscriberId = null;
     let currentUsuario = null;
 
+    // ==================== LEER SUSCRIPTOR DESDE LA URL ====================
+    function getSubscriberFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('s') || params.get('subscriber') || params.get('subscriber_id');
+    }
+
     async function loginJugador() {
         const username = document.getElementById('login-user').value.trim();
         const password = document.getElementById('login-pass').value.trim();
@@ -384,6 +390,32 @@
             <button onclick="${sub.sala4_link ? `window.open('${sub.sala4_link}', '_blank')` : `showSalaNoDisponibleModal()`}" class="sala-btn">Konabet</button>
         `;
         document.getElementById('salas-container').innerHTML = salasHTML;
+    }
+
+    // ==================== RECUPERAR DATOS (AHORA CON WHATSAPP DEL SUSCRIPTOR) ====================
+    async function recuperarDatos() {
+        const subscriberParam = getSubscriberFromUrl();
+
+        let whatsapp = "549XXXXXXXXXX"; // número de respaldo por si no encuentra
+
+        if (subscriberParam) {
+            const { data } = await _supabase
+                .from('suscriptores')
+                .select('whatsapp')
+                .eq('id', subscriberParam)           // si usas ID numérico
+                .or(`nombre_casino.eq.${subscriberParam},short_code.eq.${subscriberParam}`) // o por nombre
+                .single();
+
+            if (data && data.whatsapp) whatsapp = data.whatsapp;
+        }
+
+        const mensaje = encodeURIComponent("Hola, olvidé mis datos de acceso. Por favor ayúdame.");
+        window.open(`https://wa.me/${whatsapp}?text=${mensaje}`, "_blank");
+    }
+
+    // ==================== Crear cuenta (placeholder) ====================
+    function crearCuenta() {
+        alert("📝 Crear cuenta nueva\n\nAquí se abrirá el formulario de registro.");
     }
 
     // ==================== MENÚ HAMBURGUESA ====================
