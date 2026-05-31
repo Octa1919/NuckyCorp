@@ -304,11 +304,11 @@
             transform: scale(0.93);
             box-shadow: 0 4px 15px rgba(168, 85, 247, 0.6);
         }
-       @keyframes glow {
-    0%   { background-position: 0% 50%; }
-    50%  { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
+      @keyframes glow {
+        0%   { box-shadow: 0 0 10px #67e8f9; }
+        50%  { box-shadow: 0 0 30px #22d3ee; }
+        100% { box-shadow: 0 0 10px #67e8f9; }
+        }
     </style>
 </head>
 <body>
@@ -410,32 +410,32 @@
         </div>
     </div>
 
-           <!-- MODAL CARGAR SALDO - VERSIÓN CORREGIDA Y BONITA -->
+               <!-- MODAL CARGAR SALDO - VERSIÓN CORREGIDA Y EXACTA -->
         <div id="modal-cargar-saldo" class="modal" style="display:none;">
-            <div style="background:#1e2937; max-width:420px; width:92%; border-radius:28px; padding:24px; position:relative; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.8);">
+            <div style="background:#1e2937; max-width:400px; width:92%; border-radius:28px; padding:24px; position:relative; overflow:hidden; box-shadow:0 25px 50px rgba(0,0,0,0.8); margin: auto;">
                 
-                <!-- Glow cian animado -->
-                <div style="position:absolute; inset:-3px; border-radius:31px; border:3px solid transparent; background:linear-gradient(45deg, #67e8f9, #22d3ee, #67e8f9); animation:glow 4s linear infinite; opacity:0.6; pointer-events:none;"></div>
+                <!-- Glow cian animado en el borde -->
+                <div style="position:absolute; inset:-4px; border-radius:32px; border:3px solid #67e8f9; opacity:0.25; animation:glow 4s linear infinite; pointer-events:none;"></div>
 
-                <h2 style="text-align:center; margin:0 0 20px 0; font-size:1.6rem;">
+                <h2 style="text-align:center; margin:0 0 18px 0;">
                     Cargar Saldo 💰
                 </h2>
 
                 <!-- Advertencia roja -->
-                <div style="background:#7f1d1d; color:#fda4af; padding:12px 16px; border-radius:12px; text-align:center; font-weight:600; margin-bottom:20px;">
+                <div style="background:#991b1b; color:#fecaca; padding:10px 14px; border-radius:12px; text-align:center; font-size:0.95rem; margin-bottom:18px;">
                     ⚠️ Siempre consulta aquí el CBU disponible antes de transferir
                 </div>
 
                 <!-- Subcuadro con datos -->
-                <div id="cbu-activo-info" style="background:#0f172a; padding:20px; border-radius:16px; margin-bottom:20px; text-align:center; border:1px solid #64748b;">
+                <div id="cbu-activo-info" style="background:#0f172a; padding:18px; border-radius:16px; margin-bottom:20px; text-align:center; border:1px solid #64748b;">
                     <!-- JavaScript llena esto -->
                 </div>
 
-                <button onclick="copiarCBU()" style="width:100%; padding:16px; background:linear-gradient(90deg,#67e8f9,#22d3ee); color:#0f172a; border:none; border-radius:16px; font-weight:700; margin-bottom:12px;">
+                <button onclick="copiarCBU()" style="width:100%; padding:15px; background:#67e8f9; color:#0f172a; border:none; border-radius:16px; font-weight:700; margin-bottom:12px;">
                     📋 Copiar CBU
                 </button>
 
-                <button onclick="enviarComprobante()" style="width:100%; padding:16px; background:linear-gradient(90deg,#a855f7,#c026d3); color:white; border:none; border-radius:16px; font-weight:700;">
+                <button onclick="enviarComprobante()" style="width:100%; padding:15px; background:linear-gradient(90deg,#a855f7,#c026d3); color:white; border:none; border-radius:16px; font-weight:700;">
                     📸 Enviar comprobante
                 </button>
 
