@@ -304,11 +304,11 @@
             transform: scale(0.93);
             box-shadow: 0 4px 15px rgba(168, 85, 247, 0.6);
         }
-        @keyframes glow {
-        0%   { background-position: 0% 50%; }
-        50%  { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-        }
+       @keyframes glow {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
     </style>
 </head>
 <body>
@@ -410,28 +410,27 @@
         </div>
     </div>
 
-            <!-- MODAL CARGAR SALDO - VERSIÓN PREMIUM MEJORADA -->
+           <!-- MODAL CARGAR SALDO - VERSIÓN CORREGIDA Y BONITA -->
         <div id="modal-cargar-saldo" class="modal" style="display:none;">
-            <div class="modal-content" style="background:#1e2937; max-width:420px; width:92%; border-radius:28px; padding:24px; position:relative; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.7);">
+            <div style="background:#1e2937; max-width:420px; width:92%; border-radius:28px; padding:24px; position:relative; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.8);">
                 
-                <!-- Glow animado cian en el borde -->
-                <div style="position:absolute; inset:-2px; border-radius:30px; border:2px solid transparent; background:linear-gradient(45deg, #67e8f9, #22d3ee, #67e8f9); -webkit-background-clip:content-box; background-clip:content-box; animation:glow 3s linear infinite;"></div>
+                <!-- Glow cian animado -->
+                <div style="position:absolute; inset:-3px; border-radius:31px; border:3px solid transparent; background:linear-gradient(45deg, #67e8f9, #22d3ee, #67e8f9); animation:glow 4s linear infinite; opacity:0.6; pointer-events:none;"></div>
 
-                <h2 style="text-align:center; margin-bottom:20px; font-size:1.55rem;">
+                <h2 style="text-align:center; margin:0 0 20px 0; font-size:1.6rem;">
                     Cargar Saldo 💰
                 </h2>
 
-                <!-- Advertencia en rojo -->
-                <div style="background:#7f1d1d; color:#fda4af; padding:12px; border-radius:12px; text-align:center; font-weight:600; margin-bottom:20px;">
+                <!-- Advertencia roja -->
+                <div style="background:#7f1d1d; color:#fda4af; padding:12px 16px; border-radius:12px; text-align:center; font-weight:600; margin-bottom:20px;">
                     ⚠️ Siempre consulta aquí el CBU disponible antes de transferir
                 </div>
 
-                <!-- Subcuadro con los datos -->
+                <!-- Subcuadro con datos -->
                 <div id="cbu-activo-info" style="background:#0f172a; padding:20px; border-radius:16px; margin-bottom:20px; text-align:center; border:1px solid #64748b;">
-                    <!-- Se llena con JavaScript -->
+                    <!-- JavaScript llena esto -->
                 </div>
 
-                <!-- Botones -->
                 <button onclick="copiarCBU()" style="width:100%; padding:16px; background:linear-gradient(90deg,#67e8f9,#22d3ee); color:#0f172a; border:none; border-radius:16px; font-weight:700; margin-bottom:12px;">
                     📋 Copiar CBU
                 </button>
@@ -559,7 +558,7 @@
         alert("🎡 Ruleta VIP\n\nAquí se abrirá la ruleta cuando la desarrollemos.");
     }
 
-          async function cargarSaldo() {
+    async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
 
         const { data, error } = await _supabase
@@ -576,9 +575,9 @@
         } else {
             window.currentCBU = data.cbu;
             container.innerHTML = `
-                <strong style="font-size:1.1rem;">${data.alias_nombre}</strong><br>
+                <strong style="font-size:1.15rem;">${data.alias_nombre}</strong><br>
                 <small style="color:#94a3b8;">${data.banco}</small><br><br>
-                <strong style="font-size:1.4rem; letter-spacing:1px; color:#67e8f9;">${data.cbu}</strong>
+                <strong style="font-size:1.45rem; letter-spacing:1px; color:#67e8f9;">${data.cbu}</strong>
             `;
         }
 
@@ -588,7 +587,7 @@
     function copiarCBU() {
         if (window.currentCBU) {
             navigator.clipboard.writeText(window.currentCBU);
-            alert("✅ CBU copiado correctamente");
+            alert("✅ CBU copiado al portapapeles");
         }
     }
 
