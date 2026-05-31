@@ -410,30 +410,28 @@
         </div>
     </div>
 
-    <!-- MODAL CARGAR SALDO - VERSIÓN CORREGIDA FINAL -->
+            <!-- MODAL CARGAR SALDO - VERSIÓN FINAL INTEGRADA -->
         <div id="modal-cargar-saldo" class="modal" style="display:none;">
-            <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9; position:relative;">
+            <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
                 
-                <h2 style="text-align:center; color:#e0e7ff; margin:0 0 18px 0; font-size:1.75rem;">
+                <h2 style="text-align:center; color:#e0e7ff; margin-bottom:18px; font-size:1.75rem;">
                     Cargar Saldo 💰
                 </h2>
 
-                <div style="background:#b91c1c; color:#fee2e2; padding:11px; border-radius:12px; text-align:center; font-weight:700; margin-bottom:20px;">
+                <div style="background:#b91c1c; color:#fee2e2; padding:12px; border-radius:12px; text-align:center; font-weight:700; margin-bottom:20px;">
                     ⚠️ Siempre consulta aquí el CBU disponible antes de transferir
                 </div>
 
-                <!-- RECUADRO ÚNICO DE DATOS -->
-                <div style="background:#111827; padding:20px; border-radius:16px; margin-bottom:20px;">
-                    <div style="font-size:1.22rem; line-height:1.85; text-align:left;">
+                <!-- UN SOLO RECUADRO CON TODO -->
+                <div style="background:#111827; padding:22px; border-radius:16px; margin-bottom:22px;">
+                    <div style="font-size:1.25rem; line-height:1.9;">
                         <strong>Banco:</strong> <span id="banco-name" style="color:#67e8f9;"></span><br>
                         <strong>Titular:</strong> <span id="titular-name" style="color:#67e8f9;"></span>
                     </div>
-                    
-                    <!-- CBU integrado en el mismo cuadro -->
-                    <div id="cbu-box" style="margin-top:16px; padding:14px; background:#0f172a; border-radius:12px; font-size:1.48rem; font-weight:700; letter-spacing:0.5px; color:#a5f3fc; text-align:center; border:2px solid #67e8f9; word-break:break-all;">
+                    <div id="cbu-box" style="margin-top:16px; font-size:1.42rem; font-weight:700; letter-spacing:1px; color:#a5f3fc; text-align:center; background:#0f172a; padding:16px; border-radius:12px; border:2px solid #67e8f9;">
+                        <!-- CBU completo en UNA sola línea -->
                     </div>
-
-                    <button onclick="copiarCBU()" style="margin-top:14px; width:100%; padding:13px; background:#67e8f9; color:#0f172a; border:none; border-radius:12px; font-weight:700;">
+                    <button onclick="copiarCBU()" style="margin-top:14px; width:100%; padding:14px; background:#67e8f9; color:#0f172a; border:none; border-radius:12px; font-weight:700;">
                         📋 Copiar CBU
                     </button>
                 </div>
@@ -576,7 +574,7 @@
             document.getElementById('titular-name').textContent = data.alias_nombre || "—";
             document.getElementById('cbu-box').innerHTML = `<strong>${data.cbu}</strong>`;
         } else {
-            document.getElementById('cbu-box').innerHTML = `<strong style="color:#fda4af;">No hay CBU activo en este momento</strong>`;
+            document.getElementById('cbu-box').innerHTML = `<strong style="color:#fda4af;">No hay CBU activo</strong>`;
         }
 
         document.getElementById('modal-cargar-saldo').style.display = 'flex';
