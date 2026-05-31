@@ -410,36 +410,41 @@
         </div>
     </div>
 
-                   <!-- MODAL CARGAR SALDO - VERSIÓN ARMONIOSA Y LIMPIA -->
+    <!-- MODAL CARGAR SALDO - VERSIÓN PREMIUM 2026 -->
         <div id="modal-cargar-saldo" class="modal" style="display:none;">
-            <div style="background:#1e2937; max-width:400px; width:92%; border-radius:28px; padding:24px; box-shadow:0 25px 60px rgba(0,0,0,0.8);">
+            <div style="background:#1e2937; max-width:400px; width:92%; border-radius:28px; padding:20px; position:relative; overflow:hidden; box-shadow:0 30px 70px rgba(0,0,0,0.85); border:2px solid #67e8f9;">
                 
-                <h2 style="text-align:center; margin-bottom:18px;">Cargar Saldo 💰</h2>
+                <!-- Glow neón premium -->
+                <div style="position:absolute; inset:-5px; border-radius:32px; border:3px solid #67e8f9; opacity:0.35; animation:glow 3s linear infinite;"></div>
+
+                <h2 style="text-align:center; margin:0 0 16px 0; font-size:1.65rem; color:#e0e7ff;">
+                    Cargar Saldo 💰
+                </h2>
 
                 <!-- Advertencia -->
-                <div style="background:#7f1d1d; color:#fecaca; padding:12px; border-radius:12px; text-align:center; margin-bottom:20px; font-weight:600;">
+                <div style="background:#b91c1c; color:#fee2e2; padding:11px 14px; border-radius:12px; text-align:center; font-weight:700; margin-bottom:18px;">
                     ⚠️ Siempre consulta aquí el CBU disponible antes de transferir
                 </div>
 
-                <!-- Recuadro armonioso con datos + botón copiar -->
-                <div id="cbu-activo-info" style="background:#0f172a; padding:20px; border-radius:16px; margin-bottom:20px; border:1px solid #64748b;">
-                    <!-- JavaScript rellena esto -->
-                    <div style="text-align:center; margin-bottom:16px;">
-                        <strong>Banco:</strong> <span id="banco-name"></span><br>
-                        <strong>Titular:</strong> <span id="titular-name"></span><br><br>
-                        <strong style="font-size:1.5rem; color:#67e8f9; letter-spacing:1px;" id="cbu-number"></strong>
+                <!-- Recuadro principal de datos -->
+                <div id="cbu-activo-info" style="background:#111827; padding:20px; border-radius:16px; margin-bottom:20px; text-align:center; border:1px solid #64748b;">
+                    <div style="margin-bottom:12px;">
+                        <strong>Banco:</strong> <span id="banco-name" style="color:#a5f3fc;"></span><br>
+                        <strong>Titular:</strong> <span id="titular-name" style="color:#a5f3fc;"></span>
                     </div>
-                    <button onclick="copiarCBU()" style="width:100%; padding:12px; background:#67e8f9; color:#0f172a; border:none; border-radius:12px; font-weight:700;">
-                        Copiar CBU
+                    <div style="font-size:1.5rem; font-weight:700; letter-spacing:1px; color:#67e8f9; margin:12px 0;" id="cbu-number"></div>
+                    
+                    <button onclick="copiarCBU()" style="width:100%; padding:13px; background:#67e8f9; color:#0f172a; border:none; border-radius:12px; font-weight:700;">
+                        📋 Copiar CBU
                     </button>
                 </div>
 
                 <!-- Botón grande Enviar comprobante -->
-                <button onclick="enviarComprobante()" style="width:100%; padding:17px; background:linear-gradient(90deg, #a855f7, #c026d3); color:white; border:none; border-radius:16px; font-weight:700; font-size:1.1rem; margin-bottom:12px;">
-                    Enviar comprobante
+                <button onclick="enviarComprobante()" style="width:100%; padding:17px; background:linear-gradient(90deg, #c026d3, #db2777); color:white; border:none; border-radius:16px; font-weight:700; font-size:1.1rem; margin-bottom:12px;">
+                    📸 Enviar comprobante
                 </button>
 
-                <!-- Botón Volver simple -->
+                <!-- Volver simple -->
                 <button onclick="hideCargarSaldoModal()" style="width:100%; padding:14px; background:transparent; color:#94a3b8; border:none; font-size:1.05rem;">
                     Volver
                 </button>
@@ -559,7 +564,7 @@
         alert("🎡 Ruleta VIP\n\nAquí se abrirá la ruleta cuando la desarrollemos.");
     }
 
-    async function cargarSaldo() {
+        async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
 
         const { data, error } = await _supabase
@@ -572,12 +577,12 @@
         const container = document.getElementById('cbu-activo-info');
 
         if (error || !data) {
-            container.innerHTML = `<p style="color:#fda4af; text-align:center;">No hay CBU activo en este momento.<br>Contacta soporte.</p>`;
+            container.innerHTML = `<p style="color:#fda4af;">No hay CBU activo.<br>Contacta soporte.</p>`;
         } else {
             window.currentCBU = data.cbu;
             document.getElementById('banco-name').textContent = data.banco || "—";
             document.getElementById('titular-name').textContent = data.alias_nombre || "—";
-            document.getElementById('cbu-number').textContent = data.cbu;
+            document.getElementById('cbu-number').innerHTML = data.cbu;
         }
 
         document.getElementById('modal-cargar-saldo').style.display = 'flex';
