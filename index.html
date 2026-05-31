@@ -307,7 +307,7 @@
     </style>
 </head>
 <body>
-        <div class="header">
+            <div class="header">
         <h1 id="casino-name" class="casino-name">Nucky</h1>
         <button id="hamburger-btn" onclick="toggleHamburgerMenu()" style="display:none;">
             <i class="fas fa-bars"></i>
@@ -445,6 +445,7 @@
 
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(data.suscriptores);
     }
