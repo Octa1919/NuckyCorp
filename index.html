@@ -307,10 +307,9 @@
     </style>
 </head>
 <body>
-    <!-- HEADER -->
-    <div class="header">
+        <div class="header">
         <h1 id="casino-name" class="casino-name">Nucky</h1>
-        <button onclick="toggleHamburgerMenu()" class="hamburger">
+        <button id="hamburger-btn" onclick="toggleHamburgerMenu()" style="display:none;">
             <i class="fas fa-bars"></i>
         </button>
     </div>
@@ -495,7 +494,7 @@
         menu.style.right = (menu.style.right === '0px') ? '-100%' : '0px';
     }
     
-    // Cerrar al tocar fuera
+    // Cerrar al tocar fuera (versión corregida)
     document.addEventListener('click', function(e) {
         const menu = document.getElementById('hamburger-menu');
         const btn = document.getElementById('hamburger-btn');
@@ -506,8 +505,8 @@
         }
     });
     
-    // Mostrar botón hamburguesa solo después de login
-    function updateHeader() {
+    // Mostrar el botón solo después de login
+    function showHamburger() {
         document.getElementById('hamburger-btn').style.display = 'block';
     }
 
