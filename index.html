@@ -147,6 +147,12 @@
             transition: right 0.4s ease;
             z-index: 9999;
             padding-top: 80px;
+            display: flex;
+            flex-direction: column;
+        }
+        .menu-content {
+            flex: 1;
+            padding: 0 20px;
         }
         .menu-item {
             padding: 18px 24px;
@@ -157,11 +163,17 @@
             color: #e0e7ff;
             text-decoration: none;
             border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-            transition: all 0.2s;
         }
         .menu-item:hover {
             background: rgba(168, 85, 247, 0.15);
             padding-left: 32px;
+        }
+        .menu-footer {
+            padding: 20px;
+            text-align: center;
+            font-size: 0.95rem;
+            color: #64748b;
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
         }
         
         /* Botones de acción */
@@ -491,6 +503,16 @@
             }
         }
     });
+
+    // Mostrar/ocultar botón hamburguesa según si está logueado
+    function updateHeader() {
+        const btn = document.getElementById('hamburger-btn');
+        const isLogged = document.getElementById('dashboard').style.display !== 'none';
+        btn.style.display = isLogged ? 'block' : 'none';
+    }
+
+    // Llamar después de login y logout
+    window.onload = () => {
 
     // Funciones del menú
     function abrirPerfil() { alert("👤 Perfil - Se desarrollará más adelante"); toggleHamburgerMenu(); }
