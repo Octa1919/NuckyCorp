@@ -304,6 +304,11 @@
             transform: scale(0.93);
             box-shadow: 0 4px 15px rgba(168, 85, 247, 0.6);
         }
+        @keyframes glow {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+        }
     </style>
 </head>
 <body>
@@ -405,39 +410,42 @@
         </div>
     </div>
 
-    <!-- MODAL CARGAR SALDO - VERSIÓN PREMIUM -->
+            <!-- MODAL CARGAR SALDO - VERSIÓN PREMIUM MEJORADA -->
         <div id="modal-cargar-saldo" class="modal" style="display:none;">
-            <div style="background:#1e2937; max-width:420px; width:92%; border-radius:28px; padding:24px; color:white; box-shadow:0 20px 40px rgba(0,0,0,0.6);">
+            <div class="modal-content" style="background:#1e2937; max-width:420px; width:92%; border-radius:28px; padding:24px; position:relative; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.7);">
                 
-                <div style="text-align:center; margin-bottom:20px;">
-                    <h2 style="margin:0; font-size:1.5rem;">💰 Cargar Saldo</h2>
-                </div>
+                <!-- Glow animado cian en el borde -->
+                <div style="position:absolute; inset:-2px; border-radius:30px; border:2px solid transparent; background:linear-gradient(45deg, #67e8f9, #22d3ee, #67e8f9); -webkit-background-clip:content-box; background-clip:content-box; animation:glow 3s linear infinite;"></div>
 
-                <!-- Advertencia -->
-                <div style="background:#f97316; color:#0f172a; padding:12px 16px; border-radius:16px; text-align:center; font-weight:600; margin-bottom:20px;">
+                <h2 style="text-align:center; margin-bottom:20px; font-size:1.55rem;">
+                    Cargar Saldo 💰
+                </h2>
+
+                <!-- Advertencia en rojo -->
+                <div style="background:#7f1d1d; color:#fda4af; padding:12px; border-radius:12px; text-align:center; font-weight:600; margin-bottom:20px;">
                     ⚠️ Siempre consulta aquí el CBU disponible antes de transferir
                 </div>
 
-                <!-- Información del CBU -->
-                <div id="cbu-activo-info" style="background:#0f172a; padding:20px; border-radius:16px; margin-bottom:20px; text-align:center;">
+                <!-- Subcuadro con los datos -->
+                <div id="cbu-activo-info" style="background:#0f172a; padding:20px; border-radius:16px; margin-bottom:20px; text-align:center; border:1px solid #64748b;">
                     <!-- Se llena con JavaScript -->
                 </div>
 
                 <!-- Botones -->
-                <button onclick="copiarCBU()" style="width:100%; padding:16px; background:linear-gradient(90deg,#22d3ee,#67e8f9); color:#0f172a; border:none; border-radius:16px; font-weight:700; font-size:1.1rem; margin-bottom:12px;">
+                <button onclick="copiarCBU()" style="width:100%; padding:16px; background:linear-gradient(90deg,#67e8f9,#22d3ee); color:#0f172a; border:none; border-radius:16px; font-weight:700; margin-bottom:12px;">
                     📋 Copiar CBU
                 </button>
 
-                <button onclick="enviarComprobante()" style="width:100%; padding:16px; background:linear-gradient(90deg,#a855f7,#c026d3); color:white; border:none; border-radius:16px; font-weight:700; font-size:1.1rem; margin-bottom:12px;">
+                <button onclick="enviarComprobante()" style="width:100%; padding:16px; background:linear-gradient(90deg,#a855f7,#c026d3); color:white; border:none; border-radius:16px; font-weight:700;">
                     📸 Enviar comprobante
                 </button>
 
-                <button onclick="hideCargarSaldoModal()" style="width:100%; padding:14px; background:transparent; color:#94a3b8; border:2px solid #64748b; border-radius:16px; font-weight:600;">
+                <button onclick="hideCargarSaldoModal()" style="width:100%; padding:14px; background:transparent; color:#94a3b8; border:2px solid #64748b; border-radius:16px; margin-top:12px;">
                     Cerrar
                 </button>
             </div>
         </div>
-
+    
 <script>
     const SUPABASE_URL = "https://vevptiayzleigkjtmyhc.supabase.co";
     const SUPABASE_KEY = "sb_publishable_VBu6hcwr-NKDyxcOc60wDQ_RFDkKQjd";
@@ -551,7 +559,7 @@
         alert("🎡 Ruleta VIP\n\nAquí se abrirá la ruleta cuando la desarrollemos.");
     }
 
-           async function cargarSaldo() {
+          async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
 
         const { data, error } = await _supabase
@@ -564,13 +572,13 @@
         const container = document.getElementById('cbu-activo-info');
 
         if (error || !data) {
-            container.innerHTML = `<p style="color:#fda4af;">No hay CBU activo en este momento.<br>Por favor contacta soporte.</p>`;
+            container.innerHTML = `<p style="color:#fda4af;">No hay CBU activo en este momento.<br>Contacta a soporte.</p>`;
         } else {
             window.currentCBU = data.cbu;
             container.innerHTML = `
                 <strong style="font-size:1.1rem;">${data.alias_nombre}</strong><br>
-                <small>${data.banco}</small><br><br>
-                <strong style="font-size:1.35rem; letter-spacing:1px; color:#67e8f9;">${data.cbu}</strong>
+                <small style="color:#94a3b8;">${data.banco}</small><br><br>
+                <strong style="font-size:1.4rem; letter-spacing:1px; color:#67e8f9;">${data.cbu}</strong>
             `;
         }
 
@@ -580,7 +588,7 @@
     function copiarCBU() {
         if (window.currentCBU) {
             navigator.clipboard.writeText(window.currentCBU);
-            alert("✅ CBU copiado al portapapeles");
+            alert("✅ CBU copiado correctamente");
         }
     }
 
