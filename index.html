@@ -135,7 +135,7 @@
             white-space: nowrap;
         }
 
-        /* Menú lateral */
+        /* Menú hamburguesa */
         #hamburger-menu {
             position: fixed;
             top: 0;
@@ -143,7 +143,7 @@
             width: 280px;
             height: 100%;
             background: #0f172a;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.6);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.7);
             transition: right 0.4s ease;
             z-index: 9999;
             padding-top: 80px;
@@ -163,7 +163,7 @@
             background: rgba(168, 85, 247, 0.15);
             padding-left: 32px;
         }
-
+        
         /* Botones de acción */
         .btn-accion {
             width: 100%;
@@ -298,7 +298,7 @@
     <!-- HEADER -->
     <div class="header">
         <h1 id="casino-name" class="casino-name">Nucky</h1>
-        <button onclick="toggleHamburgerMenu()" style="background:none;border:none;font-size:1.8rem;color:#c026d3;">
+        <button onclick="toggleHamburgerMenu()" class="hamburger">
             <i class="fas fa-bars"></i>
         </button>
     </div>
@@ -369,7 +369,7 @@
         </div>
     </div>
 
-    <!-- MENÚ HAMBURGUESA LATERAL -->
+   <!-- MENÚ HAMBURGUESA -->
     <div id="hamburger-menu">
         <div style="padding:0 20px;">
             <a onclick="toggleHamburgerMenu(); abrirPerfil()" class="menu-item"><i class="fas fa-user"></i> Perfil</a>
@@ -474,18 +474,21 @@
         alert("📝 Crear cuenta nueva\n\nAquí se abrirá el formulario de registro.");
     }
 
-    // ==================== MENÚ HAMBURGUESA ====================
+    // ==================== MENÚ HAMBURGUESA CORREGIDO ====================
     function toggleHamburgerMenu() {
         const menu = document.getElementById('hamburger-menu');
-        menu.style.right = menu.style.right === '0px' ? '-100%' : '0px';
+        if (!menu) return;
+        menu.style.right = (menu.style.right === '0px') ? '-100%' : '0px';
     }
 
-    // Cerrar menú al tocar fuera
+    // Cerrar al tocar fuera (versión segura)
     document.addEventListener('click', function(e) {
         const menu = document.getElementById('hamburger-menu');
-        const hamburgerBtn = document.querySelector('.hamburger');
-        if (menu.style.right === '0px' && !menu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
-            menu.style.right = '-100%';
+        const btn = document.querySelector('.hamburger');
+        if (menu && btn && menu.style.right === '0px') {
+            if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                menu.style.right = '-100%';
+            }
         }
     });
 
