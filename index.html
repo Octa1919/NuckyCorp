@@ -769,7 +769,7 @@
         document.getElementById('modal-install-ios').style.display = 'none';
     }
 
-        async function cargarSaldo() {
+    async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
 
         const { data } = await _supabase
@@ -819,6 +819,20 @@
         }
 
         document.getElementById('modal-cargar-saldo').style.display = 'flex';
+    }
+
+    function copiarCBU() {
+        const cbuElement = document.getElementById('cbu-box');
+        if (cbuElement && cbuElement.textContent.trim() !== "") {
+            const cbuText = cbuElement.textContent.replace(/<[^>]+>/g, '').trim(); // Limpia cualquier HTML
+            navigator.clipboard.writeText(cbuText).then(() => {
+                alert("✅ CBU copiado al portapapeles");
+            }).catch(() => {
+                alert("No se pudo copiar. Inténtalo de nuevo.");
+            });
+        } else {
+            alert("No hay CBU para copiar");
+        }
     }
 
     function enviarComprobante() {
