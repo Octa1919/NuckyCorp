@@ -792,7 +792,7 @@
     }
 
     // ==================== CARGAR SALDO ====================
-            async function cargarSaldo() {
+    async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
 
         const { data } = await _supabase
@@ -802,15 +802,42 @@
             .eq('activo', true)
             .single();
 
-        const content = document.getElementById('cbu-content') || document.getElementById('modal-cargar-saldo'); // fallback si no usaste id anterior
+        const modalContent = document.getElementById('cbu-content') || document.getElementById('modal-cargar-saldo');
 
         if (data && data.cbu) {
-            document.getElementById('banco-name').textContent = data.banco || "—";
-            document.getElementById('titular-name').textContent = data.alias_nombre || "—";
-            document.getElementById('cbu-box').innerHTML = `<strong>${data.cbu}</strong>`;
+            // ✅ Hay CBU activo
+            document.getElementById('cbu-content').innerHTML = `
+                <div style="background:#111827; padding:22px; border-radius:16px; margin-bottom:20px;">
+                    <div style="font-size:1.3rem; line-height:1.9;">
+                        <strong style="color:#67e8f9;">Banco:</strong> ${data.banco || "—"}<br>
+                        <strong style="color:#67e8f9;">Titular:</strong> ${data.alias_nombre || "—"}
+                    </div>
+                    <div style="margin-top:16px; font-size:1.32rem; font-weight:700; color:#a5f3fc; text-align:center; background:#0f172a; padding:12px; border-radius:10px;">
+                        ${data.cbu}
+                    </div>
+                </div>
+
+                <button onclick="copiarCBU()" style="width:100%; padding:14px; background:#67e8f9; color:#0f172a; border:none; border-radius:12px; font-weight:700; margin-bottom:12px;">
+                    📋 Copiar CBU
+                </button>
+
+                <button onclick="enviarComprobante()" style="width:100%; padding:17px; background:linear-gradient(90deg, #c026d3, #db2777); color:white; border:none; border-radius:16px; font-weight:700;">
+                    📸 Enviar comprobante
+                </button>
+            `;
             window.currentCBU = data.cbu;
         } else {
-            document.getElementById('cbu-box').innerHTML = `<strong style="color:#fda4af;">No hay CBU activo en este momento</strong>`;
+            // ❌ No hay CBU activo → Solo mensaje limpio
+            document.getElementById('cbu-content').innerHTML = `
+                <div style="background:#111827; padding:30px; border-radius:16px; text-align:center; color:#fda4af;">
+                    <p style="font-size:1.25rem; margin-bottom:16px;">⚠️ No hay CBU activo en este momento</p>
+                    <p style="color:#e0e7ff; line-height:1.6;">Por favor escribinos desde<br><strong>Atención Personalizada</strong> para obtener el CBU actualizado.</p>
+                </div>
+
+                <button onclick="enviarComprobante()" style="width:100%; padding:16px; background:linear-gradient(90deg, #c026d3, #db2777); color:white; border:none; border-radius:16px; font-weight:700; margin-top:15px;">
+                    💬 Ir a Atención Personalizada
+                </button>
+            `;
             window.currentCBU = null;
         }
 
