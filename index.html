@@ -386,20 +386,20 @@
         </div>
     </div>
 
-          <!-- MENÚ HAMBURGUESA -->
-    <div id="hamburger-menu">
-        <div class="menu-content">
-            <a onclick="toggleHamburgerMenu(); abrirPerfil()" class="menu-item"><i class="fas fa-user"></i> Perfil</a>
-            <a onclick="toggleHamburgerMenu(); abrirCronograma()" class="menu-item"><i class="fas fa-calendar-alt"></i> Cronograma</a>
-            <a onclick="toggleHamburgerMenu(); abrirReferir()" class="menu-item"><i class="fas fa-share"></i> Referir</a>
-            <a onclick="toggleHamburgerMenu(); abrirChatwoot()" class="menu-item"><i class="fas fa-headset"></i> Contacto</a>
-            <a onclick="toggleHamburgerMenu(); instalarApp()" class="menu-item"><i class="fas fa-download"></i> Instalar App</a>
-            <a onclick="toggleHamburgerMenu(); cerrarSesion()" class="menu-item" style="color:#f43f5e;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
-        </div>
-        <div class="menu-footer">
-            Created by Nucky24hs
-        </div>
+     <!-- MENÚ HAMBURGUESA -->
+<div id="hamburger-menu">
+    <div class="menu-content">
+        <a onclick="toggleHamburgerMenu(); abrirPerfil()" class="menu-item"><i class="fas fa-user"></i> Perfil</a>
+        <a onclick="toggleHamburgerMenu(); abrirCronograma()" class="menu-item"><i class="fas fa-calendar-alt"></i> Cronograma</a>
+        <a onclick="toggleHamburgerMenu(); abrirReferir()" class="menu-item"><i class="fas fa-share"></i> Referir</a>
+        <a onclick="toggleHamburgerMenu(); abrirChatwoot()" class="menu-item"><i class="fas fa-headset"></i> Contacto</a>
+        <a onclick="toggleHamburgerMenu(); instalarApp()" class="menu-item"><i class="fas fa-download"></i> Instalar App</a>
+        <a onclick="toggleHamburgerMenu(); cerrarSesion()" class="menu-item" style="color:#f43f5e;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
     </div>
+    <div class="menu-footer">
+        Created by Nucky24hs
+    </div>
+</div>
     
             <!-- MODAL PERFIL - VERSIÓN FINAL PARA JUGADOR -->
         <div id="modal-perfil" class="modal" style="display:none;">
@@ -667,7 +667,7 @@
         function abrirReferir() {
         toggleHamburgerMenu(); // Cierra el menú automáticamente
 
-        const whatsapp = "5492478425018"; // Cambia si quieres usar el del suscriptor
+        const whatsapp = "5492478425018"; 
         const mensaje = encodeURIComponent(`Hola, vengo recomendado por ${currentUsuario} para jugar en NuckyCorp.`);
         const referralLink = `https://wa.me/${whatsapp}?text=${mensaje}`;
 
