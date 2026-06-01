@@ -564,6 +564,7 @@
     let currentSubscriberId = null;
     let currentUsuario = null;
     let jugadorAEditarId = null;
+    let deferredPrompt = null;   // ← Solo una vez
 
     // ==================== LEER SUSCRIPTOR DESDE LA URL ====================
     function getSubscriberFromUrl() {
@@ -642,10 +643,6 @@
         }
     });
 
-    function showHamburger() {
-        document.getElementById('hamburger-btn').style.display = 'block';
-    }
-
     // ==================== PERFIL DEL JUGADOR ====================
     function showPerfilModal() {
         toggleHamburgerMenu();
@@ -691,12 +688,10 @@
         }
     }
 
-    // ==================== REFERIR (CORREGIDO) ====================
+    // ==================== REFERIR ====================
     async function abrirReferir() {
         toggleHamburgerMenu();
-
-        // Obtenemos el whatsapp del suscriptor desde la base de datos
-        let whatsapp = "5492478425018"; // número de respaldo
+        let whatsapp = "5492478425018";
         if (currentSubscriberId) {
             const { data } = await _supabase
                 .from('suscriptores')
@@ -705,7 +700,6 @@
                 .single();
             if (data && data.whatsapp) whatsapp = data.whatsapp;
         }
-
         const mensaje = encodeURIComponent(`Hola, vengo recomendado por ${currentUsuario} para jugar en NuckyCorp.`);
         const referralLink = `https://wa.me/${whatsapp}?text=${mensaje}`;
 
@@ -720,9 +714,72 @@
     function copiarLinkReferido() {
         const link = document.getElementById('referral-link').textContent;
         navigator.clipboard.writeText(link).then(() => {
-            alert("✅ Link de recomendación copiado al portapapeles");
+            alert("✅ Link de recomendación copiado");
             hideReferirModal();
-        }).catch(() => alert("No se pudo copiar el link"));
+        }).catch(() => alert("No se pudo copiar"));
+    }
+
+    // ==================== CONTACTO ====================
+    async function abrirContacto() {
+        toggleHamburgerMenu();
+        const { data } = await _supabase
+            .from('suscriptores')
+            .select('whatsapp, telegram, instagram')
+            .eq('id', currentSubscriberId)
+            .single();
+        window.currentContactLinks = data || {};
+        document.getElementById('modal-contacto').style.display = 'flex';
+    }
+
+    function hideContactoModal() {
+        document.getElementById('modal-contacto').style.display = 'none';
+    }
+
+    function abrirLinkContacto(tipo) {
+        let link = "";
+        if (tipo === "whatsapp" && window.currentContactLinks.whatsapp) link = `https://wa.me/${window.currentContactLinks.whatsapp}`;
+        else if (tipo === "telegram" && window.currentContactLinks.telegram) link = window.currentContactLinks.telegram;
+        else if (tipo === "instagram" && window.currentContactLinks.instagram) link = window.currentContactLinks.instagram;
+
+        if (link) {
+            window.open(link, "_blank");
+            hideContactoModal();
+        } else {
+            alert(`No hay ${tipo} registrado`);
+        }
+    }
+
+    // ==================== INSTALAR APP ====================
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+    });
+
+    function instalarApp() {
+        toggleHamburgerMenu();
+        if (isIOS()) {
+            showInstallIOSModal();
+        } else if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choice) => {
+                if (choice.outcome === 'accepted') alert("✅ App instalada!");
+                deferredPrompt = null;
+            });
+        } else {
+            alert("📲 Usa el botón Compartir → Añadir a pantalla de inicio en Android/iOS");
+        }
+    }
+
+    function isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
+
+    function showInstallIOSModal() {
+        document.getElementById('modal-install-ios').style.display = 'flex';
+    }
+
+    function hideInstallIOSModal() {
+        document.getElementById('modal-install-ios').style.display = 'none';
     }
 
     // ==================== CARGAR SALDO ====================
@@ -748,9 +805,7 @@
 
     function copiarCBU() {
         if (!window.currentCBU) return alert("No hay CBU para copiar");
-        navigator.clipboard.writeText(window.currentCBU).then(() => {
-            alert("✅ CBU copiado al portapapeles");
-        }).catch(() => alert("No se pudo copiar"));
+        navigator.clipboard.writeText(window.currentCBU).then(() => alert("✅ CBU copiado")).catch(() => alert("No se pudo copiar"));
     }
 
     function enviarComprobante() {
@@ -788,11 +843,6 @@
         else alert("🟢 Chatwoot se abrirá aquí");
     }
 
-    function instalarApp() {
-        toggleHamburgerMenu();
-        alert("📲 Instalar App - Se desarrollará más adelante");
-    }
-
     function cerrarSesion() {
         if (confirm("¿Cerrar sesión?")) location.reload();
     }
@@ -803,117 +853,5 @@
 
     window.onload = () => {
         const subscriber = getSubscriberFromUrl();
-        if (subscriber) {
-            // Podrías cargar datos automáticos aquí si es necesario
-        }
     };
-
-    // ==================== CONTACTO ====================
-    async function abrirContacto() {
-        toggleHamburgerMenu(); // Cierra el menú hamburguesa
-
-        // Cargamos los links del suscriptor
-        const { data } = await _supabase
-            .from('suscriptores')
-            .select('whatsapp, telegram, instagram')
-            .eq('id', currentSubscriberId)
-            .single();
-
-        window.currentContactLinks = data || {};
-
-        document.getElementById('modal-contacto').style.display = 'flex';
-    }
-
-    function hideContactoModal() {
-        document.getElementById('modal-contacto').style.display = 'none';
-    }
-
-           // ==================== CONTACTO ====================
-    async function abrirContacto() {
-        // Cierra el menú hamburguesa
-        const menu = document.getElementById('hamburger-menu');
-        if (menu) menu.style.right = '-100%';
-
-        // Cargamos los links del suscriptor
-        const { data } = await _supabase
-            .from('suscriptores')
-            .select('whatsapp, telegram, instagram')
-            .eq('id', currentSubscriberId)
-            .single();
-
-        window.currentContactLinks = data || {};
-        document.getElementById('modal-contacto').style.display = 'flex';
-    }
-
-    function hideContactoModal() {
-        document.getElementById('modal-contacto').style.display = 'none';
-    }
-
-    function abrirLinkContacto(tipo) {
-        let link = "";
-
-        if (tipo === "whatsapp" && window.currentContactLinks.whatsapp) {
-            link = `https://wa.me/${window.currentContactLinks.whatsapp}`;
-        } 
-        else if (tipo === "telegram" && window.currentContactLinks.telegram) {
-            link = window.currentContactLinks.telegram;
-        } 
-        else if (tipo === "instagram" && window.currentContactLinks.instagram) {
-            link = window.currentContactLinks.instagram;
-        }
-
-        if (link) {
-            window.open(link, "_blank");
-            hideContactoModal();
-        } else {
-            alert(`No hay ${tipo} registrado para este casino`);
-        }
-    }
-
-        // ==================== INSTALAR APP ====================
-    let deferredPrompt = null;
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-    });
-
-           // ==================== INSTALAR APP ====================
-    let deferredPrompt = null;
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-    });
-
-    function instalarApp() {
-        toggleHamburgerMenu(); // Cierra el menú automáticamente
-
-        if (isIOS()) {
-            showInstallIOSModal();
-        } else if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choice) => {
-                if (choice.outcome === 'accepted') {
-                    alert("✅ ¡App instalada correctamente!");
-                }
-                deferredPrompt = null;
-            });
-        } else {
-            alert("📲 La aplicación ya está instalada o usa Chrome en Android.\n\nTambién puedes usar: Compartir → Añadir a pantalla de inicio.");
-        }
-    }
-
-    function isIOS() {
-        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    }
-
-    function showInstallIOSModal() {
-        document.getElementById('modal-install-ios').style.display = 'flex';
-    }
-
-    function hideInstallIOSModal() {
-        document.getElementById('modal-install-ios').style.display = 'none';
-    }nt.getElementById('modal-install-ios').style.display = 'none';
-    }
 </script>
