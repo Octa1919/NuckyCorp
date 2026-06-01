@@ -516,7 +516,7 @@
             </div>
         </div>
 
-            <!-- MODAL CARGAR SALDO - CORREGIDO (Maneja bien cuando no hay CBU activo) -->
+                   <!-- MODAL CARGAR SALDO - CORREGIDO FINAL -->
         <div id="modal-cargar-saldo" class="modal" style="display:none;">
             <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
                 
@@ -524,12 +524,34 @@
                     Cargar Saldo 💰
                 </h2>
 
-                <div id="cbu-content">
-                    <!-- Se llena dinámicamente -->
+                <div style="background:#b91c1c; color:#fee2e2; padding:12px; border-radius:12px; text-align:center; font-weight:700; margin-bottom:20px;">
+                    ⚠️ Siempre consulta aquí el CBU disponible antes de transferir
                 </div>
 
-                <button onclick="hideCargarSaldoModal()" style="width:100%; padding:14px; background:#334155; color:white; border:none; border-radius:12px; margin-top:10px;">
-                    ← Cerrar
+                <!-- RECUADRO ÚNICO -->
+                <div style="background:#111827; padding:22px; border-radius:16px; margin-bottom:20px;">
+                    <div style="font-size:1.3rem; line-height:1.9;">
+                        <strong style="color:#67e8f9;">Banco:</strong> <span id="banco-name" style="color:#67e8f9;"></span><br>
+                        <strong style="color:#67e8f9;">Titular:</strong> <span id="titular-name" style="color:#67e8f9;"></span>
+                    </div>
+                    
+                    <div style="margin-top:12px;">
+                        <strong style="color:#67e8f9;">CBU:</strong><br>
+                        <span id="cbu-box" style="font-size:1.25rem; font-weight:700; letter-spacing:0.8px; color:#a5f3fc; display:block; margin-top:6px; white-space:nowrap; overflow-x:auto; padding:8px 0;">
+                        </span>
+                    </div>
+                </div>
+
+                <button onclick="copiarCBU()" style="width:100%; padding:14px; background:#67e8f9; color:#0f172a; border:none; border-radius:12px; font-weight:700; margin-bottom:12px;">
+                    📋 Copiar CBU
+                </button>
+
+                <button onclick="enviarComprobante()" style="width:100%; padding:17px; background:linear-gradient(90deg, #c026d3, #db2777); color:white; border:none; border-radius:16px; font-weight:700; font-size:1.15rem; margin-bottom:12px;">
+                    📸 Enviar comprobante
+                </button>
+
+                <button onclick="hideCargarSaldoModal()" style="width:100%; padding:13px; background:transparent; color:#94a3b8; border:none; font-size:1.1rem;">
+                    ← Volver
                 </button>
             </div>
         </div>
@@ -770,7 +792,7 @@
     }
 
     // ==================== CARGAR SALDO ====================
-        async function cargarSaldo() {
+            async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
 
         const { data } = await _supabase
@@ -780,45 +802,20 @@
             .eq('activo', true)
             .single();
 
-        const content = document.getElementById('cbu-content');
+        const content = document.getElementById('cbu-content') || document.getElementById('modal-cargar-saldo'); // fallback si no usaste id anterior
 
         if (data && data.cbu) {
-            // Hay CBU activo → Mostrar normal
-            content.innerHTML = `
-                <div style="background:#111827; padding:20px; border-radius:16px; margin-bottom:20px; text-align:left;">
-                    <strong>Banco:</strong> ${data.banco || "—"}<br>
-                    <strong>Titular:</strong> ${data.alias_nombre || "—"}<br><br>
-                    <strong>CBU:</strong><br>
-                    <span style="font-size:1.4rem; font-weight:700; color:#a5f3fc; word-break:break-all;">${data.cbu}</span>
-                </div>
-
-                <button onclick="copiarCBU()" style="width:100%; padding:14px; background:#67e8f9; color:#0f172a; border:none; border-radius:12px; font-weight:700; margin-bottom:12px;">
-                    📋 Copiar CBU
-                </button>
-
-                <button onclick="enviarComprobante()" style="width:100%; padding:17px; background:linear-gradient(90deg, #c026d3, #db2777); color:white; border:none; border-radius:16px; font-weight:700; margin-bottom:12px;">
-                    📸 Enviar comprobante
-                </button>
-            `;
+            document.getElementById('banco-name').textContent = data.banco || "—";
+            document.getElementById('titular-name').textContent = data.alias_nombre || "—";
+            document.getElementById('cbu-box').innerHTML = `<strong>${data.cbu}</strong>`;
             window.currentCBU = data.cbu;
         } else {
-            // NO hay CBU activo
-            content.innerHTML = `
-                <div style="background:#111827; padding:25px; border-radius:16px; text-align:center; color:#fda4af;">
-                    <p style="font-size:1.2rem; margin-bottom:15px;">⚠️ No hay CBU activo en este momento</p>
-                    <p style="color:#e0e7ff;">Escribinos desde <strong>Atención Personalizada</strong> para obtener el CBU actualizado.</p>
-                </div>
-
-                <button onclick="enviarComprobante()" style="width:100%; padding:16px; background:linear-gradient(90deg, #c026d3, #db2777); color:white; border:none; border-radius:12px; font-weight:700;">
-                    💬 Ir a Atención Personalizada
-                </button>
-            `;
+            document.getElementById('cbu-box').innerHTML = `<strong style="color:#fda4af;">No hay CBU activo en este momento</strong>`;
             window.currentCBU = null;
         }
 
         document.getElementById('modal-cargar-saldo').style.display = 'flex';
     }
-
     function copiarCBU() {
         if (!window.currentCBU) return alert("No hay CBU para copiar");
         navigator.clipboard.writeText(window.currentCBU).then(() => alert("✅ CBU copiado")).catch(() => alert("No se pudo copiar"));
