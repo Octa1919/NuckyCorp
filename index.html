@@ -401,6 +401,31 @@
         </div>
     </div>
 
+            <!-- MODAL PERFIL - EDITAR JUGADOR (tabla usuarios) -->
+        <div id="modal-perfil" class="modal" style="display:none;">
+            <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
+                <h2 style="text-align:center; color:#e0e7ff; margin-bottom:20px;">Editar Jugador</h2>
+
+                <input type="text" id="buscar-jugador" placeholder="Buscar usuario (ej: Octa.nucky09)" 
+                       style="width:100%; padding:12px; background:#0f172a; border:1px solid #64748b; border-radius:12px; color:white; margin-bottom:16px;">
+
+                <button onclick="buscarJugadorParaEditar()" style="width:100%; padding:12px; background:#67e8f9; color:#0f172a; border:none; border-radius:12px; margin-bottom:20px;">
+                    🔍 Buscar Jugador
+                </button>
+
+                <div id="info-jugador-edit" style="display:none; background:#111827; padding:18px; border-radius:16px; margin-bottom:20px;">
+                    <p><strong>Usuario:</strong> <span id="edit-username-show" style="color:#67e8f9;"></span></p>
+                    <input type="text" id="edit-nueva-password" placeholder="Nueva contraseña" 
+                           style="width:100%; padding:12px; background:#0f172a; border:1px solid #64748b; border-radius:12px; color:white; margin-top:12px;">
+                </div>
+
+                <div style="display:flex; gap:12px;">
+                    <button onclick="hidePerfilModal()" style="flex:1; padding:14px; background:#334155; color:white; border:none; border-radius:12px;">Cancelar</button>
+                    <button onclick="guardarPasswordJugador()" style="flex:1; padding:14px; background:linear-gradient(90deg, #67e8f9, #22d3ee); color:#0f172a; border:none; border-radius:12px; font-weight:700;">Guardar Contraseña</button>
+                </div>
+            </div>
+        </div>
+
     <!-- Modales -->
     <div id="modal-sala-no-disponible" class="modal" style="display:none;">
         <div style="background:#1e2937; max-width:380px; width:90%; border-radius:24px; padding:40px 30px; color:white; text-align:center;">
@@ -457,6 +482,7 @@
 
     let currentSubscriberId = null;
     let currentUsuario = null;
+    let jugadorAEditarId = null;
 
     // ==================== LEER SUSCRIPTOR DESDE LA URL ====================
     function getSubscriberFromUrl() {
@@ -480,11 +506,9 @@
 
         currentSubscriberId = data.subscriber_id;
         currentUsuario = username;
-
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
-
         await cargarDatosSuscriptor(data.suscriptores);
     }
 
@@ -501,39 +525,32 @@
         document.getElementById('salas-container').innerHTML = salasHTML;
     }
 
-    // ==================== RECUPERAR DATOS (AHORA CON WHATSAPP DEL SUSCRIPTOR) ====================
+    // ==================== RECUPERAR DATOS ====================
     async function recuperarDatos() {
         const subscriberParam = getSubscriberFromUrl();
-
-        let whatsapp = "549XXXXXXXXXX"; // número de respaldo por si no encuentra
-
+        let whatsapp = "5492478425018"; // número de respaldo
         if (subscriberParam) {
             const { data } = await _supabase
                 .from('suscriptores')
                 .select('whatsapp')
-                .eq('id', subscriberParam)           // si usas ID numérico
-                .or(`nombre_casino.eq.${subscriberParam},short_code.eq.${subscriberParam}`) // o por nombre
+                .eq('id', subscriberParam)
                 .single();
-
             if (data && data.whatsapp) whatsapp = data.whatsapp;
         }
-
         const mensaje = encodeURIComponent("Hola, olvidé mis datos de acceso. Por favor ayúdame.");
         window.open(`https://wa.me/${whatsapp}?text=${mensaje}`, "_blank");
     }
 
-    // ==================== Crear cuenta (placeholder) ====================
     function crearCuenta() {
         alert("📝 Crear cuenta nueva\n\nAquí se abrirá el formulario de registro.");
     }
 
-    // ==================== MENÚ HAMBURGUESA CORREGIDO ====================
+    // ==================== MENÚ HAMBURGUESA ====================
     function toggleHamburgerMenu() {
         const menu = document.getElementById('hamburger-menu');
         menu.style.right = (menu.style.right === '0px') ? '-100%' : '0px';
     }
-    
-    // Cerrar al tocar fuera (versión corregida)
+
     document.addEventListener('click', function(e) {
         const menu = document.getElementById('hamburger-menu');
         const btn = document.getElementById('hamburger-btn');
@@ -543,27 +560,69 @@
             }
         }
     });
-    
-    // Mostrar el botón solo después de login
+
     function showHamburger() {
         document.getElementById('hamburger-btn').style.display = 'block';
     }
 
-    // Funciones del menú
-    function abrirPerfil() { alert("👤 Perfil - Se desarrollará más adelante"); toggleHamburgerMenu(); }
-    function abrirCronograma() { alert("📅 Cronograma - Se desarrollará más adelante"); toggleHamburgerMenu(); }
-    function abrirReferir() { alert("🔗 Referir - Se desarrollará más adelante"); toggleHamburgerMenu(); }
-    function abrirChatwoot() { alert("🟢 Chatwoot se abrirá aquí cuando lo configures completamente."); toggleHamburgerMenu(); }
-    function instalarApp() { alert("📲 Instalar App - Se desarrollará más adelante"); toggleHamburgerMenu(); }
-    function cerrarSesion() {
-        if (confirm("¿Cerrar sesión?")) location.reload();
+    // ==================== PERFIL - EDITAR JUGADOR ====================
+    function showPerfilModal() {
+        document.getElementById('modal-perfil').style.display = 'flex';
+        document.getElementById('info-jugador-edit').style.display = 'none';
+        document.getElementById('buscar-jugador').value = '';
+        jugadorAEditarId = null;
     }
 
-    function abrirRuleta() {
-        alert("🎡 Ruleta VIP\n\nAquí se abrirá la ruleta cuando la desarrollemos.");
+    function hidePerfilModal() {
+        document.getElementById('modal-perfil').style.display = 'none';
+        jugadorAEditarId = null;
     }
 
-       async function cargarSaldo() {
+    async function buscarJugadorParaEditar() {
+        const username = document.getElementById('buscar-jugador').value.trim();
+        if (!username) return alert("Ingresa un nombre de usuario");
+
+        const { data, error } = await _supabase
+            .from('usuarios')
+            .select('id, username, telefono')
+            .eq('username', username)
+            .eq('subscriber_id', currentSubscriberId)
+            .single();
+
+        if (error || !data) {
+            alert("Jugador no encontrado o no pertenece a tu casino");
+            return;
+        }
+
+        jugadorAEditarId = data.id;
+        document.getElementById('edit-username-show').textContent = data.username;
+        document.getElementById('info-jugador-edit').style.display = 'block';
+        document.getElementById('edit-nueva-password').focus();
+    }
+
+    async function guardarPasswordJugador() {
+        if (!jugadorAEditarId) return alert("Primero busca un jugador");
+
+        const nuevaPass = document.getElementById('edit-nueva-password').value.trim();
+        if (!nuevaPass || nuevaPass.length < 6) {
+            return alert("La contraseña debe tener al menos 6 caracteres");
+        }
+
+        const { error } = await _supabase
+            .from('usuarios')
+            .update({ password: nuevaPass })
+            .eq('id', jugadorAEditarId);
+
+        if (error) {
+            alert("Error: " + error.message);
+        } else {
+            alert("✅ Contraseña del jugador actualizada correctamente");
+            hidePerfilModal();
+        }
+    }
+
+    // ==================== CARGAR SALDO ====================
+    async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
 
         const { data } = await _supabase
@@ -577,41 +636,31 @@
             document.getElementById('banco-name').textContent = data.banco || "—";
             document.getElementById('titular-name').textContent = data.alias_nombre || "—";
             document.getElementById('cbu-box').innerHTML = `<strong>${data.cbu}</strong>`;
-            
-            // Guardamos el CBU para poder copiarlo
             window.currentCBU = data.cbu;
         } else {
             document.getElementById('cbu-box').innerHTML = `<strong style="color:#fda4af;">No hay CBU activo</strong>`;
             window.currentCBU = null;
         }
-
         document.getElementById('modal-cargar-saldo').style.display = 'flex';
     }
-        // COPIAR CBU
+
     function copiarCBU() {
         if (!window.currentCBU) return alert("No hay CBU para copiar");
-        
         navigator.clipboard.writeText(window.currentCBU).then(() => {
             alert("✅ CBU copiado al portapapeles");
-        }).catch(() => {
-            alert("No se pudo copiar. Inténtalo de nuevo.");
-        });
+        }).catch(() => alert("No se pudo copiar"));
     }
 
-    // ENVIAR COMPROBANTE → Abre Chatwoot
     function enviarComprobante() {
         hideCargarSaldoModal();
-        if (window.$chatwoot) {
-            window.$chatwoot.toggle("open");
-        } else {
-            alert("Chatwoot se está cargando...");
-        }
+        if (window.$chatwoot) window.$chatwoot.toggle("open");
+        else alert("Chatwoot se está cargando...");
     }
 
-    // CERRAR MODAL
     function hideCargarSaldoModal() {
         document.getElementById('modal-cargar-saldo').style.display = 'none';
     }
+
     function showSalaNoDisponibleModal() {
         document.getElementById('modal-sala-no-disponible').style.display = 'flex';
     }
@@ -620,7 +669,45 @@
         document.getElementById('modal-sala-no-disponible').style.display = 'none';
     }
 
-    window.onload = () => {};
+    // ==================== BOTONES DEL MENÚ ====================
+    function abrirPerfil() { 
+        toggleHamburgerMenu(); 
+        showPerfilModal(); 
+    }
+
+    function abrirCronograma() { 
+        toggleHamburgerMenu(); 
+        alert("📅 Cronograma - Se desarrollará más adelante"); 
+    }
+
+    function abrirReferir() { 
+        toggleHamburgerMenu(); 
+        alert("🔗 Referir - Se desarrollará más adelante"); 
+    }
+
+    function abrirChatwoot() { 
+        toggleHamburgerMenu(); 
+        if (window.$chatwoot) window.$chatwoot.toggle("open");
+        else alert("🟢 Chatwoot se abrirá aquí");
+    }
+
+    function instalarApp() { 
+        toggleHamburgerMenu(); 
+        alert("📲 Instalar App - Se desarrollará más adelante"); 
+    }
+
+    function cerrarSesion() {
+        if (confirm("¿Cerrar sesión?")) location.reload();
+    }
+
+    function abrirRuleta() {
+        alert("🎡 Ruleta VIP\n\nAquí se abrirá la ruleta cuando la desarrollemos.");
+    }
+
+    window.onload = () => {
+        const subscriber = getSubscriberFromUrl();
+        if (subscriber) {
+            // Podrías cargar datos automáticos aquí si es necesario
+        }
+    };
 </script>
-</body>
-</html>
