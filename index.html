@@ -447,6 +447,29 @@
             </div>
         </div>
 
+            <!-- MODAL REFERIR -->
+        <div id="modal-referir" class="modal" style="display:none;">
+            <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
+                <h2 style="text-align:center; color:#e0e7ff; margin-bottom:8px;">🔗 Recomendanos y ganá un premio</h2>
+                <p style="text-align:center; color:#94a3b8; margin-bottom:20px;">Comparte tu link y obtené un bono extra cuando tu amigo cargue saldo.</p>
+                
+                <div style="background:#111827; padding:18px; border-radius:16px; margin-bottom:20px; text-align:center;">
+                    <p style="color:#67e8f9; margin-bottom:8px; font-size:1.05rem;">Tu link de recomendación:</p>
+                    <span id="referral-link" style="font-size:1.05rem; word-break:break-all; display:block; background:#0f172a; padding:12px; border-radius:12px; color:#a5f3fc;"></span>
+                </div>
+
+                <button onclick="copiarLinkReferido()" 
+                        style="width:100%; padding:15px; background:#67e8f9; color:#0f172a; border:none; border-radius:12px; font-weight:700; margin-bottom:12px;">
+                    📋 Copiar Link
+                </button>
+
+                <button onclick="hideReferirModal()" 
+                        style="width:100%; padding:14px; background:#334155; color:white; border:none; border-radius:12px;">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+
     <!-- Modales -->
     <div id="modal-sala-no-disponible" class="modal" style="display:none;">
         <div style="background:#1e2937; max-width:380px; width:90%; border-radius:24px; padding:40px 30px; color:white; text-align:center;">
@@ -638,6 +661,32 @@
             alert("✅ Tu contraseña ha sido actualizada correctamente");
             hidePerfilModal();
         }
+    }
+
+        // ==================== REFERIR ====================
+    function abrirReferir() {
+        toggleHamburgerMenu(); // Cierra el menú automáticamente
+
+        const whatsapp = "5492478425018"; // ← Cambia esto por el whatsapp real del suscriptor si lo tienes guardado
+        const mensaje = encodeURIComponent(`Hola, vengo recomendado por ${currentUsuario} para jugar en NuckyCorp.`);
+        const referralLink = `https://wa.me/${whatsapp}?text=${mensaje}`;
+
+        document.getElementById('referral-link').textContent = referralLink;
+        document.getElementById('modal-referir').style.display = 'flex';
+    }
+
+    function hideReferirModal() {
+        document.getElementById('modal-referir').style.display = 'none';
+    }
+
+    function copiarLinkReferido() {
+        const link = document.getElementById('referral-link').textContent;
+        navigator.clipboard.writeText(link).then(() => {
+            alert("✅ Link de recomendación copiado al portapapeles");
+            hideReferirModal();
+        }).catch(() => {
+            alert("No se pudo copiar el link");
+        });
     }
 
     // ==================== CARGAR SALDO ====================
