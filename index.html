@@ -690,7 +690,11 @@
 
     // ==================== REFERIR ====================
     async function abrirReferir() {
-        toggleHamburgerMenu();
+        // Forzar cierre del menú hamburguesa
+        const menu = document.getElementById('hamburger-menu');
+        if (menu) menu.style.right = '-100%';
+
+        // Obtenemos el whatsapp del suscriptor
         let whatsapp = "5492478425018";
         if (currentSubscriberId) {
             const { data } = await _supabase
@@ -700,13 +704,14 @@
                 .single();
             if (data && data.whatsapp) whatsapp = data.whatsapp;
         }
+
         const mensaje = encodeURIComponent(`Hola, vengo recomendado por ${currentUsuario} para jugar en NuckyCorp.`);
         const referralLink = `https://wa.me/${whatsapp}?text=${mensaje}`;
 
         document.getElementById('referral-link').textContent = referralLink;
         document.getElementById('modal-referir').style.display = 'flex';
     }
-
+    
     function hideReferirModal() {
         document.getElementById('modal-referir').style.display = 'none';
     }
