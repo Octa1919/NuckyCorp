@@ -726,16 +726,20 @@
 
     // ==================== CONTACTO ====================
     async function abrirContacto() {
-        toggleHamburgerMenu();
+        // Forzar cierre del menú hamburguesa
+        const menu = document.getElementById('hamburger-menu');
+        if (menu) menu.style.right = '-100%';
+
+        // Cargamos los links del suscriptor
         const { data } = await _supabase
             .from('suscriptores')
             .select('whatsapp, telegram, instagram')
             .eq('id', currentSubscriberId)
             .single();
+
         window.currentContactLinks = data || {};
         document.getElementById('modal-contacto').style.display = 'flex';
     }
-
     function hideContactoModal() {
         document.getElementById('modal-contacto').style.display = 'none';
     }
