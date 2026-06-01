@@ -392,8 +392,7 @@
         <a onclick="toggleHamburgerMenu(); abrirPerfil()" class="menu-item"><i class="fas fa-user"></i> Perfil</a>
         <a onclick="toggleHamburgerMenu(); abrirCronograma()" class="menu-item"><i class="fas fa-calendar-alt"></i> Cronograma</a>
         <a onclick="toggleHamburgerMenu(); abrirReferir()" class="menu-item"><i class="fas fa-share"></i> Referir</a>
-        <a onclick="toggleHamburgerMenu(); abrirChatwoot()" class="menu-item"><i class="fas fa-headset"></i> Contacto</a>
-        <a onclick="toggleHamburgerMenu(); instalarApp()" class="menu-item"><i class="fas fa-download"></i> Instalar App</a>
+        <a onclick="toggleHamburgerMenu(); abrirContacto()" class="menu-item"><i class="fas fa-headset"></i> Contacto</a>        <a onclick="toggleHamburgerMenu(); instalarApp()" class="menu-item"><i class="fas fa-download"></i> Instalar App</a>
         <a onclick="toggleHamburgerMenu(); cerrarSesion()" class="menu-item" style="color:#f43f5e;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
     </div>
     <div class="menu-footer">
@@ -465,6 +464,29 @@
 
                 <button onclick="hideReferirModal()" 
                         style="width:100%; padding:14px; background:#334155; color:white; border:none; border-radius:12px;">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+
+            <!-- MODAL CONTACTO - MENÚ DESPLEGABLE -->
+        <div id="modal-contacto" class="modal" style="display:none;">
+            <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
+                <h2 style="text-align:center; color:#e0e7ff; margin-bottom:20px;">📞 Contacto</h2>
+                
+                <button onclick="abrirLinkContacto('whatsapp')" style="width:100%; padding:16px; background:#25D366; color:white; border:none; border-radius:12px; margin-bottom:12px; font-size:1.1rem;">
+                    📱 WhatsApp
+                </button>
+                
+                <button onclick="abrirLinkContacto('telegram')" style="width:100%; padding:16px; background:#229ED9; color:white; border:none; border-radius:12px; margin-bottom:12px; font-size:1.1rem;">
+                    ✈️ Telegram
+                </button>
+                
+                <button onclick="abrirLinkContacto('instagram')" style="width:100%; padding:16px; background:#E1306C; color:white; border:none; border-radius:12px; font-size:1.1rem;">
+                    📷 Instagram
+                </button>
+
+                <button onclick="hideContactoModal()" style="width:100%; padding:14px; background:#334155; color:white; border:none; border-radius:12px; margin-top:10px;">
                     Cerrar
                 </button>
             </div>
@@ -770,4 +792,42 @@
             // Podrías cargar datos automáticos aquí si es necesario
         }
     };
+
+    // ==================== CONTACTO ====================
+    async function abrirContacto() {
+        toggleHamburgerMenu(); // Cierra el menú hamburguesa
+
+        // Cargamos los links del suscriptor
+        const { data } = await _supabase
+            .from('suscriptores')
+            .select('whatsapp, telegram, instagram')
+            .eq('id', currentSubscriberId)
+            .single();
+
+        window.currentContactLinks = data || {};
+
+        document.getElementById('modal-contacto').style.display = 'flex';
+    }
+
+    function hideContactoModal() {
+        document.getElementById('modal-contacto').style.display = 'none';
+    }
+
+    function abrirLinkContacto(tipo) {
+        let link = "";
+        if (tipo === 'whatsapp' && window.currentContactLinks.whatsapp) {
+            link = `https://wa.me/${window.currentContactLinks.whatsapp}`;
+        } else if (tipo === 'telegram' && window.currentContactLinks.telegram) {
+            link = window.currentContactLinks.telegram;
+        } else if (tipo === 'instagram' && window.currentContactLinks.instagram) {
+            link = window.currentContactLinks.instagram;
+        }
+
+        if (link) {
+            window.open(link, "_blank");
+            hideContactoModal();
+        } else {
+            alert(`No existente (${tipo})`);
+        }
+    }
 </script>
