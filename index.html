@@ -878,26 +878,42 @@
         deferredPrompt = e;
     });
 
-        function instalarApp() {
-        toggleHamburgerMenu(); // Cierra el menú hamburguesa primero
+           // ==================== INSTALAR APP ====================
+    let deferredPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+    });
+
+    function instalarApp() {
+        toggleHamburgerMenu(); // Cierra el menú automáticamente
 
         if (isIOS()) {
             showInstallIOSModal();
         } else if (deferredPrompt) {
             deferredPrompt.prompt();
             deferredPrompt.userChoice.then((choice) => {
-                if (choice.outcome === 'accepted') alert("✅ ¡App instalada!");
+                if (choice.outcome === 'accepted') {
+                    alert("✅ ¡App instalada correctamente!");
+                }
                 deferredPrompt = null;
             });
         } else {
-            alert("📲 Prueba desde Chrome en Android o usa el botón Compartir → Añadir a pantalla de inicio.");
+            alert("📲 La aplicación ya está instalada o usa Chrome en Android.\n\nTambién puedes usar: Compartir → Añadir a pantalla de inicio.");
         }
     }
+
+    function isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
+
     function showInstallIOSModal() {
         document.getElementById('modal-install-ios').style.display = 'flex';
     }
 
     function hideInstallIOSModal() {
         document.getElementById('modal-install-ios').style.display = 'none';
+    }nt.getElementById('modal-install-ios').style.display = 'none';
     }
 </script>
