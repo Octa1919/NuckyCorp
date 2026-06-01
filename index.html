@@ -410,7 +410,7 @@
         </div>
     </div>
 
-            <!-- MODAL CARGAR SALDO - OPTIMIZADO PARA CELULAR -->
+                    <!-- MODAL CARGAR SALDO - CBU AJUSTADO AUTOMÁTICAMENTE -->
         <div id="modal-cargar-saldo" class="modal" style="display:none;">
             <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
                 
@@ -422,16 +422,16 @@
                     ⚠️ Siempre consulta aquí el CBU disponible antes de transferir
                 </div>
 
-                <!-- RECUADRO ÚNICO -->
-                <div style="background:#111827; padding:20px; border-radius:16px; margin-bottom:20px;">
-                    <div style="font-size:1.2rem; line-height:1.85;">
+                <!-- RECUADRO ÚNICO CON TODO -->
+                <div style="background:#111827; padding:22px; border-radius:16px; margin-bottom:20px;">
+                    <div style="font-size:1.22rem; line-height:1.85;">
                         <strong>Banco:</strong> <span id="banco-name" style="color:#67e8f9;"></span><br>
                         <strong>Titular:</strong> <span id="titular-name" style="color:#67e8f9;"></span>
                     </div>
                     
-                    <div style="margin-top:12px;">
+                    <div style="margin-top:10px;">
                         <strong>CBU:</strong><br>
-                        <span id="cbu-box" style="font-size:1.28rem; font-weight:700; letter-spacing:0.8px; color:#a5f3fc; display:block; margin-top:6px; white-space:nowrap; overflow-x:auto; padding:10px 0; background:#0f172a; border-radius:10px; border:2px solid #67e8f9; text-align:center;">
+                        <span id="cbu-box" style="font-size:1.18rem; font-weight:700; letter-spacing:0.8px; color:#a5f3fc; display:block; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                         </span>
                     </div>
                 </div>
@@ -563,7 +563,7 @@
         alert("🎡 Ruleta VIP\n\nAquí se abrirá la ruleta cuando la desarrollemos.");
     }
 
-       async function cargarSaldo() {
+    async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
 
         const { data } = await _supabase
@@ -578,7 +578,7 @@
             document.getElementById('titular-name').textContent = data.alias_nombre || "—";
             document.getElementById('cbu-box').innerHTML = `<strong>${data.cbu}</strong>`;
         } else {
-            document.getElementById('cbu-box').innerHTML = `<strong style="color:#fda4af;">Sin CBU activo</strong>`;
+            document.getElementById('cbu-box').innerHTML = `<strong style="color:#fda4af;">No hay CBU activo</strong>`;
         }
 
         document.getElementById('modal-cargar-saldo').style.display = 'flex';
