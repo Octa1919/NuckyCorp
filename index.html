@@ -663,11 +663,11 @@
         }
     }
 
-        // ==================== REFERIR ====================
-        function abrirReferir() {
-        toggleHamburgerMenu(); // Cierra el menú automáticamente
+          // ==================== REFERIR - FUNCIONA CORRECTAMENTE ====================
+    function abrirReferir() {
+        toggleHamburgerMenu();   // Cierra el menú automáticamente
 
-        const whatsapp = "5492478425018"; 
+        const whatsapp = "5492478425018";   // ← Cambia si quieres usar el número del suscriptor
         const mensaje = encodeURIComponent(`Hola, vengo recomendado por ${currentUsuario} para jugar en NuckyCorp.`);
         const referralLink = `https://wa.me/${whatsapp}?text=${mensaje}`;
 
