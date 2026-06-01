@@ -821,20 +821,10 @@
         document.getElementById('modal-cargar-saldo').style.display = 'flex';
     }
 
-    function copiarCBU() {
-        const cbuElement = document.getElementById('cbu-box');
-        if (cbuElement && cbuElement.textContent.trim() !== "") {
-            const cbuText = cbuElement.textContent.replace(/<[^>]+>/g, '').trim(); // Limpia cualquier HTML
-            navigator.clipboard.writeText(cbuText).then(() => {
-                alert("✅ CBU copiado al portapapeles");
-            }).catch(() => {
-                alert("No se pudo copiar. Inténtalo de nuevo.");
-            });
-        } else {
-            alert("No hay CBU para copiar");
-        }
+     function copiarCBU() {
+        if (!window.currentCBU) return alert("No hay CBU para copiar");
+        navigator.clipboard.writeText(window.currentCBU).then(() => alert("✅ CBU copiado")).catch(() => alert("No se pudo copiar"));
     }
-
     function enviarComprobante() {
         hideCargarSaldoModal();
         if (window.$chatwoot) window.$chatwoot.toggle("open");
