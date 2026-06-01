@@ -813,9 +813,9 @@
         document.getElementById('modal-contacto').style.display = 'none';
     }
 
-        // ==================== CONTACTO (Menú se cierra automáticamente) ====================
+           // ==================== CONTACTO ====================
     async function abrirContacto() {
-        // Forzar cierre del menú hamburguesa
+        // Cierra el menú hamburguesa
         const menu = document.getElementById('hamburger-menu');
         if (menu) menu.style.right = '-100%';
 
@@ -827,7 +827,31 @@
             .single();
 
         window.currentContactLinks = data || {};
-
         document.getElementById('modal-contacto').style.display = 'flex';
+    }
+
+    function hideContactoModal() {
+        document.getElementById('modal-contacto').style.display = 'none';
+    }
+
+    function abrirLinkContacto(tipo) {
+        let link = "";
+
+        if (tipo === "whatsapp" && window.currentContactLinks.whatsapp) {
+            link = `https://wa.me/${window.currentContactLinks.whatsapp}`;
+        } 
+        else if (tipo === "telegram" && window.currentContactLinks.telegram) {
+            link = window.currentContactLinks.telegram;
+        } 
+        else if (tipo === "instagram" && window.currentContactLinks.instagram) {
+            link = window.currentContactLinks.instagram;
+        }
+
+        if (link) {
+            window.open(link, "_blank");
+            hideContactoModal();
+        } else {
+            alert(`No hay ${tipo} registrado para este casino`);
+        }
     }
 </script>
