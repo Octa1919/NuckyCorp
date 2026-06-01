@@ -401,7 +401,7 @@
         </div>
     </div>
 
-    <!-- MODAL PERFIL - CORREGIDO PARA JUGADOR -->
+            <!-- MODAL PERFIL - VERSIÓN FINAL PARA JUGADOR -->
         <div id="modal-perfil" class="modal" style="display:none;">
             <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
                 <h2 style="text-align:center; color:#e0e7ff; margin-bottom:20px;">👤 Mi Perfil</h2>
@@ -413,13 +413,26 @@
                     </div>
                     <div>
                         <strong>Contraseña actual:</strong><br>
-                        <span id="perfil-password-actual" style="font-size:1.35rem; color:#67e8f9; letter-spacing:2px;"></span>
+                        <span id="perfil-password-actual" style="font-size:1.35rem; color:#67e8f9; letter-spacing:1px;"></span>
                     </div>
                 </div>
 
                 <p style="color:#94a3b8; margin-bottom:8px; font-size:1.05rem;">Cambiar contraseña</p>
-                <input type="password" id="perfil-nueva-password" placeholder="Ingresa tu nueva contraseña" 
-                       style="width:100%; padding:14px; background:#0f172a; border:1px solid #64748b; border-radius:12px; color:white; margin-bottom:24px;">
+                
+                <div style="position:relative; margin-bottom:20px;">
+                    <input type="password" id="perfil-nueva-password" placeholder="Nueva contraseña" 
+                           style="width:100%; padding:14px; background:#0f172a; border:1px solid #64748b; border-radius:12px; color:white;">
+                    <span onclick="togglePasswordVisibility()" 
+                          style="position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer; color:#94a3b8; font-size:1.3rem;">
+                        👁️
+                    </span>
+                </div>
+
+                <small style="color:#f87171; display:block; margin-bottom:20px;">
+                    • Mínimo 8 caracteres<br>
+                    • Al menos 1 mayúscula, 1 minúscula y 1 número<br><br>
+                    ⚠️ Esta contraseña es solo para la App. Para cambiar la contraseña del casino debes hacerlo desde la página del casino o contactar al cajero.
+                </small>
 
                 <div style="display:flex; gap:12px;">
                     <button onclick="hidePerfilModal()" 
@@ -573,11 +586,15 @@
         document.getElementById('hamburger-btn').style.display = 'block';
     }
 
-            // ==================== PERFIL DEL JUGADOR ====================
+                // ==================== PERFIL DEL JUGADOR ====================
     function showPerfilModal() {
-        toggleHamburgerMenu();                    // Cierra el menú automáticamente
+        toggleHamburgerMenu(); // Cierra el menú automáticamente
+
         document.getElementById('perfil-username').textContent = currentUsuario || "Usuario";
-        document.getElementById('perfil-password-actual').textContent = "••••••••"; // Oculta la contraseña real por seguridad
+
+        // Mostrar la contraseña actual real
+        document.getElementById('perfil-password-actual').textContent = "••••••••"; // Por seguridad mostramos enmascarada, pero puedes cambiar a real si querés
+
         document.getElementById('perfil-nueva-password').value = "";
         document.getElementById('modal-perfil').style.display = 'flex';
     }
@@ -586,11 +603,27 @@
         document.getElementById('modal-perfil').style.display = 'none';
     }
 
+    // Toggle ver/ocultar contraseña
+    function togglePasswordVisibility() {
+        const input = document.getElementById('perfil-nueva-password');
+        const icon = input.parentElement.querySelector('span');
+        if (input.type === "password") {
+            input.type = "text";
+            icon.textContent = "🙈";
+        } else {
+            input.type = "password";
+            icon.textContent = "👁️";
+        }
+    }
+
     async function guardarMiPassword() {
         const nuevaPass = document.getElementById('perfil-nueva-password').value.trim();
         
-        if (!nuevaPass || nuevaPass.length < 6) {
-            return alert("La contraseña debe tener al menos 6 caracteres");
+        if (!nuevaPass || nuevaPass.length < 8) {
+            return alert("La contraseña debe tener al menos 8 caracteres");
+        }
+        if (!/[A-Z]/.test(nuevaPass) || !/[a-z]/.test(nuevaPass) || !/[0-9]/.test(nuevaPass)) {
+            return alert("La contraseña debe contener al menos una mayúscula, una minúscula y un número");
         }
 
         const { error } = await _supabase
