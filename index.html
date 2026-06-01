@@ -386,7 +386,7 @@
         </div>
     </div>
 
-       <!-- ==================== MENÚ HAMBURGUESA ==================== -->
+           <!-- ==================== MENÚ HAMBURGUESA (Diseño anterior) ==================== -->
     <div id="hamburger-menu" style="position:fixed; top:0; right:-100%; width:280px; height:100%; background:#0f172a; box-shadow:-8px 0 30px rgba(0,0,0,0.7); transition:right 0.4s ease; z-index:9999; padding-top:80px; overflow-y:auto;">
         <div style="padding:0 20px;">
             
@@ -398,7 +398,6 @@
                 📅 Cronograma
             </button>
             
-            <!-- BOTÓN REFERIR (aquí va) -->
             <button onclick="abrirReferir()" style="width:100%; padding:16px; background:#1e2937; color:white; border:none; border-radius:12px; margin-bottom:8px; text-align:left; font-size:1.1rem;">
                 🔗 Referir
             </button>
@@ -680,10 +679,10 @@
     }
 
         // ==================== REFERIR ====================
-    function abrirReferir() {
+        function abrirReferir() {
         toggleHamburgerMenu(); // Cierra el menú automáticamente
 
-        const whatsapp = "5492478425018"; // ← Cambia esto por el whatsapp real del suscriptor si lo tienes guardado
+        const whatsapp = "5492478425018"; // Cambia si quieres usar el del suscriptor
         const mensaje = encodeURIComponent(`Hola, vengo recomendado por ${currentUsuario} para jugar en NuckyCorp.`);
         const referralLink = `https://wa.me/${whatsapp}?text=${mensaje}`;
 
