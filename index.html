@@ -401,21 +401,35 @@
         </div>
     </div>
 
-    <!-- MODAL PERFIL - PARA JUGADOR (App Clientes) -->
+    <!-- MODAL PERFIL - CORREGIDO PARA JUGADOR -->
         <div id="modal-perfil" class="modal" style="display:none;">
             <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
                 <h2 style="text-align:center; color:#e0e7ff; margin-bottom:20px;">👤 Mi Perfil</h2>
                 
                 <div style="background:#111827; padding:20px; border-radius:16px; margin-bottom:20px;">
-                    <p><strong>Usuario:</strong> <span id="perfil-username" style="color:#67e8f9; font-size:1.3rem;"></span></p>
-                    <input type="password" id="perfil-nueva-password" placeholder="Nueva contraseña" 
-                           style="width:100%; padding:14px; background:#0f172a; border:1px solid #64748b; border-radius:12px; color:white; margin-top:16px;">
+                    <div style="margin-bottom:16px;">
+                        <strong>Usuario:</strong><br>
+                        <span id="perfil-username" style="font-size:1.35rem; color:#67e8f9;"></span>
+                    </div>
+                    <div>
+                        <strong>Contraseña actual:</strong><br>
+                        <span id="perfil-password-actual" style="font-size:1.35rem; color:#67e8f9; letter-spacing:2px;"></span>
+                    </div>
                 </div>
 
+                <p style="color:#94a3b8; margin-bottom:8px; font-size:1.05rem;">Cambiar contraseña</p>
+                <input type="password" id="perfil-nueva-password" placeholder="Ingresa tu nueva contraseña" 
+                       style="width:100%; padding:14px; background:#0f172a; border:1px solid #64748b; border-radius:12px; color:white; margin-bottom:24px;">
+
                 <div style="display:flex; gap:12px;">
-                    <button onclick="hidePerfilModal()" style="flex:1; padding:14px; background:#334155; color:white; border:none; border-radius:12px;">Cancelar</button>
-                    <button onclick="guardarMiPassword()" style="flex:1; padding:14px; background:linear-gradient(90deg, #67e8f9, #22d3ee); color:#0f172a; border:none; border-radius:12px; font-weight:700;">Guardar Nueva Contraseña</button>
-                    <button onclick="showPerfilModal()">👤 Perfil</button>
+                    <button onclick="hidePerfilModal()" 
+                            style="flex:1; padding:14px; background:#334155; color:white; border:none; border-radius:12px; font-weight:600;">
+                        Cerrar
+                    </button>
+                    <button onclick="guardarMiPassword()" 
+                            style="flex:1; padding:14px; background:linear-gradient(90deg, #67e8f9, #22d3ee); color:#0f172a; border:none; border-radius:12px; font-weight:700;">
+                        Guardar cambios
+                    </button>
                 </div>
             </div>
         </div>
@@ -559,9 +573,11 @@
         document.getElementById('hamburger-btn').style.display = 'block';
     }
 
-        // ==================== PERFIL DEL JUGADOR ====================
+            // ==================== PERFIL DEL JUGADOR ====================
     function showPerfilModal() {
+        toggleHamburgerMenu();                    // Cierra el menú automáticamente
         document.getElementById('perfil-username').textContent = currentUsuario || "Usuario";
+        document.getElementById('perfil-password-actual').textContent = "••••••••"; // Oculta la contraseña real por seguridad
         document.getElementById('perfil-nueva-password').value = "";
         document.getElementById('modal-perfil').style.display = 'flex';
     }
