@@ -541,7 +541,7 @@
 
         const { data, error } = await _supabase
             .from('usuarios')
-            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada)')
+            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp)')
             .eq('username', username)
             .eq('password', password)
             .single();
@@ -572,7 +572,7 @@
     // ==================== RECUPERAR DATOS ====================
     async function recuperarDatos() {
         const subscriberParam = getSubscriberFromUrl();
-        let whatsapp = "5492478425018"; // número de respaldo
+        let whatsapp = "5492478425018";
         if (subscriberParam) {
             const { data } = await _supabase
                 .from('suscriptores')
@@ -609,15 +609,11 @@
         document.getElementById('hamburger-btn').style.display = 'block';
     }
 
-                // ==================== PERFIL DEL JUGADOR ====================
+    // ==================== PERFIL DEL JUGADOR ====================
     function showPerfilModal() {
-        toggleHamburgerMenu(); // Cierra el menú automáticamente
-
+        toggleHamburgerMenu();
         document.getElementById('perfil-username').textContent = currentUsuario || "Usuario";
-
-        // Mostrar la contraseña actual real
-        document.getElementById('perfil-password-actual').textContent = "••••••••"; // Por seguridad mostramos enmascarada, pero puedes cambiar a real si querés
-
+        document.getElementById('perfil-password-actual').textContent = "••••••••";
         document.getElementById('perfil-nueva-password').value = "";
         document.getElementById('modal-perfil').style.display = 'flex';
     }
@@ -626,7 +622,6 @@
         document.getElementById('modal-perfil').style.display = 'none';
     }
 
-    // Toggle ver/ocultar contraseña
     function togglePasswordVisibility() {
         const input = document.getElementById('perfil-nueva-password');
         const icon = input.parentElement.querySelector('span');
@@ -641,10 +636,7 @@
 
     async function guardarMiPassword() {
         const nuevaPass = document.getElementById('perfil-nueva-password').value.trim();
-        
-        if (!nuevaPass || nuevaPass.length < 8) {
-            return alert("La contraseña debe tener al menos 8 caracteres");
-        }
+        if (!nuevaPass || nuevaPass.length < 8) return alert("La contraseña debe tener al menos 8 caracteres");
         if (!/[A-Z]/.test(nuevaPass) || !/[a-z]/.test(nuevaPass) || !/[0-9]/.test(nuevaPass)) {
             return alert("La contraseña debe contener al menos una mayúscula, una minúscula y un número");
         }
@@ -655,19 +647,28 @@
             .eq('username', currentUsuario)
             .eq('subscriber_id', currentSubscriberId);
 
-        if (error) {
-            alert("Error al guardar: " + error.message);
-        } else {
+        if (error) alert("Error al guardar: " + error.message);
+        else {
             alert("✅ Tu contraseña ha sido actualizada correctamente");
             hidePerfilModal();
         }
     }
 
-          // ==================== REFERIR - FUNCIONA CORRECTAMENTE ====================
-    function abrirReferir() {
-        toggleHamburgerMenu();   // Cierra el menú automáticamente
+    // ==================== REFERIR (CORREGIDO) ====================
+    async function abrirReferir() {
+        toggleHamburgerMenu();
 
-        const whatsapp = "5492478425018";   // ← Cambia si quieres usar el número del suscriptor
+        // Obtenemos el whatsapp del suscriptor desde la base de datos
+        let whatsapp = "5492478425018"; // número de respaldo
+        if (currentSubscriberId) {
+            const { data } = await _supabase
+                .from('suscriptores')
+                .select('whatsapp')
+                .eq('id', currentSubscriberId)
+                .single();
+            if (data && data.whatsapp) whatsapp = data.whatsapp;
+        }
+
         const mensaje = encodeURIComponent(`Hola, vengo recomendado por ${currentUsuario} para jugar en NuckyCorp.`);
         const referralLink = `https://wa.me/${whatsapp}?text=${mensaje}`;
 
@@ -684,22 +685,18 @@
         navigator.clipboard.writeText(link).then(() => {
             alert("✅ Link de recomendación copiado al portapapeles");
             hideReferirModal();
-        }).catch(() => {
-            alert("No se pudo copiar el link");
-        });
+        }).catch(() => alert("No se pudo copiar el link"));
     }
 
     // ==================== CARGAR SALDO ====================
     async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
-
         const { data } = await _supabase
             .from('cbus')
             .select('banco, alias_nombre, cbu')
             .eq('subscriber_id', currentSubscriberId)
             .eq('activo', true)
             .single();
-
         if (data) {
             document.getElementById('banco-name').textContent = data.banco || "—";
             document.getElementById('titular-name').textContent = data.alias_nombre || "—";
@@ -738,30 +735,25 @@
     }
 
     // ==================== BOTONES DEL MENÚ ====================
-    function abrirPerfil() { 
-        toggleHamburgerMenu(); 
-        showPerfilModal(); 
+    function abrirPerfil() {
+        toggleHamburgerMenu();
+        showPerfilModal();
     }
 
-    function abrirCronograma() { 
-        toggleHamburgerMenu(); 
-        alert("📅 Cronograma - Se desarrollará más adelante"); 
+    function abrirCronograma() {
+        toggleHamburgerMenu();
+        alert("📅 Cronograma - Se desarrollará más adelante");
     }
 
-    function abrirReferir() { 
-        toggleHamburgerMenu(); 
-        alert("🔗 Referir - Se desarrollará más adelante"); 
-    }
-
-    function abrirChatwoot() { 
-        toggleHamburgerMenu(); 
+    function abrirChatwoot() {
+        toggleHamburgerMenu();
         if (window.$chatwoot) window.$chatwoot.toggle("open");
         else alert("🟢 Chatwoot se abrirá aquí");
     }
 
-    function instalarApp() { 
-        toggleHamburgerMenu(); 
-        alert("📲 Instalar App - Se desarrollará más adelante"); 
+    function instalarApp() {
+        toggleHamburgerMenu();
+        alert("📲 Instalar App - Se desarrollará más adelante");
     }
 
     function cerrarSesion() {
