@@ -516,7 +516,7 @@
             </div>
         </div>
 
-  <!-- MODAL CARGAR SALDO - VERSIÓN FINAL LIMPIA -->
+         <!-- MODAL CARGAR SALDO - BOTONES MÁS GRANDES Y ESPACIADOS -->
         <div id="modal-cargar-saldo" class="modal" style="display:none;">
             <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
                 
@@ -524,11 +524,32 @@
                     Cargar Saldo 💰
                 </h2>
 
-                <div id="cbu-content" style="min-height:180px;">
-                    <!-- Se llena dinámicamente por JavaScript -->
+                <div style="background:#b91c1c; color:#fee2e2; padding:12px; border-radius:12px; text-align:center; font-weight:700; margin-bottom:20px;">
+                    ⚠️ Siempre consulta aquí el CBU disponible antes de transferir
                 </div>
 
-                <button onclick="hideCargarSaldoModal()" style="width:100%; padding:14px; background:#334155; color:white; border:none; border-radius:12px;">
+                <div style="background:#111827; padding:22px; border-radius:16px; margin-bottom:20px;">
+                    <div style="font-size:1.3rem; line-height:1.9;">
+                        <strong style="color:#67e8f9;">Banco:</strong> <span id="banco-name" style="color:#67e8f9;"></span><br>
+                        <strong style="color:#67e8f9;">Titular:</strong> <span id="titular-name" style="color:#67e8f9;"></span>
+                    </div>
+                    <div style="margin-top:14px;">
+                        <strong style="color:#67e8f9;">CBU:</strong><br>
+                        <span id="cbu-box" style="font-size:1.3rem; font-weight:700; letter-spacing:0.8px; color:#a5f3fc; display:block; margin-top:6px; white-space:nowrap; overflow-x:auto;">
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Botones más grandes y espaciados -->
+                <button onclick="copiarCBU()" style="width:100%; padding:18px; background:#67e8f9; color:#0f172a; border:none; border-radius:14px; font-weight:700; font-size:1.2rem; margin-bottom:16px;">
+                    📋 Copiar CBU
+                </button>
+
+                <button onclick="enviarComprobante()" style="width:100%; padding:18px; background:linear-gradient(90deg, #c026d3, #db2777); color:white; border:none; border-radius:14px; font-weight:700; font-size:1.2rem; margin-bottom:16px;">
+                    📸 Enviar comprobante
+                </button>
+
+                <button onclick="hideCargarSaldoModal()" style="width:100%; padding:14px; background:transparent; color:#94a3b8; border:none; font-size:1.1rem;">
                     ← Volver
                 </button>
             </div>
