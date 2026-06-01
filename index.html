@@ -854,4 +854,34 @@
             alert(`No hay ${tipo} registrado para este casino`);
         }
     }
+
+        // ==================== INSTALAR APP ====================
+    let deferredPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+    });
+
+    function instalarApp() {
+        toggleHamburgerMenu(); // Cierra el menú
+
+        if (isIOS()) {
+            showInstallIOSModal();
+        } else if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choice) => {
+                if (choice.outcome === 'accepted') {
+                    alert("✅ ¡App instalada correctamente!");
+                }
+                deferredPrompt = null;
+            });
+        } else {
+            alert("📲 La aplicación ya está instalada o tu navegador no soporta instalación directa.\n\nPrueba desde Chrome en Android.");
+        }
+    }
+
+    function isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
 </script>
