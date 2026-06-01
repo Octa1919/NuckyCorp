@@ -501,6 +501,21 @@
         </div>
     </div>
 
+            <!-- MODAL INSTALAR EN iOS -->
+        <div id="modal-install-ios" class="modal" style="display:none;">
+            <div style="background:#1e2937; max-width:400px; width:92%; border-radius:24px; padding:30px; color:white; text-align:center;">
+                <h2 style="margin-bottom:20px;">📲 Cómo instalar en iPhone / iPad</h2>
+                <ol style="text-align:left; max-width:300px; margin:0 auto 30px; font-size:1.05rem; line-height:1.8;">
+                    <li>1. Toca el botón <strong>Compartir</strong> <span style="font-size:1.4rem;">🔗</span> en la barra inferior</li>
+                    <li>2. Desplázate hacia abajo y selecciona <strong>"Añadir a la pantalla de inicio"</strong></li>
+                    <li>3. Toca <strong>"Agregar"</strong> en la esquina superior derecha</li>
+                </ol>
+                <button onclick="hideInstallIOSModal()" style="width:100%; padding:16px; background:#67e8f9; color:#0f172a; border:none; border-radius:14px; font-weight:bold;">
+                    Entendido 👍
+                </button>
+            </div>
+        </div>
+
     <!-- MODAL CARGAR SALDO - CBU AJUSTADO AUTOMÁTICAMENTE -->
         <div id="modal-cargar-saldo" class="modal" style="display:none;">
             <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
@@ -883,5 +898,12 @@
 
     function isIOS() {
         return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
+        function showInstallIOSModal() {
+        document.getElementById('modal-install-ios').style.display = 'flex';
+    }
+
+    function hideInstallIOSModal() {
+        document.getElementById('modal-install-ios').style.display = 'none';
     }
 </script>
