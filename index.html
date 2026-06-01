@@ -401,27 +401,21 @@
         </div>
     </div>
 
-            <!-- MODAL PERFIL - EDITAR JUGADOR (tabla usuarios) -->
+    <!-- MODAL PERFIL - PARA JUGADOR (App Clientes) -->
         <div id="modal-perfil" class="modal" style="display:none;">
             <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
-                <h2 style="text-align:center; color:#e0e7ff; margin-bottom:20px;">Editar Jugador</h2>
-
-                <input type="text" id="buscar-jugador" placeholder="Buscar usuario (ej: Octa.nucky09)" 
-                       style="width:100%; padding:12px; background:#0f172a; border:1px solid #64748b; border-radius:12px; color:white; margin-bottom:16px;">
-
-                <button onclick="buscarJugadorParaEditar()" style="width:100%; padding:12px; background:#67e8f9; color:#0f172a; border:none; border-radius:12px; margin-bottom:20px;">
-                    🔍 Buscar Jugador
-                </button>
-
-                <div id="info-jugador-edit" style="display:none; background:#111827; padding:18px; border-radius:16px; margin-bottom:20px;">
-                    <p><strong>Usuario:</strong> <span id="edit-username-show" style="color:#67e8f9;"></span></p>
-                    <input type="text" id="edit-nueva-password" placeholder="Nueva contraseña" 
-                           style="width:100%; padding:12px; background:#0f172a; border:1px solid #64748b; border-radius:12px; color:white; margin-top:12px;">
+                <h2 style="text-align:center; color:#e0e7ff; margin-bottom:20px;">👤 Mi Perfil</h2>
+                
+                <div style="background:#111827; padding:20px; border-radius:16px; margin-bottom:20px;">
+                    <p><strong>Usuario:</strong> <span id="perfil-username" style="color:#67e8f9; font-size:1.3rem;"></span></p>
+                    <input type="password" id="perfil-nueva-password" placeholder="Nueva contraseña" 
+                           style="width:100%; padding:14px; background:#0f172a; border:1px solid #64748b; border-radius:12px; color:white; margin-top:16px;">
                 </div>
 
                 <div style="display:flex; gap:12px;">
                     <button onclick="hidePerfilModal()" style="flex:1; padding:14px; background:#334155; color:white; border:none; border-radius:12px;">Cancelar</button>
-                    <button onclick="guardarPasswordJugador()" style="flex:1; padding:14px; background:linear-gradient(90deg, #67e8f9, #22d3ee); color:#0f172a; border:none; border-radius:12px; font-weight:700;">Guardar Contraseña</button>
+                    <button onclick="guardarMiPassword()" style="flex:1; padding:14px; background:linear-gradient(90deg, #67e8f9, #22d3ee); color:#0f172a; border:none; border-radius:12px; font-weight:700;">Guardar Nueva Contraseña</button>
+                    <button onclick="showPerfilModal()">👤 Perfil</button>
                 </div>
             </div>
         </div>
@@ -435,7 +429,7 @@
         </div>
     </div>
 
-                    <!-- MODAL CARGAR SALDO - CBU AJUSTADO AUTOMÁTICAMENTE -->
+    <!-- MODAL CARGAR SALDO - CBU AJUSTADO AUTOMÁTICAMENTE -->
         <div id="modal-cargar-saldo" class="modal" style="display:none;">
             <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
                 
@@ -565,45 +559,20 @@
         document.getElementById('hamburger-btn').style.display = 'block';
     }
 
-    // ==================== PERFIL - EDITAR JUGADOR ====================
+        // ==================== PERFIL DEL JUGADOR ====================
     function showPerfilModal() {
+        document.getElementById('perfil-username').textContent = currentUsuario || "Usuario";
+        document.getElementById('perfil-nueva-password').value = "";
         document.getElementById('modal-perfil').style.display = 'flex';
-        document.getElementById('info-jugador-edit').style.display = 'none';
-        document.getElementById('buscar-jugador').value = '';
-        jugadorAEditarId = null;
     }
 
     function hidePerfilModal() {
         document.getElementById('modal-perfil').style.display = 'none';
-        jugadorAEditarId = null;
     }
 
-    async function buscarJugadorParaEditar() {
-        const username = document.getElementById('buscar-jugador').value.trim();
-        if (!username) return alert("Ingresa un nombre de usuario");
-
-        const { data, error } = await _supabase
-            .from('usuarios')
-            .select('id, username, telefono')
-            .eq('username', username)
-            .eq('subscriber_id', currentSubscriberId)
-            .single();
-
-        if (error || !data) {
-            alert("Jugador no encontrado o no pertenece a tu casino");
-            return;
-        }
-
-        jugadorAEditarId = data.id;
-        document.getElementById('edit-username-show').textContent = data.username;
-        document.getElementById('info-jugador-edit').style.display = 'block';
-        document.getElementById('edit-nueva-password').focus();
-    }
-
-    async function guardarPasswordJugador() {
-        if (!jugadorAEditarId) return alert("Primero busca un jugador");
-
-        const nuevaPass = document.getElementById('edit-nueva-password').value.trim();
+    async function guardarMiPassword() {
+        const nuevaPass = document.getElementById('perfil-nueva-password').value.trim();
+        
         if (!nuevaPass || nuevaPass.length < 6) {
             return alert("La contraseña debe tener al menos 6 caracteres");
         }
@@ -611,12 +580,13 @@
         const { error } = await _supabase
             .from('usuarios')
             .update({ password: nuevaPass })
-            .eq('id', jugadorAEditarId);
+            .eq('username', currentUsuario)
+            .eq('subscriber_id', currentSubscriberId);
 
         if (error) {
-            alert("Error: " + error.message);
+            alert("Error al guardar: " + error.message);
         } else {
-            alert("✅ Contraseña del jugador actualizada correctamente");
+            alert("✅ Tu contraseña ha sido actualizada correctamente");
             hidePerfilModal();
         }
     }
