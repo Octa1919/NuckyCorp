@@ -909,8 +909,23 @@
         if (confirm("¿Cerrar sesión?")) location.reload();
     }
 
-    function abrirRuleta() {
-        alert("🎡 Ruleta VIP\n\nAquí se abrirá la ruleta cuando la desarrollemos.");
+       async function abrirRuleta() {
+        const { data } = await _supabase
+            .from('suscriptores')
+            .select('premios_normal')
+            .eq('id', currentSubscriberId)
+            .single();
+
+        if (data && data.premios_normal) {
+            ruletaPremios = data.premios_normal
+                .split(',')
+                .map(p => p.trim());           // Limpiamos espacios
+        } else {
+            ruletaPremios = ["10k Fichas", "Bono 50%", "20k Fichas", "Regalo", "30k Fichas", "Bono 100%"];
+        }
+
+        generarPremiosEnRuleta();
+        document.getElementById('modal-ruleta').style.display = 'flex';
     }
 
     window.onload = () => {
@@ -937,30 +952,34 @@
         document.getElementById('modal-ruleta').style.display = 'flex';
     }
 
-    function generarPremiosEnRuleta() {
+        function generarPremiosEnRuleta() {
         const container = document.getElementById('ruleta-premios');
         container.innerHTML = '';
 
-        const radius = 78; // Distancia desde el centro hasta el premio (ajustable)
+        const radius = 78;
 
         ruletaPremios.forEach((premio, i) => {
             const div = document.createElement('div');
-            const angle = (i * 60) + 2;   // Centro exacto de cada segmento de 60°
+            const angle = (i * 60) + 2;
+
+            // Reemplazamos "/" por salto de línea
+            const textoConSaltos = premio.replace(/\//g, '\n');
 
             div.style.position = 'absolute';
             div.style.left = '35%';
             div.style.top = '45%';
             div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
-            div.style.fontSize = '0.80rem';
+            div.style.fontSize = '0.78rem';
             div.style.fontWeight = '700';
             div.style.color = '#ffffff';
             div.style.textShadow = '2px 2px 6px #000000';
             div.style.letterSpacing = '0.3px';
             div.style.lineHeight = '1.15';
             div.style.textAlign = 'center';
-            div.style.whiteSpace = 'pre-wrap';
+            div.style.whiteSpace = 'pre-wrap';     // ← Importante para que respete los saltos de línea
             div.style.maxWidth = '95px';
-            div.textContent = premio;
+            div.textContent = textoConSaltos;      // Usamos textContent (más seguro)
+
             container.appendChild(div);
         });
     }
