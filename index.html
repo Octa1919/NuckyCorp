@@ -614,11 +614,6 @@
 
         <!-- Ruleta -->
         <div id="ruleta-box-dorada" style="position:relative; width:320px; height:320px; margin:0 auto 20px; border-radius:9999px; border:12px solid #facc15; box-shadow:0 0 40px rgba(250,204,21,0.6), inset 0 0 60px rgba(0,0,0,0.8); background:#1c1408;">
-
-        <!-- Contenedor de premios -->
-            <div id="ruleta-premios-dorada" 
-                 style="position:absolute; top:0; left:0; width:100%; height:100%; border-radius:9999px; pointer-events:none; z-index:5;">
-            </div>
             
             <!-- Círculo de la ruleta -->
             <div id="ruleta-wheel-dorada" 
@@ -630,6 +625,11 @@
             <!-- Flecha fija superior -->
             <div style="position:absolute; top:-18px; left:50%; transform:translateX(-50%); font-size:2.8rem; z-index:10; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));">🔻</div>
 
+            <!-- Contenedor de premios -->
+            <div id="ruleta-premios-dorada" 
+                 style="position:absolute; top:0; left:0; width:100%; height:100%; border-radius:9999px; pointer-events:none; z-index:5;">
+            </div>
+            
             <!-- Centro (botón girar) -->
             <div onclick="spinRuletaDorada()" 
                  style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:78px; height:78px; background:#1c1408; border:6px solid #facc15; border-radius:9999px; display:flex; align-items:center; justify-content:center; z-index:20; box-shadow:0 0 30px rgba(250,204,21,0.7); cursor:pointer;">
@@ -995,32 +995,16 @@
         if (confirm("¿Cerrar sesión?")) location.reload();
     }
 
-       async function abrirRuleta() {
-        const { data } = await _supabase
-            .from('suscriptores')
-            .select('premios_normal')
-            .eq('id', currentSubscriberId)
-            .single();
+// ==================== RULETA (NORMAL + DORADA) ====================
+let ruletaPremios = [];
+let ruletaPremiosDorados = [];
 
-        if (data && data.premios_normal) {
-            ruletaPremios = data.premios_normal
-                .split(',')
-                .map(p => p.trim());           // Limpiamos espacios
-        } else {
-            ruletaPremios = ["10k Fichas", "Bono 50%", "20k Fichas", "Regalo", "30k Fichas", "Bono 100%"];
-        }
-
-        generarPremiosEnRuleta();
-        document.getElementById('modal-ruleta').style.display = 'flex';
+// === ABRIR RULETA (inteligente) ===
+async function abrirRuleta() {
+    if (!currentSubscriberId || !currentUsuario) {
+        return alert("Error: No se detectó usuario o suscriptor");
     }
 
-    window.onload = () => {
-        const subscriber = getSubscriberFromUrl();
-    };
-
-    let ruletaPremios = [];
-    async function abrirRuleta() {
-    // Obtenemos la racha del usuario y la configuración del suscriptor
     const { data: userData } = await _supabase
         .from('usuarios')
         .select('racha_ruleta')
@@ -1029,181 +1013,66 @@
 
     const { data: subData } = await _supabase
         .from('suscriptores')
-        .select('dias_dorada, premios_dorada, premios_normal')
+        .select('dias_dorada, premios_normal, premios_dorada')
         .eq('id', currentSubscriberId)
         .single();
 
     const rachaActual = userData?.racha_ruleta || 0;
     const diasNecesarios = subData?.dias_dorada || 7;
 
-    // === DECISIÓN: ¿Abrir Ruleta Dorada o Normal? ===
     if (rachaActual >= diasNecesarios) {
-        // ===================== RULETA DORADA =====================
-        if (subData && subData.premios_dorada) {
-            ruletaPremiosDorados = subData.premios_dorada
-                .split(',')
-                .map(p => p.trim());
-        } else {
-            ruletaPremiosDorados = ["50k Fichas", "Bono 100%", "Jackpot", "200k Fichas", "Bono 200%", "Ruleta Extra"];
-        }
+        // === RULETA DORADA ===
+        ruletaPremiosDorados = (subData && subData.premios_dorada)
+            ? subData.premios_dorada.split(',').map(p => p.trim())
+            : ["50k Fichas", "Bono 100%", "Jackpot", "200k Fichas", "Bono 200%", "Ruleta Extra"];
 
         generarPremiosEnRuletaDorada();
         document.getElementById('modal-ruleta-dorada').style.display = 'flex';
 
     } else {
-        // ===================== RULETA NORMAL =====================
-        if (subData && subData.premios_normal) {
-            ruletaPremios = subData.premios_normal
-                .split(',')
-                .map(p => p.trim());
-        } else {
-            ruletaPremios = ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
-        }
+        // === RULETA NORMAL ===
+        ruletaPremios = (subData && subData.premios_normal)
+            ? subData.premios_normal.split(',').map(p => p.trim())
+            : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
 
         generarPremiosEnRuleta();
         document.getElementById('modal-ruleta').style.display = 'flex';
     }
 }
 
-        function generarPremiosEnRuleta() {
-        const container = document.getElementById('ruleta-premios');
-        container.innerHTML = '';
+// === GENERAR PREMIOS RULETA NORMAL ===
+function generarPremiosEnRuleta() {
+    const container = document.getElementById('ruleta-premios');
+    if (!container) return;
+    container.innerHTML = '';
 
-        const radius = 85;
+    const radius = 85;
 
-        ruletaPremios.forEach((premio, i) => {
-            const div = document.createElement('div');
-            const angle = (i * 60) + 2;
+    ruletaPremios.forEach((premio, i) => {
+        const div = document.createElement('div');
+        const angle = (i * 60) + 2;
+        const textoConSaltos = premio.replace(/\//g, '\n');
 
-            // Reemplazamos "/" por salto de línea
-            const textoConSaltos = premio.replace(/\//g, '\n');
+        div.style.position = 'absolute';
+        div.style.left = '40%';
+        div.style.top = '42%';
+        div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
+        div.style.fontSize = '0.78rem';
+        div.style.fontWeight = '700';
+        div.style.color = '#ffffff';
+        div.style.textShadow = '2px 2px 6px #000000';
+        div.style.letterSpacing = '0.3px';
+        div.style.lineHeight = '1.15';
+        div.style.textAlign = 'center';
+        div.style.whiteSpace = 'pre-wrap';
+        div.style.maxWidth = '95px';
+        div.textContent = textoConSaltos;
 
-            div.style.position = 'absolute';
-            div.style.left = '40%';
-            div.style.top = '42%';
-            div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
-            div.style.fontSize = '0.78rem';
-            div.style.fontWeight = '700';
-            div.style.color = '#ffffff';
-            div.style.textShadow = '2px 2px 6px #000000';
-            div.style.letterSpacing = '0.3px';
-            div.style.lineHeight = '1.15';
-            div.style.textAlign = 'center';
-            div.style.whiteSpace = 'pre-wrap';     // ← Importante para que respete los saltos de línea
-            div.style.maxWidth = '95px';
-            div.textContent = textoConSaltos;      // Usamos textContent (más seguro)
-
-            container.appendChild(div);
-        });
-    }
-    
-    function hideRuletaModal() {
-        document.getElementById('modal-ruleta').style.display = 'none';
-    }
-
-   async function spinRuleta() {
-    const wheel = document.getElementById('ruleta-wheel');
-    const btn = document.getElementById('btn-spin');
-
-    if (!btn || btn.disabled) return;
-
-    btn.disabled = true;
-    btn.innerText = "GIRANDO...";
-
-    // === 1. Determinamos el premio ANTES de girar ===
-    const winningIndex = Math.floor(Math.random() * 6);
-    const correctedIndex = (winningIndex - 1 + 6) % 6;
-    const premioOriginal = ruletaPremios[correctedIndex] || "Premio";
-    const premioLimpio = premioOriginal.replace(/\//g, ' ');
-    const codigo = generarCodigoPremio();
-
-    // === 2. Guardamos INMEDIATAMENTE en la base de datos ===
-    try {
-        const { error } = await _supabase.from('premios_ruleta').insert({
-            subscriber_id: currentSubscriberId,
-            usuario: currentUsuario,           // ← CORREGIDO: ahora es "usuario"
-            premio: premioLimpio,
-            codigo: codigo,
-            estado: "pendiente",               // ← Agregamos estado
-            created_at: new Date().toISOString()
-        });
-
-        if (error) {
-            console.error("Error al guardar el premio:", error);
-            alert("Hubo un error al registrar el premio. Intentá de nuevo.");
-        } else {
-            console.log("✅ Premio registrado correctamente:", premioLimpio);
-        }
-    } catch (err) {
-        console.error("Error inesperado:", err);
-    }
-
-    // === 3. Guardamos los datos para mostrar en el modal ===
-    window.premioActual = {
-        premio: premioLimpio,
-        codigo: codigo
-    };
-
-    // === 4. Iniciamos la animación ===
-    const segmentCenter = (winningIndex * 60) + 30;
-    const spins = 8 * 360;
-    const totalRotation = spins - segmentCenter;
-
-    wheel.style.transition = 'transform 5.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
-    wheel.style.transform = `rotate(${totalRotation}deg)`;
-
-    // === 5. Cuando termina la animación, mostramos el modal ===
-    setTimeout(() => {
-        document.getElementById('premio-ganado-texto').innerText = window.premioActual.premio;
-        document.getElementById('codigo-premio').innerText = window.premioActual.codigo;
-        window.codigoPremioActual = window.premioActual.codigo;
-
-        document.getElementById('modal-ruleta').style.display = 'none';
-        document.getElementById('modal-premio-ganado').style.display = 'flex';
-
-        btn.disabled = false;
-        btn.innerText = "GIRAR RULETA";
-
-    }, 5400);
-}
-    
-// Función para generar código
-function generarCodigoPremio() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let codigo = '';
-    for (let i = 0; i < 8; i++) {
-        codigo += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return codigo;
-}
-
-    function copiarCodigoPremio() {
-    const codigo = window.codigoPremioActual;
-    if (!codigo) return;
-
-    navigator.clipboard.writeText(codigo).then(() => {
-        alert("✅ Código copiado al portapapeles");
-    }).catch(() => {
-        alert("No se pudo copiar. Intentalo de nuevo.");
+        container.appendChild(div);
     });
 }
 
-function reclamarPremio() {
-    hideModalPremio();
-    if (window.$chatwoot) {
-        window.$chatwoot.toggle("open");
-    } else {
-        alert("Chatwoot se está cargando...");
-    }
-}
-
-function hideModalPremio() {
-    document.getElementById('modal-premio-ganado').style.display = 'none';
-}
-
-// ==================== RULETA DORADA ====================
-let ruletaPremiosDorados = [];
-
+// === GENERAR PREMIOS RULETA DORADA ===
 function generarPremiosEnRuletaDorada() {
     const container = document.getElementById('ruleta-premios-dorada');
     if (!container) return;
@@ -1235,11 +1104,61 @@ function generarPremiosEnRuletaDorada() {
     });
 }
 
+// === GIRAR RULETA NORMAL ===
+async function spinRuleta() {
+    const wheel = document.getElementById('ruleta-wheel');
+    const btn = document.getElementById('btn-spin');
+    if (!btn || btn.disabled) return;
+
+    btn.disabled = true;
+    btn.innerText = "GIRANDO...";
+
+    const winningIndex = Math.floor(Math.random() * 6);
+    const correctedIndex = (winningIndex - 1 + 6) % 6;
+    const premioOriginal = ruletaPremios[correctedIndex] || "Premio";
+    const premioLimpio = premioOriginal.replace(/\//g, ' ');
+    const codigo = generarCodigoPremio();
+
+    try {
+        await _supabase.from('premios_ruleta').insert({
+            subscriber_id: currentSubscriberId,
+            usuario: currentUsuario,
+            premio: premioLimpio,
+            codigo: codigo,
+            estado: "pendiente",
+            created_at: new Date().toISOString()
+        });
+    } catch (err) {
+        console.error("Error al guardar premio:", err);
+    }
+
+    window.premioActual = { premio: premioLimpio, codigo: codigo };
+
+    const segmentCenter = (winningIndex * 60) + 30;
+    const spins = 8 * 360;
+    const totalRotation = spins - segmentCenter;
+
+    wheel.style.transition = 'transform 5.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
+    wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+    setTimeout(() => {
+        document.getElementById('premio-ganado-texto').innerText = window.premioActual.premio;
+        document.getElementById('codigo-premio').innerText = window.premioActual.codigo;
+        window.codigoPremioActual = window.premioActual.codigo;
+
+        document.getElementById('modal-ruleta').style.display = 'none';
+        document.getElementById('modal-premio-ganado').style.display = 'flex';
+
+        btn.disabled = false;
+        btn.innerText = "GIRAR RULETA";
+    }, 5400);
+}
+
+// === GIRAR RULETA DORADA ===
 async function spinRuletaDorada() {
     const wheel = document.getElementById('ruleta-wheel-dorada');
     if (!wheel) return;
 
-    // Deshabilitar botón del centro mientras gira
     const centerBtn = wheel.parentElement.querySelector('div[onclick]');
     if (centerBtn) centerBtn.style.pointerEvents = 'none';
 
@@ -1249,7 +1168,6 @@ async function spinRuletaDorada() {
     const premioLimpio = premioOriginal.replace(/\//g, ' ');
     const codigo = generarCodigoPremio();
 
-    // Guardar en base de datos
     try {
         await _supabase.from('premios_ruleta').insert({
             subscriber_id: currentSubscriberId,
@@ -1282,5 +1200,15 @@ async function spinRuletaDorada() {
 
         if (centerBtn) centerBtn.style.pointerEvents = 'auto';
     }, 5400);
+}
+
+// Función para generar código
+function generarCodigoPremio() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let codigo = '';
+    for (let i = 0; i < 8; i++) {
+        codigo += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return codigo;
 }
 </script>
