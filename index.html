@@ -1004,7 +1004,7 @@
             // Como visualmente cae un premio "por delante",
             // sumamos +1 para que coincida con lo que se ve.
             // =============================================
-            const correctedIndex = (winningIndex + 1) % 6;
+            const correctedIndex = (winningIndex - 1) % 6;
             const premioGanado = ruletaPremios[correctedIndex];
 
             alert(`🎉 ¡Felicidades!\n\nGanaste: ${premioGanado}`);
