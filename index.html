@@ -937,15 +937,15 @@
         document.getElementById('modal-ruleta').style.display = 'flex';
     }
 
-    function generarPremiosEnRuleta() {
+        function generarPremiosEnRuleta() {
         const container = document.getElementById('ruleta-premios');
         container.innerHTML = '';
 
-        const angleStep = 60;   // 360 / 6
+        const angleStep = 60; // 360° / 6 segmentos
 
         ruletaPremios.forEach((premio, i) => {
             const div = document.createElement('div');
-            const angle = i * angleStep + 30;   // centro exacto de cada segmento
+            const angle = (i * angleStep) + 30; // centro exacto del segmento
 
             div.style.position = 'absolute';
             div.style.width = '100%';
@@ -953,16 +953,16 @@
             div.style.display = 'flex';
             div.style.alignItems = 'center';
             div.style.justifyContent = 'center';
-            div.style.transform = `rotate(${angle}deg) translate(118px) rotate(-${angle}deg)`;   // ← Esta es la clave
-            div.style.fontSize = '0.84rem';
+            div.style.transform = `rotate(${angle}deg) translateY(-108px) rotate(-${angle}deg)`;
+            div.style.fontSize = '0.82rem';
             div.style.fontWeight = '700';
             div.style.color = '#ffffff';
-            div.style.textShadow = '2px 2px 5px #000';
-            div.style.letterSpacing = '0.4px';
-            div.style.lineHeight = '1.1';
+            div.style.textShadow = '2px 2px 6px #000000';
+            div.style.letterSpacing = '0.3px';
+            div.style.lineHeight = '1.15';
             div.style.textAlign = 'center';
             div.style.whiteSpace = 'pre-wrap';
-            div.style.maxWidth = '92px';
+            div.style.maxWidth = '95px';
             div.textContent = premio;
             container.appendChild(div);
         });
