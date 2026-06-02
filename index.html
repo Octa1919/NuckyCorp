@@ -516,9 +516,9 @@
             </div>
         </div>
 
-                            <!-- MODAL RULETA VIP - PREMIOS DINÁMICOS -->
+                                   <!-- MODAL RULETA VIP - PREMIOS DENTRO DE CADA SEGMENTO -->
         <div id="modal-ruleta" class="modal" style="display:none;">
-            <div style="background:#0f172a; max-width:440px; width:96%; border-radius:28px; padding:20px; box-shadow:0 0 60px rgba(103, 232, 249, 0.6); border:3px solid #67e8f9; position:relative;">
+            <div style="background:#0f172a; max-width:440px; width:96%; border-radius:28px; padding:20px; box-shadow:0 0 60px rgba(103, 232, 249, 0.6); border:3px solid #67e8f9;">
                 
                 <h2 style="text-align:center; color:#e0e7ff; font-size:1.8rem; margin-bottom:8px; text-shadow:0 0 15px #67e8f9;">
                     🎰 Ruleta VIP
@@ -534,20 +534,19 @@
                     Completa 7 días consecutivos y desbloquea la <strong>Ruleta Dorada</strong> 🔥
                 </p>
 
-                <!-- Ruleta con premios dinámicos -->
+                <!-- Ruleta -->
                 <div style="position:relative; width:280px; height:280px; margin:0 auto 20px;">
-                    <!-- La ruleta de colores -->
-                    <div id="ruleta-wheel" style="width:280px; height:280px; border-radius:50%; background:conic-gradient(#a855f7 0% 16.6%, #c026d3 16.6% 33.3%, #e11d48 33.3% 50%, #f97316 50% 66.6%, #eab308 66.6% 83.3%, #67e8f9 83.3% 100%); border:14px solid #e0e7ff; box-shadow:0 0 40px #67e8f9, inset 0 0 35px rgba(255,255,255,0.5); transition: transform 4.8s cubic-bezier(0.25, 0.1, 0.25, 1);">
+                    <div id="ruleta-wheel" style="width:280px; height:280px; border-radius:50%; background:conic-gradient(#a855f7 0% 16.6%, #c026d3 16.6% 33.3%, #e11d48 33.3% 50%, #f97316 50% 66.6%, #eab308 66.6% 83.3%, #67e8f9 83.3% 100%); border:14px solid #e0e7ff; box-shadow:0 0 40px #67e8f9, inset 0 0 35px rgba(255,255,255,0.5); transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1); position:relative;">
+                        
+                        <!-- Premios dentro de los segmentos -->
+                        <div id="ruleta-premios" style="position:absolute; inset:0;"></div>
                     </div>
 
                     <!-- Flecha fija superior -->
                     <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); font-size:48px; z-index:30; filter:drop-shadow(0 4px 8px #67e8f9);">🔽</div>
 
-                    <!-- Premios dinámicos (se generan con JS) -->
-                    <div id="ruleta-premios" style="position:absolute; inset:0; pointer-events:none;"></div>
-
                     <!-- Centro -->
-                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:78px; height:78px; background:#0f172a; border-radius:50%; border:7px solid #67e8f9; display:flex; align-items:center; justify-content:center; font-size:2.2rem; color:#67e8f9; box-shadow:0 0 25px #67e8f9;">
+                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:78px; height:78px; background:#0f172a; border-radius:50%; border:7px solid #67e8f9; display:flex; align-items:center; justify-content:center; font-size:2.2rem; color:#67e8f9;">
                         🎰
                     </div>
                 </div>
@@ -939,15 +938,15 @@
         document.getElementById('modal-ruleta').style.display = 'flex';
     }
 
-       function generarPremiosEnRuleta() {
+    function generarPremiosEnRuleta() {
         const container = document.getElementById('ruleta-premios');
         container.innerHTML = '';
 
-        const angleStep = 60;   // 360° / 6
+        const angleStep = 60;
 
         ruletaPremios.forEach((premio, i) => {
             const div = document.createElement('div');
-            const angle = (i * angleStep) + 30;   // +30° para que quede exactamente en el centro del segmento
+            const angle = i * angleStep + 30; // centrado en cada segmento
 
             div.style.position = 'absolute';
             div.style.width = '100%';
@@ -956,13 +955,12 @@
             div.style.alignItems = 'center';
             div.style.justifyContent = 'center';
             div.style.transform = `rotate(${angle}deg)`;
-            div.style.fontSize = premio.length > 15 ? '0.78rem' : '0.92rem';
+            div.style.fontSize = '0.95rem';
             div.style.fontWeight = '700';
             div.style.color = '#ffffff';
-            div.style.textShadow = '2px 2px 4px #000, -2px -2px 4px #000';
-            div.style.paddingLeft = '85px';        // distancia desde el centro hacia afuera
+            div.style.textShadow = '2px 2px 6px #000000';
+            div.style.paddingLeft = '72px';           // distancia desde el centro
             div.style.letterSpacing = '0.5px';
-            div.style.textAlign = 'center';
             div.textContent = premio;
             container.appendChild(div);
         });
