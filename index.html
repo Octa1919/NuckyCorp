@@ -937,15 +937,15 @@
         document.getElementById('modal-ruleta').style.display = 'flex';
     }
 
-        function generarPremiosEnRuleta() {
+    function generarPremiosEnRuleta() {
         const container = document.getElementById('ruleta-premios');
         container.innerHTML = '';
 
-        const angleStep = 60; // 360° / 6 segmentos
+        const angleStep = 60;
 
         ruletaPremios.forEach((premio, i) => {
             const div = document.createElement('div');
-            const angle = (i * angleStep) + 30; // centro exacto del segmento
+            const angle = (i * angleStep) + 30;   // centro exacto del segmento
 
             div.style.position = 'absolute';
             div.style.width = '100%';
@@ -953,7 +953,7 @@
             div.style.display = 'flex';
             div.style.alignItems = 'center';
             div.style.justifyContent = 'center';
-            div.style.transform = `rotate(${angle}deg) translateY(-108px) rotate(-${angle}deg)`;
+            div.style.transform = `rotate(${angle}deg) translateY(-118px) rotate(-${angle}deg)`;
             div.style.fontSize = '0.82rem';
             div.style.fontWeight = '700';
             div.style.color = '#ffffff';
