@@ -1201,7 +1201,7 @@ function hideModalPremio() {
     document.getElementById('modal-premio-ganado').style.display = 'none';
 }
 
-    // ==================== RULETA DORADA ====================
+// ==================== RULETA DORADA ====================
 let ruletaPremiosDorados = [];
 
 function generarPremiosEnRuletaDorada() {
@@ -1239,6 +1239,7 @@ async function spinRuletaDorada() {
     const wheel = document.getElementById('ruleta-wheel-dorada');
     if (!wheel) return;
 
+    // Deshabilitar botón del centro mientras gira
     const centerBtn = wheel.parentElement.querySelector('div[onclick]');
     if (centerBtn) centerBtn.style.pointerEvents = 'none';
 
