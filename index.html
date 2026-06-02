@@ -995,33 +995,44 @@
         if (confirm("¿Cerrar sesión?")) location.reload();
     }
 
-// ==================== RULETA (NORMAL + DORADA) ====================
+// ==================== RULETA (NORMAL + DORADA) - VERSIÓN FINAL ====================
 let ruletaPremios = [];
 let ruletaPremiosDorados = [];
 
-// === ABRIR RULETA INTELIGENTE (elige Normal o Dorada según racha) ===
+// === ABRIR RULETA INTELIGENTE ===
 async function abrirRuleta() {
     if (!currentSubscriberId || !currentUsuario) {
         return alert("Error: No se detectó usuario o suscriptor");
     }
 
-    const { data: userData } = await _supabase
+    console.log("Consultando racha...");
+
+    // Obtenemos racha del usuario + configuración del suscriptor
+    const { data: userData, error: userError } = await _supabase
         .from('usuarios')
         .select('racha_ruleta')
         .eq('username', currentUsuario)
         .single();
 
-    const { data: subData } = await _supabase
+    const { data: subData, error: subError } = await _supabase
         .from('suscriptores')
         .select('dias_dorada, premios_normal, premios_dorada')
         .eq('id', currentSubscriberId)
         .single();
 
+    if (userError || subError) {
+        console.error("Error al consultar base de datos:", userError || subError);
+        alert("Error al consultar la base de datos");
+        return;
+    }
+
     const rachaActual = userData?.racha_ruleta || 0;
     const diasNecesarios = subData?.dias_dorada || 7;
 
+    console.log(`Racha actual: ${rachaActual} | Días necesarios para dorada: ${diasNecesarios}`);
+
     if (rachaActual >= diasNecesarios) {
-        // === RULETA DORADA ===
+        // ===================== RULETA DORADA =====================
         ruletaPremiosDorados = (subData && subData.premios_dorada)
             ? subData.premios_dorada.split(',').map(p => p.trim())
             : ["50k Fichas", "Bono 100%", "Jackpot", "200k Fichas", "Bono 200%", "Ruleta Extra"];
@@ -1030,7 +1041,7 @@ async function abrirRuleta() {
         document.getElementById('modal-ruleta-dorada').style.display = 'flex';
 
     } else {
-        // === RULETA NORMAL ===
+        // ===================== RULETA NORMAL =====================
         ruletaPremios = (subData && subData.premios_normal)
             ? subData.premios_normal.split(',').map(p => p.trim())
             : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
