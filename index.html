@@ -1035,7 +1035,39 @@
     btn.disabled = true;
     btn.innerText = "GIRANDO...";
 
+    // === 1. Determinamos el premio ANTES de girar ===
     const winningIndex = Math.floor(Math.random() * 6);
+    const correctedIndex = (winningIndex - 1 + 6) % 6;
+    const premioOriginal = ruletaPremios[correctedIndex] || "Premio";
+    const premioLimpio = premioOriginal.replace(/\//g, ' ');
+    const codigo = generarCodigoPremio();
+
+    // === 2. Guardamos INMEDIATAMENTE en la base de datos ===
+    try {
+        const { error } = await _supabase.from('premios_ruleta').insert({
+            subscriber_id: currentSubscriberId,
+            username: currentUsuario,
+            premio: premioLimpio,
+            codigo: codigo,
+            created_at: new Date().toISOString()
+        });
+
+        if (error) {
+            console.error("Error al guardar el premio:", error);
+        } else {
+            console.log("✅ Premio registrado en la base de datos:", premioLimpio);
+        }
+    } catch (err) {
+        console.error("Error inesperado al insertar premio:", err);
+    }
+
+    // === 3. Guardamos los datos para usarlos después en el modal ===
+    window.premioActual = {
+        premio: premioLimpio,
+        codigo: codigo
+    };
+
+    // === 4. Iniciamos la animación de la ruleta ===
     const segmentCenter = (winningIndex * 60) + 30;
     const spins = 8 * 360;
     const totalRotation = spins - segmentCenter;
@@ -1043,31 +1075,12 @@
     wheel.style.transition = 'transform 5.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
     wheel.style.transform = `rotate(${totalRotation}deg)`;
 
-    setTimeout(async () => {
-        const correctedIndex = (winningIndex - 1 + 6) % 6;
-        const premioOriginal = ruletaPremios[correctedIndex] || "Premio";
-        const premioLimpio = premioOriginal.replace(/\//g, ' '); // Reemplaza / por espacio
-
-        // Generamos código
-        const codigo = generarCodigoPremio();
-
-        // Guardamos en la base de datos
-        try {
-            await _supabase.from('premios_ruleta').insert({
-                subscriber_id: currentSubscriberId,
-                username: currentUsuario,
-                premio: premioLimpio,
-                codigo: codigo,
-                created_at: new Date().toISOString()
-            });
-        } catch (err) {
-            console.error("Error al guardar premio:", err);
-        }
-
-        // Mostramos el modal bonito
-        document.getElementById('premio-ganado-texto').innerText = premioLimpio;
-        document.getElementById('codigo-premio').innerText = codigo;
-        window.codigoPremioActual = codigo; // Guardamos para copiar
+    // === 5. Cuando termina la animación, mostramos el modal ===
+    setTimeout(() => {
+        // Mostramos el modal con los datos ya guardados
+        document.getElementById('premio-ganado-texto').innerText = window.premioActual.premio;
+        document.getElementById('codigo-premio').innerText = window.premioActual.codigo;
+        window.codigoPremioActual = window.premioActual.codigo;
 
         document.getElementById('modal-ruleta').style.display = 'none';
         document.getElementById('modal-premio-ganado').style.display = 'flex';
