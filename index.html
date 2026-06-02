@@ -516,39 +516,39 @@
             </div>
         </div>
 
-            <!-- MODAL RULETA VIP - PREMIUM CON NEÓN -->
+                    <!-- MODAL RULETA VIP - TRIÁNGULO FIJO EN LA PARTE SUPERIOR -->
         <div id="modal-ruleta" class="modal" style="display:none;">
-            <div style="background:#0f172a; max-width:440px; width:96%; border-radius:28px; padding:20px; box-shadow:0 0 60px rgba(103, 232, 249, 0.6); border:3px solid #67e8f9; position:relative; overflow:hidden;">
+            <div style="background:#0f172a; max-width:440px; width:96%; border-radius:28px; padding:20px; box-shadow:0 0 60px rgba(103, 232, 249, 0.6); border:3px solid #67e8f9; position:relative;">
                 
-                <!-- Título con neón -->
                 <h2 style="text-align:center; color:#e0e7ff; font-size:1.8rem; margin-bottom:8px; text-shadow:0 0 15px #67e8f9;">
                     🎰 Ruleta VIP
                 </h2>
                 
-                <!-- Contador de racha -->
                 <div style="text-align:center; margin-bottom:12px;">
                     <span style="background:#1e2937; padding:6px 16px; border-radius:30px; color:#f97316; font-weight:700; font-size:1.1rem;">
                         🔥 Racha: <span id="racha-count">3</span> / 7 días
                     </span>
                 </div>
 
-                <!-- Explicativo -->
                 <p style="text-align:center; color:#c4d0ff; font-size:0.98rem; margin-bottom:16px;">
-                    Completa <strong>7 días consecutivos</strong> girando y desbloquea la <strong>Ruleta Dorada</strong> con premios mucho mejores 🔥
+                    Completa <strong>7 días consecutivos</strong> girando y desbloquea la <strong>Ruleta Dorada</strong> 🔥
                 </p>
 
-                <!-- La Ruleta -->
+                <!-- Contenedor de la ruleta con flecha fija -->
                 <div style="position:relative; width:100%; max-width:280px; margin:0 auto 20px;">
-                    <div id="ruleta-wheel" style="width:280px; height:280px; border-radius:50%; background:conic-gradient(#a855f7 0% 16.6%, #c026d3 16.6% 33.3%, #e11d48 33.3% 50%, #f97316 50% 66.6%, #eab308 66.6% 83.3%, #67e8f9 83.3% 100%); border:12px solid #e0e7ff; box-shadow:0 0 40px #67e8f9, inset 0 0 30px rgba(255,255,255,0.4); transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);">
-                        <!-- Flecha indicadora -->
-                        <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); font-size:42px; z-index:10;">🔽</div>
+                    <!-- Flecha fija en la parte superior -->
+                    <div style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); font-size:48px; z-index:20; filter: drop-shadow(0 4px 8px #67e8f9);">🔽</div>
+                    
+                    <!-- La ruleta que gira -->
+                    <div id="ruleta-wheel" style="width:280px; height:280px; border-radius:50%; background:conic-gradient(#a855f7 0% 16.6%, #c026d3 16.6% 33.3%, #e11d48 33.3% 50%, #f97316 50% 66.6%, #eab308 66.6% 83.3%, #67e8f9 83.3% 100%); border:14px solid #e0e7ff; box-shadow:0 0 40px #67e8f9, inset 0 0 35px rgba(255,255,255,0.5); transition: transform 4.5s cubic-bezier(0.25, 0.1, 0.25, 1);">
                     </div>
-                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:80px; height:80px; background:#0f172a; border-radius:50%; border:6px solid #67e8f9; display:flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:900; color:#67e8f9; box-shadow:0 0 20px #67e8f9;">
+
+                    <!-- Centro fijo -->
+                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:72px; height:72px; background:#0f172a; border-radius:50%; border:6px solid #67e8f9; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:900; color:#67e8f9; box-shadow:0 0 20px #67e8f9;">
                         ?
                     </div>
                 </div>
 
-                <!-- Botones -->
                 <button onclick="spinRuleta()" id="btn-spin" 
                         style="width:100%; padding:18px; background:linear-gradient(90deg, #67e8f9, #22d3ee); color:#0f172a; border:none; border-radius:16px; font-size:1.35rem; font-weight:700; margin-bottom:12px; box-shadow:0 0 25px #67e8f9;">
                     🎲 GIRAR RULETA
