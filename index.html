@@ -974,42 +974,37 @@
         const btn = document.getElementById('btn-spin');
 
         if (!ruletaPremios || ruletaPremios.length === 0) {
-            alert("No se cargaron los premios de la ruleta.");
+            alert("Error: No se cargaron los premios.");
             return;
         }
 
         btn.disabled = true;
         btn.innerText = "🎰 GIRANDO...";
 
-        // Elegimos un segmento ganador al azar (0 a 5)
+        // 1. Elegimos el segmento ganador (0 a 5)
         const winningIndex = Math.floor(Math.random() * 6);
 
-        // Calculamos el ángulo para que el centro de ese segmento quede exactamente bajo la flecha (arriba)
-        // Flecha está en 0°. Cada segmento = 60°. Sumamos 30° para centrarlo.
-        const segmentAngle = 60;
-        const centerOffset = 30;
-        const finalAngle = (winningIndex * segmentAngle) + centerOffset;
+        // 2. Calculamos el ángulo exacto para que el CENTRO del segmento quede justo bajo la flecha (arriba)
+        // Cada segmento = 60°. El centro del segmento está 30° después del inicio.
+        // Para que el centro quede en la posición 0° (arriba), rotamos en sentido contrario.
+        const segmentCenter = (winningIndex * 60) + 30;
+        const spins = 8 * 360;                    // 8 vueltas completas
+        const totalRotation = spins - segmentCenter;   // Restamos para que el centro quede arriba
 
-        // Damos varias vueltas completas + el ángulo final
-        const spins = 8 * 360;
-        const totalRotation = spins + (360 - finalAngle); // 360 - finalAngle para que quede arriba
-
-        // Aplicamos la rotación
+        // 3. Aplicamos la rotación
         wheel.style.transition = 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)';
         wheel.style.transform = `rotate(${totalRotation}deg)`;
 
-        // Esperamos que termine la animación
+        // 4. Esperamos que termine la animación
         setTimeout(() => {
             btn.disabled = false;
             btn.innerText = "🎲 GIRAR RULETA";
 
-            // Premio correcto según el índice
+            // 5. Mostramos el premio correcto
             const premioGanado = ruletaPremios[winningIndex];
-
-            // Anunciamos el premio correcto
             alert(`🎉 ¡Felicidades!\n\nGanaste: ${premioGanado}`);
 
-            // Aquí después vamos a guardar el giro en la base de datos
+            // Aquí después guardaremos el giro en la base de datos
             // guardarGiroRuleta(premioGanado);
 
         }, 5200);
