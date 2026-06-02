@@ -1026,7 +1026,7 @@
         document.getElementById('modal-ruleta').style.display = 'none';
     }
 
-    async function spinRuleta() {
+   async function spinRuleta() {
     const wheel = document.getElementById('ruleta-wheel');
     const btn = document.getElementById('btn-spin');
 
@@ -1046,28 +1046,30 @@
     try {
         const { error } = await _supabase.from('premios_ruleta').insert({
             subscriber_id: currentSubscriberId,
-            username: currentUsuario,
+            usuario: currentUsuario,           // ← CORREGIDO: ahora es "usuario"
             premio: premioLimpio,
             codigo: codigo,
+            estado: "pendiente",               // ← Agregamos estado
             created_at: new Date().toISOString()
         });
 
         if (error) {
             console.error("Error al guardar el premio:", error);
+            alert("Hubo un error al registrar el premio. Intentá de nuevo.");
         } else {
-            console.log("✅ Premio registrado en la base de datos:", premioLimpio);
+            console.log("✅ Premio registrado correctamente:", premioLimpio);
         }
     } catch (err) {
-        console.error("Error inesperado al insertar premio:", err);
+        console.error("Error inesperado:", err);
     }
 
-    // === 3. Guardamos los datos para usarlos después en el modal ===
+    // === 3. Guardamos los datos para mostrar en el modal ===
     window.premioActual = {
         premio: premioLimpio,
         codigo: codigo
     };
 
-    // === 4. Iniciamos la animación de la ruleta ===
+    // === 4. Iniciamos la animación ===
     const segmentCenter = (winningIndex * 60) + 30;
     const spins = 8 * 360;
     const totalRotation = spins - segmentCenter;
@@ -1077,7 +1079,6 @@
 
     // === 5. Cuando termina la animación, mostramos el modal ===
     setTimeout(() => {
-        // Mostramos el modal con los datos ya guardados
         document.getElementById('premio-ganado-texto').innerText = window.premioActual.premio;
         document.getElementById('codigo-premio').innerText = window.premioActual.codigo;
         window.codigoPremioActual = window.premioActual.codigo;
@@ -1090,7 +1091,7 @@
 
     }, 5400);
 }
-
+    
 // Función para generar código
 function generarCodigoPremio() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
