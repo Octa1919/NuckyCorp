@@ -648,6 +648,54 @@
     </div>
 </div>
 
+    <!-- MODAL PREMIO PENDIENTE -->
+<div id="modal-premio-pendiente" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); z-index:99999; align-items:center; justify-content:center;">
+    <div style="background:#1e2937; max-width:400px; width:94%; border-radius:24px; padding:28px 24px; text-align:center; border:3px solid #f97316; box-shadow:0 25px 70px rgba(0,0,0,0.9);">
+        
+        <h2 style="color:#f97316; margin-bottom:12px; font-size:1.6rem;">⚠️ Tenés un premio pendiente</h2>
+        
+        <p style="color:#e0e7ff; margin-bottom:20px; font-size:1.05rem;">
+            Reclamá tu premio antes de la fecha límite para no perder tu racha actual.
+        </p>
+
+        <!-- Premio -->
+        <div style="background:#111827; border-radius:16px; padding:18px; margin-bottom:16px; text-align:left;">
+            <p style="color:#94a3b8; font-size:0.95rem; margin-bottom:4px;">Premio pendiente:</p>
+            <p id="pendiente-premio" style="font-size:1.35rem; font-weight:700; color:#e0e7ff; margin:0;"></p>
+        </div>
+
+        <!-- Código -->
+        <div style="background:#111827; border-radius:16px; padding:18px; margin-bottom:20px; text-align:left;">
+            <p style="color:#94a3b8; font-size:0.95rem; margin-bottom:4px;">Código:</p>
+            <p id="pendiente-codigo" style="font-size:1.5rem; font-weight:800; color:#67e8f9; margin:0; letter-spacing:1px;"></p>
+        </div>
+
+        <!-- Aviso de racha -->
+        <div style="background:#3f2a1f; border-radius:12px; padding:14px; margin-bottom:24px;">
+            <p style="color:#fdba74; font-size:0.95rem; margin:0;">
+                Reclamá antes del <strong id="pendiente-limite"></strong> para no perder tu racha.
+            </p>
+        </div>
+
+        <!-- Botones -->
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <button onclick="copiarCodigoPendiente()" 
+                    style="background:#67e8f9; color:#0f172a; border:none; padding:16px; border-radius:14px; font-size:1.1rem; font-weight:700;">
+                📋 Copiar Código
+            </button>
+
+            <button onclick="abrirChatwootDesdePendiente()" 
+                    style="background:#c026d3; color:white; border:none; padding:16px; border-radius:14px; font-size:1.1rem; font-weight:700;">
+                💬 Reclamar por Chatwoot
+            </button>
+
+            <button onclick="hideModalPremioPendiente()" 
+                    style="background:#334155; color:#e2e8f0; border:none; padding:14px; border-radius:12px; margin-top:8px;">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
    <!-- MODAL RULETA DORADA -->
 <div id="modal-ruleta-dorada" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); z-index:99999; align-items:center; justify-content:center;">
     <div style="background:#1c1408; max-width:420px; width:94%; border-radius:28px; padding:24px; border:4px solid #facc15; box-shadow:0 0 60px rgba(250, 204, 21, 0.4);">
@@ -1074,9 +1122,16 @@ async function abrirRuleta() {
         return alert("Error: No se detectó usuario o suscriptor");
     }
 
+    // === VERIFICAR SI TIENE PREMIO PENDIENTE ===
+    const tienePendiente = await mostrarModalPremioPendiente();
+    if (tienePendiente) {
+        return; // Bloqueamos el giro
+    }
+
+    // === Si no tiene pendiente, continuar con flujo normal ===
     const { data: userData } = await _supabase
         .from('usuarios')
-        .select('racha_ruleta')
+        .select('racha_ruleta, ultima_ruleta')
         .eq('username', currentUsuario)
         .single();
 
@@ -1089,8 +1144,20 @@ async function abrirRuleta() {
     const rachaActual = userData?.racha_ruleta || 0;
     const diasNecesarios = subData?.dias_dorada || 7;
 
+    // Verificar cooldown de 24hs
+    if (userData?.ultima_ruleta) {
+        const ultima = new Date(userData.ultima_ruleta);
+        const ahora = new Date();
+        const horasPasadas = (ahora - ultima) / (1000 * 60 * 60);
+
+        if (horasPasadas < 24) {
+            const horasRestantes = Math.ceil(24 - horasPasadas);
+            return alert(`Debes esperar ${horasRestantes} horas para volver a girar la ruleta.`);
+        }
+    }
+
+    // Abrir ruleta normal o dorada
     if (rachaActual >= diasNecesarios) {
-        // RULETA DORADA
         ruletaPremiosDorados = (subData && subData.premios_dorada)
             ? subData.premios_dorada.split(',').map(p => p.trim())
             : ["50k Fichas", "Bono 100%", "Jackpot", "200k Fichas", "Bono 200%", "Ruleta Extra"];
@@ -1098,7 +1165,6 @@ async function abrirRuleta() {
         generarPremiosEnRuletaDorada();
         document.getElementById('modal-ruleta-dorada').style.display = 'flex';
     } else {
-        // RULETA NORMAL
         ruletaPremios = (subData && subData.premios_normal)
             ? subData.premios_normal.split(',').map(p => p.trim())
             : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
@@ -1280,6 +1346,74 @@ function mostrarPremioDorado(premio, codigo) {
     setTimeout(() => {
         lanzarConfetiDorada();
     }, 120);
+}
+
+    // ==================== PREMIO PENDIENTE ====================
+let premioPendienteActual = null;
+
+async function verificarPremioPendiente() {
+    const { data, error } = await _supabase
+        .from('premios_ruleta')
+        .select('id, premio, codigo, created_at')
+        .eq('usuario', currentUsuario)
+        .eq('estado', 'pendiente')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (error || !data) {
+        return null; // No tiene premio pendiente
+    }
+
+    return data;
+}
+
+async function mostrarModalPremioPendiente() {
+    const premio = await verificarPremioPendiente();
+    
+    if (!premio) return false;
+
+    premioPendienteActual = premio;
+
+    // Mostrar datos
+    document.getElementById('pendiente-premio').innerText = premio.premio;
+    document.getElementById('pendiente-codigo').innerText = premio.codigo;
+
+    // Calcular fecha límite (24hs desde created_at del premio pendiente)
+    const fechaLimite = new Date(premio.created_at);
+    fechaLimite.setHours(fechaLimite.getHours() + 24);
+
+    const opciones = { 
+        day: '2-digit', 
+        month: '2-digit', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    };
+    document.getElementById('pendiente-limite').innerText = 
+        fechaLimite.toLocaleDateString('es-AR', opciones);
+
+    // Mostrar modal
+    document.getElementById('modal-premio-pendiente').style.display = 'flex';
+    return true;
+}
+
+function copiarCodigoPendiente() {
+    if (!premioPendienteActual) return;
+    navigator.clipboard.writeText(premioPendienteActual.codigo)
+        .then(() => alert("✅ Código copiado"));
+}
+
+function abrirChatwootDesdePendiente() {
+    hideModalPremioPendiente();
+    if (window.$chatwoot) {
+        window.$chatwoot.toggle("open");
+    } else {
+        alert("Chatwoot se está cargando...");
+    }
+}
+
+function hideModalPremioPendiente() {
+    document.getElementById('modal-premio-pendiente').style.display = 'none';
 }
 
 // === FUNCIONES COMUNES ===
