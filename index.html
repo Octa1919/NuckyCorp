@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nucky - App Jugadores</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Confeti para Ruleta Dorada -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -1156,6 +1158,7 @@ async function spinRuletaDorada() {
     const premioLimpio = premioOriginal.replace(/\//g, ' ');
     const codigo = generarCodigoPremio();
 
+    // Guardar en base de datos
     try {
         await _supabase.from('premios_ruleta').insert({
             subscriber_id: currentSubscriberId,
@@ -1171,6 +1174,9 @@ async function spinRuletaDorada() {
 
     window.premioActual = { premio: premioLimpio, codigo: codigo };
     window.codigoPremioActual = codigo;
+
+    // === CONFETI DORADO ===
+    lanzarConfetiDorada();
 
     const segmentCenter = (winningIndex * 60) + 30;
     const spins = 8 * 360;
@@ -1232,5 +1238,34 @@ function generarCodigoPremio() {
         codigo += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return codigo;
+}
+
+    // ==================== CONFETI DORADO ====================
+function lanzarConfetiDorada() {
+    const duration = 2800;
+    const end = Date.now() + duration;
+
+    const colors = ['#facc15', '#eab308', '#ca8a04', '#fefce8', '#fde047'];
+
+    (function frame() {
+        confetti({
+            particleCount: 5,
+            angle: 60,
+            spread: 70,
+            origin: { x: 0.1, y: 0.6 },
+            colors: colors
+        });
+        confetti({
+            particleCount: 5,
+            angle: 120,
+            spread: 70,
+            origin: { x: 0.9, y: 0.6 },
+            colors: colors
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    })();
 }
 </script>
