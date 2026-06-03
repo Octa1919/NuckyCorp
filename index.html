@@ -723,26 +723,34 @@
     }
 
     async function loginJugador() {
-        const username = document.getElementById('login-user').value.trim();
-        const password = document.getElementById('login-pass').value.trim();
-        if (!username || !password) return alert("Usuario y contraseña son obligatorios");
+    const username = document.getElementById('login-user').value.trim();
+    const password = document.getElementById('login-pass').value.trim();
+    if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
-        const { data, error } = await _supabase
-            .from('usuarios')
-            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp)')
-            .eq('username', username)
-            .eq('password', password)
-            .single();
+    const { data, error } = await _supabase
+        .from('usuarios')
+        .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp)')
+        .eq('username', username)
+        .eq('password', password)
+        .single();
 
-        if (error || !data) return alert("Credenciales incorrectas");
+    if (error || !data) return alert("Credenciales incorrectas");
 
-        currentSubscriberId = data.subscriber_id;
-        currentUsuario = username;
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        document.getElementById('hamburger-btn').style.display = 'block';
-        await cargarDatosSuscriptor(data.suscriptores);
-    }
+    currentSubscriberId = data.subscriber_id;
+    currentUsuario = username;
+
+    // === GUARDAR SESIÓN EN LOCALSTORAGE ===
+    localStorage.setItem('nucky_session', JSON.stringify({
+        username: currentUsuario,
+        subscriber_id: currentSubscriberId
+    }));
+
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('hamburger-btn').style.display = 'block';
+
+    await cargarDatosSuscriptor(data.suscriptores);
+}
 
     async function cargarDatosSuscriptor(sub) {
         document.getElementById('casino-name').textContent = sub.nombre_casino || "Nucky";
@@ -1033,8 +1041,11 @@
     }
 
     function cerrarSesion() {
-        if (confirm("¿Cerrar sesión?")) location.reload();
+    if (confirm("¿Cerrar sesión?")) {
+        localStorage.removeItem('nucky_session');
+        location.reload();
     }
+}
 
 // ==================== RULETA (NORMAL + DORADA) ====================
 let ruletaPremios = [];
@@ -1323,4 +1334,48 @@ function lanzarConfetiDorada() {
         }
     })();
 }
+
+    // ==================== RESTAURAR SESIÓN ====================
+async function restoreSession() {
+    const savedSession = localStorage.getItem('nucky_session');
+    if (!savedSession) return false;
+
+    try {
+        const session = JSON.parse(savedSession);
+        currentUsuario = session.username;
+        currentSubscriberId = session.subscriber_id;
+
+        // Traemos los datos del suscriptor
+        const { data: subData, error } = await _supabase
+            .from('suscriptores')
+            .select('*')
+            .eq('id', currentSubscriberId)
+            .single();
+
+        if (error || !subData) {
+            localStorage.removeItem('nucky_session');
+            return false;
+        }
+
+        // Mostramos el dashboard directamente
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('hamburger-btn').style.display = 'block';
+
+        await cargarDatosSuscriptor(subData);
+        return true;
+
+    } catch (e) {
+        localStorage.removeItem('nucky_session');
+        return false;
+    }
+}
+    window.onload = async () => {
+    const restored = await restoreSession();
+    
+    // Si no hay sesión guardada, mostramos el login (por defecto ya está visible)
+    if (!restored) {
+        document.getElementById('login-screen').style.display = 'block';
+    }
+};
 </script>
