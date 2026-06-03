@@ -334,6 +334,18 @@
             <button onclick="loginJugador()">Ingresar</button>
             
             <div style="height: 32px;"></div>   <!-- Espacio adicional entre botón e links -->
+
+            <!-- Dentro del div del login -->
+            <input type="text" id="login-user" placeholder="Usuario">
+            <input type="password" id="login-pass" placeholder="Contraseña">
+
+            <!-- NUEVO: Recordarme -->
+            <div style="margin: 12px 0 20px 4px; display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="recordarme" checked style="width: 18px; height: 18px; accent-color: #c026d3;">
+            <label for="recordarme" style="color: #c4b5fd; font-size: 1.05rem; cursor: pointer;">Recordarme</label>
+            </div>
+
+            <button onclick="loginJugador()">Ingresar</button>
             
             <a onclick="crearCuenta()" class="login-link" style="margin-top:8px;">Crear cuenta nueva</a>
             <a onclick="recuperarDatos()" class="login-link">Olvidé mis datos</a>
@@ -725,6 +737,8 @@
     async function loginJugador() {
     const username = document.getElementById('login-user').value.trim();
     const password = document.getElementById('login-pass').value.trim();
+    const recordar = document.getElementById('recordarme').checked;
+
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
     const { data, error } = await _supabase
@@ -739,11 +753,19 @@
     currentSubscriberId = data.subscriber_id;
     currentUsuario = username;
 
-    // === GUARDAR SESIÓN EN LOCALSTORAGE ===
-    localStorage.setItem('nucky_session', JSON.stringify({
+    const sessionData = {
         username: currentUsuario,
         subscriber_id: currentSubscriberId
-    }));
+    };
+
+    // Guardamos según si marcó "Recordarme"
+    if (recordar) {
+        localStorage.setItem('nucky_session', JSON.stringify(sessionData));
+        sessionStorage.removeItem('nucky_session'); // Limpiamos el otro por si acaso
+    } else {
+        sessionStorage.setItem('nucky_session', JSON.stringify(sessionData));
+        localStorage.removeItem('nucky_session');
+    }
 
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
@@ -1043,6 +1065,7 @@
     function cerrarSesion() {
     if (confirm("¿Cerrar sesión?")) {
         localStorage.removeItem('nucky_session');
+        sessionStorage.removeItem('nucky_session');
         location.reload();
     }
 }
@@ -1337,7 +1360,16 @@ function lanzarConfetiDorada() {
 
     // ==================== RESTAURAR SESIÓN ====================
 async function restoreSession() {
-    const savedSession = localStorage.getItem('nucky_session');
+    // Primero intentamos con localStorage (Recordarme)
+    let savedSession = localStorage.getItem('nucky_session');
+    let storageType = 'local';
+
+    // Si no hay en localStorage, intentamos con sessionStorage
+    if (!savedSession) {
+        savedSession = sessionStorage.getItem('nucky_session');
+        storageType = 'session';
+    }
+
     if (!savedSession) return false;
 
     try {
@@ -1345,7 +1377,6 @@ async function restoreSession() {
         currentUsuario = session.username;
         currentSubscriberId = session.subscriber_id;
 
-        // Traemos los datos del suscriptor
         const { data: subData, error } = await _supabase
             .from('suscriptores')
             .select('*')
@@ -1353,11 +1384,12 @@ async function restoreSession() {
             .single();
 
         if (error || !subData) {
+            // Limpiamos ambas storages si los datos ya no son válidos
             localStorage.removeItem('nucky_session');
+            sessionStorage.removeItem('nucky_session');
             return false;
         }
 
-        // Mostramos el dashboard directamente
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
@@ -1367,9 +1399,11 @@ async function restoreSession() {
 
     } catch (e) {
         localStorage.removeItem('nucky_session');
+        sessionStorage.removeItem('nucky_session');
         return false;
     }
 }
+    
     window.onload = async () => {
     const restored = await restoreSession();
     
