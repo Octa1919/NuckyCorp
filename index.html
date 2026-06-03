@@ -696,6 +696,38 @@
         </div>
     </div>
 </div>
+
+    <!-- MODAL COOLDOWN RULETA (24hs) -->
+<div id="modal-cooldown-ruleta" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); z-index:99999; align-items:center; justify-content:center;">
+    <div style="background:#1e2937; max-width:400px; width:94%; border-radius:24px; padding:28px 24px; text-align:center; border:3px solid #64748b; box-shadow:0 25px 70px rgba(0,0,0,0.9);">
+        
+        <h2 style="color:#64748b; margin-bottom:12px; font-size:1.55rem;">⏳ Ruleta en espera</h2>
+        
+        <p style="color:#cbd5e1; margin-bottom:24px; font-size:1.05rem;">
+            Ya giraste recientemente.<br>
+            La ruleta se habilitará en:
+        </p>
+
+        <!-- Cuenta regresiva -->
+        <div style="background:#0f172a; border-radius:18px; padding:24px; margin-bottom:24px;">
+            <div id="cooldown-tiempo" 
+                 style="font-size:2.1rem; font-weight:800; color:#67e8f9; letter-spacing:1px; line-height:1.1;">
+                --:--
+            </div>
+            <p style="color:#94a3b8; margin-top:8px; font-size:0.95rem;">horas : minutos</p>
+        </div>
+
+        <p style="color:#64748b; font-size:0.95rem; margin-bottom:24px;">
+            Una vez que se habilite, tendrás 24 horas para girar y mantener tu racha.
+        </p>
+
+        <button onclick="hideModalCooldown()" 
+                style="width:100%; padding:15px; background:#334155; color:#e2e8f0; border:none; border-radius:14px; font-size:1.05rem; font-weight:600;">
+            Entendido
+        </button>
+    </div>
+</div>
+    
    <!-- MODAL RULETA DORADA -->
 <div id="modal-ruleta-dorada" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); z-index:99999; align-items:center; justify-content:center;">
     <div style="background:#1c1408; max-width:420px; width:94%; border-radius:28px; padding:24px; border:4px solid #facc15; box-shadow:0 0 60px rgba(250, 204, 21, 0.4);">
@@ -1122,19 +1154,32 @@ async function abrirRuleta() {
         return alert("Error: No se detectó usuario o suscriptor");
     }
 
-    // === VERIFICAR SI TIENE PREMIO PENDIENTE ===
+    // 1. Verificar si tiene premio pendiente
     const tienePendiente = await mostrarModalPremioPendiente();
     if (tienePendiente) {
-        return; // Bloqueamos el giro
+        return; // Bloqueado por premio pendiente
     }
 
-    // === Si no tiene pendiente, continuar con flujo normal ===
+    // 2. Verificar cooldown de 24hs (basado en ultima_ruleta)
     const { data: userData } = await _supabase
         .from('usuarios')
         .select('racha_ruleta, ultima_ruleta')
         .eq('username', currentUsuario)
         .single();
 
+    if (userData?.ultima_ruleta) {
+        const ultima = new Date(userData.ultima_ruleta);
+        const ahora = new Date();
+        const horasPasadas = (ahora - ultima) / (1000 * 60 * 60);
+
+        if (horasPasadas < 24) {
+            // Está en cooldown → mostrar modal con cuenta regresiva
+            mostrarCooldownRuleta(userData.ultima_ruleta);
+            return;
+        }
+    }
+
+    // 3. Si no está en cooldown ni tiene pendiente → flujo normal
     const { data: subData } = await _supabase
         .from('suscriptores')
         .select('dias_dorada, premios_normal, premios_dorada')
@@ -1144,20 +1189,8 @@ async function abrirRuleta() {
     const rachaActual = userData?.racha_ruleta || 0;
     const diasNecesarios = subData?.dias_dorada || 7;
 
-    // Verificar cooldown de 24hs
-    if (userData?.ultima_ruleta) {
-        const ultima = new Date(userData.ultima_ruleta);
-        const ahora = new Date();
-        const horasPasadas = (ahora - ultima) / (1000 * 60 * 60);
-
-        if (horasPasadas < 24) {
-            const horasRestantes = Math.ceil(24 - horasPasadas);
-            return alert(`Debes esperar ${horasRestantes} horas para volver a girar la ruleta.`);
-        }
-    }
-
-    // Abrir ruleta normal o dorada
     if (rachaActual >= diasNecesarios) {
+        // Ruleta Dorada
         ruletaPremiosDorados = (subData && subData.premios_dorada)
             ? subData.premios_dorada.split(',').map(p => p.trim())
             : ["50k Fichas", "Bono 100%", "Jackpot", "200k Fichas", "Bono 200%", "Ruleta Extra"];
@@ -1165,6 +1198,7 @@ async function abrirRuleta() {
         generarPremiosEnRuletaDorada();
         document.getElementById('modal-ruleta-dorada').style.display = 'flex';
     } else {
+        // Ruleta Normal
         ruletaPremios = (subData && subData.premios_normal)
             ? subData.premios_normal.split(',').map(p => p.trim())
             : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
@@ -1414,6 +1448,57 @@ function abrirChatwootDesdePendiente() {
 
 function hideModalPremioPendiente() {
     document.getElementById('modal-premio-pendiente').style.display = 'none';
+}
+
+    // ==================== COOLDOWN 24HS ====================
+let cooldownInterval = null;
+
+function mostrarCooldownRuleta(ultimaRuleta) {
+    const modal = document.getElementById('modal-cooldown-ruleta');
+    const tiempoEl = document.getElementById('cooldown-tiempo');
+
+    if (!modal || !tiempoEl) return;
+
+    // Limpiar intervalo anterior si existe
+    if (cooldownInterval) clearInterval(cooldownInterval);
+
+    function actualizarTiempo() {
+        const ahora = new Date();
+        const ultima = new Date(ultimaRuleta);
+        const msPasados = ahora - ultima;
+        const msRestantes = (24 * 60 * 60 * 1000) - msPasados;
+
+        if (msRestantes <= 0) {
+            // Ya pasaron las 24hs
+            clearInterval(cooldownInterval);
+            modal.style.display = 'none';
+            // Re-abrimos la ruleta para que pueda girar
+            setTimeout(() => {
+                abrirRuleta(); // Reintentamos abrir normalmente
+            }, 300);
+            return;
+        }
+
+        const horas = Math.floor(msRestantes / (1000 * 60 * 60));
+        const minutos = Math.floor((msRestantes % (1000 * 60 * 60)) / (1000 * 60));
+
+        tiempoEl.innerHTML = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+    }
+
+    actualizarTiempo(); // Primera actualización inmediata
+    cooldownInterval = setInterval(actualizarTiempo, 30000); // Actualiza cada 30 segundos
+
+    modal.style.display = 'flex';
+}
+
+function hideModalCooldown() {
+    const modal = document.getElementById('modal-cooldown-ruleta');
+    if (modal) modal.style.display = 'none';
+
+    if (cooldownInterval) {
+        clearInterval(cooldownInterval);
+        cooldownInterval = null;
+    }
 }
 
 // === FUNCIONES COMUNES ===
