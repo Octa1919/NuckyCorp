@@ -898,10 +898,9 @@
         subscriber_id: currentSubscriberId
     };
 
-    // Guardamos según si marcó "Recordarme"
     if (recordar) {
         localStorage.setItem('nucky_session', JSON.stringify(sessionData));
-        sessionStorage.removeItem('nucky_session'); // Limpiamos el otro por si acaso
+        sessionStorage.removeItem('nucky_session');
     } else {
         sessionStorage.setItem('nucky_session', JSON.stringify(sessionData));
         localStorage.removeItem('nucky_session');
@@ -912,12 +911,12 @@
     document.getElementById('hamburger-btn').style.display = 'block';
 
     await cargarDatosSuscriptor(data.suscriptores);
-}
 
-    // Mostrar tour la primera vez
-setTimeout(() => {
-    iniciarTour(false);
-}, 1800);
+    // ==================== TOUR: Solo después de iniciar sesión ====================
+    setTimeout(() => {
+        iniciarTour(false); // false = solo si es la primera vez
+    }, 1800);
+}
 
     async function cargarDatosSuscriptor(sub) {
         document.getElementById('casino-name').textContent = sub.nombre_casino || "Nucky";
@@ -1693,7 +1692,10 @@ let tourStep = 0;
 let tourSteps = [];
 
 function iniciarTour(forzar = false) {
+    console.log('%c[TOUR] iniciarTour llamado. forzar =', 'color:#a78bfa', forzar);
+
     if (!forzar && localStorage.getItem('nucky_jugador_tour_completado') === 'true') {
+        console.log('%c[TOUR] Ya vio el tour. No se muestra.', 'color:#f59e0b');
         return;
     }
 
