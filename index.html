@@ -1086,16 +1086,16 @@ function generarPremiosEnRuletaDorada() {
     if (!container) return;
     container.innerHTML = '';
 
-    const radius = 78; // Ajustá este valor si hace falta
+    const radius = 85; // Ajustá este valor si hace falta
 
     ruletaPremiosDorados.forEach((premio, i) => {
         const div = document.createElement('div');
-        const angle = (i * 60) + 30;
+        const angle = (i * 60) + 2;
         const textoConSaltos = premio.replace(/\//g, '\n');
 
         div.style.position = 'absolute';
-        div.style.left = '50%';
-        div.style.top = '50%';
+        div.style.left = '40%';
+        div.style.top = '42%';
         div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
         div.style.transformOrigin = 'center center';
         div.style.fontSize = '0.80rem';
