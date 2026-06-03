@@ -1702,41 +1702,35 @@ function iniciarTour(forzar = false) {
     tourSteps = [
         {
             element: '.header',
-            title: '¡Bienvenido a Nucky!',
-            description: 'Este es tu panel de jugador. Desde acá podés cargar saldo, jugar y contactarnos.'
+            title: '¡Bienvenido!',
+            description: 'Este es tu panel de jugador. Desde acá podés cargar saldo, ingresar a las páginas de casino, contactarnos y demás.'
         },
-        {
-            element: '.card:first-of-type',
+       {
+            element: '.card:first-of-type > div',   // ← Más preciso (solo los botones)
             title: 'Cargar y Retirar',
-            description: 'Acá podés cargar saldo con el CBU actual o retirar tus ganancias.'
+            description: 'Acá podés consultar el CBU activo para cargar saldo y solicitar retirar tus ganancias.'
         },
         {
             element: '.btn-atencion',
             title: 'Atención Personalizada',
-            description: 'Tocá acá para chatear con nosotros por cualquier consulta o problema.'
+            description: 'Tocá acá para chatear con nosotros. Desde acá te atendemos como en WhatsApp, te cargamos, retiramos y pagamos desde este chat'
         },
         {
             element: '#salas-container',
             title: 'Salas de Juego',
-            description: 'Elegí la sala donde querés jugar. Si alguna no está disponible, te avisaremos.'
+            description: 'Elegí el casino donde querés jugar, en todos ingresas con tu mismo usuario y contraseña. Si alguno no está disponible, te avisaremos.'
         },
         {
-            element: '.btn-ruleta',
+            element: '.btn-ruleta',                 // ← Ahora apunta directamente al botón
             title: 'Ruleta VIP',
-            description: 'Girala todos los días para acumular rachas y desbloquear la Ruleta Dorada.'
+            description: 'Girala y ganá premios, hacelo cada día para mantener la racha y desbloquear la ruleta doorada, con la cual ganás aún mejores premios.'
         },
         {
             element: '#hamburger-btn',
             title: 'Menú',
             description: 'Desde acá accedés a tu Perfil, podés referir amigos, ver el cronograma y más.'
         },
-        {
-            element: '.menu-item',
-            title: 'Opciones del menú',
-            description: 'Acá podés ver tu perfil, referir amigos, contactarnos o instalar la app.'
-        }
-    ];
-
+        
     tourStep = 0;
     mostrarPasoTour();
 }
