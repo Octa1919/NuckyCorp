@@ -1040,7 +1040,7 @@
 let ruletaPremios = [];
 let ruletaPremiosDorados = [];
 
-// === ABRIR RULETA (elige Normal o Dorada según racha) ===
+// === ABRIR RULETA ===
 async function abrirRuleta() {
     if (!currentSubscriberId || !currentUsuario) {
         return alert("Error: No se detectó usuario o suscriptor");
@@ -1175,7 +1175,7 @@ async function spinRuleta() {
     const spins = 8 * 360;
     const totalRotation = spins - segmentCenter;
 
-    wheel.style.transition = 'transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
+    wheel.style.transition = 'transform 5.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
     wheel.style.transform = `rotate(${totalRotation}deg)`;
 
     setTimeout(() => {
@@ -1215,12 +1215,20 @@ async function spinRuletaDorada() {
     window.premioActual = { premio: premioLimpio, codigo: codigo };
     window.codigoPremioActual = codigo;
 
+    const segmentCenter = (winningIndex * 60) + 30;
+    const spins = 8 * 360;
+    const totalRotation = spins - segmentCenter;
+
+    wheel.style.transition = 'transform 5.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
+    wheel.style.transform = `rotate(${totalRotation}deg)`;
+
     setTimeout(() => {
         mostrarPremioDorado(premioLimpio, codigo);
         if (centerBtn) centerBtn.style.pointerEvents = 'auto';
     }, 5400);
+}
 
-// === MOSTRAR MODAL DE PREMIO (Normal) ===
+// === MOSTRAR MODAL PREMIO NORMAL ===
 function mostrarPremioGanado(premio, codigo) {
     document.getElementById('premio-ganado-texto').innerText = premio;
     document.getElementById('codigo-premio').innerText = codigo;
@@ -1231,22 +1239,19 @@ function mostrarPremioGanado(premio, codigo) {
     document.getElementById('modal-premio-ganado').style.display = 'flex';
 }
 
-// === MOSTRAR MODAL PREMIO DORADO ===
+// === MOSTRAR MODAL PREMIO DORADO + CONFETI ===
 function mostrarPremioDorado(premio, codigo) {
     document.getElementById('premio-dorado-texto').innerText = premio;
     document.getElementById('codigo-dorado').innerText = codigo;
     window.codigoPremioActual = codigo;
 
-    // Cerrar modal de la ruleta dorada
     document.getElementById('modal-ruleta-dorada').style.display = 'none';
-
-    // Mostrar el modal dorado
     document.getElementById('modal-premio-dorado').style.display = 'flex';
 
-    // === CONFETI DORADO (sobre el modal) ===
+    // Confeti apenas se abre el modal
     setTimeout(() => {
         lanzarConfetiDorada();
-    }, 150); // Pequeño delay para que se vea bien
+    }, 120);
 }
 
 // === FUNCIONES COMUNES ===
@@ -1289,29 +1294,26 @@ function generarCodigoPremio() {
     return codigo;
 }
 
+// ==================== CONFETI DORADO ====================
 function lanzarConfetiDorada() {
     const duration = 3200;
     const end = Date.now() + duration;
-
     const colors = ['#facc15', '#eab308', '#fde047', '#fefce8', '#ca8a04'];
 
     (function frame() {
-        // Confeti izquierdo
         confetti({
-            particleCount: 7,
+            particleCount: 8,
             angle: 60,
-            spread: 80,
-            origin: { x: 0.05, y: 0.6 },
+            spread: 75,
+            origin: { x: 0.08, y: 0.65 },
             colors: colors,
             zIndex: 100000
         });
-
-        // Confeti derecho
         confetti({
-            particleCount: 7,
+            particleCount: 8,
             angle: 120,
-            spread: 80,
-            origin: { x: 0.95, y: 0.6 },
+            spread: 75,
+            origin: { x: 0.92, y: 0.65 },
             colors: colors,
             zIndex: 100000
         });
