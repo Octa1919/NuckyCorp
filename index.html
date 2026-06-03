@@ -1115,15 +1115,15 @@ function generarPremiosEnRuletaDorada() {
     if (!container) return;
     container.innerHTML = '';
 
-    const radius = 85;
+    const radius = 88;
     ruletaPremiosDorados.forEach((premio, i) => {
         const div = document.createElement('div');
-        const angle = (i * 60) + 2;
+        const angle = (i * 60) + 30;
         const textoConSaltos = premio.replace(/\//g, '\n');
 
         div.style.position = 'absolute';
-        div.style.left = '40%';
-        div.style.top = '42%';
+        div.style.left = '50%';
+        div.style.top = '50%';
         div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
         div.style.transformOrigin = 'center center';
         div.style.fontSize = '0.80rem';
@@ -1199,7 +1199,6 @@ async function spinRuletaDorada() {
     const premioLimpio = premioOriginal.replace(/\//g, ' ');
     const codigo = generarCodigoPremio();
 
-    // Guardar en base de datos
     try {
         await _supabase.from('premios_ruleta').insert({
             subscriber_id: currentSubscriberId,
@@ -1216,7 +1215,7 @@ async function spinRuletaDorada() {
     window.premioActual = { premio: premioLimpio, codigo: codigo };
     window.codigoPremioActual = codigo;
 
-    // === CONFETI DORADO ===
+    // Confeti dorado
     lanzarConfetiDorada();
 
     const segmentCenter = (winningIndex * 60) + 30;
@@ -1227,55 +1226,63 @@ async function spinRuletaDorada() {
     wheel.style.transform = `rotate(${totalRotation}deg)`;
 
     setTimeout(() => {
-        const premioLimpio = window.premioActual.premio;
-        const codigo = window.premioActual.codigo;
-
-        // Mostrar modal dorado + confeti
         mostrarPremioDorado(premioLimpio, codigo);
-
         if (centerBtn) centerBtn.style.pointerEvents = 'auto';
     }, 5400);
+}
 
-// === MOSTRAR MODAL DE PREMIO ===
+// === MOSTRAR MODAL DE PREMIO (Normal) ===
 function mostrarPremioGanado(premio, codigo) {
     document.getElementById('premio-ganado-texto').innerText = premio;
     document.getElementById('codigo-premio').innerText = codigo;
     window.codigoPremioActual = codigo;
 
-    // Cerrar el modal de la ruleta que esté abierto
     document.getElementById('modal-ruleta').style.display = 'none';
     document.getElementById('modal-ruleta-dorada').style.display = 'none';
-
-    // Abrir modal de premio
     document.getElementById('modal-premio-ganado').style.display = 'flex';
 }
 
-// === FUNCIONES DEL MODAL DE PREMIO ===
+// === MOSTRAR MODAL PREMIO DORADO ===
+function mostrarPremioDorado(premio, codigo) {
+    document.getElementById('premio-dorado-texto').innerText = premio;
+    document.getElementById('codigo-dorado').innerText = codigo;
+    window.codigoPremioActual = codigo;
+
+    document.getElementById('modal-ruleta-dorada').style.display = 'none';
+    document.getElementById('modal-premio-dorado').style.display = 'flex';
+}
+
+// === FUNCIONES COMUNES ===
 function copiarCodigoPremio() {
     const codigo = window.codigoPremioActual;
-    if (!codigo) return alert("No hay código para copiar");
+    if (!codigo) return;
+    navigator.clipboard.writeText(codigo).then(() => alert("✅ Código copiado"));
+}
 
-    navigator.clipboard.writeText(codigo).then(() => {
-        alert("✅ Código copiado al portapapeles");
-    }).catch(() => {
-        alert("No se pudo copiar. Intentalo de nuevo.");
-    });
+function copiarCodigoDorado() {
+    const codigo = window.codigoPremioActual;
+    if (!codigo) return;
+    navigator.clipboard.writeText(codigo).then(() => alert("✅ Código copiado"));
 }
 
 function reclamarPremio() {
     hideModalPremio();
-    if (window.$chatwoot) {
-        window.$chatwoot.toggle("open");
-    } else {
-        alert("Chatwoot se está cargando...");
-    }
+    if (window.$chatwoot) window.$chatwoot.toggle("open");
+}
+
+function reclamarPremioDorado() {
+    hideModalPremioDorado();
+    if (window.$chatwoot) window.$chatwoot.toggle("open");
 }
 
 function hideModalPremio() {
     document.getElementById('modal-premio-ganado').style.display = 'none';
 }
 
-// Función para generar código
+function hideModalPremioDorado() {
+    document.getElementById('modal-premio-dorado').style.display = 'none';
+}
+
 function generarCodigoPremio() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let codigo = '';
@@ -1285,64 +1292,25 @@ function generarCodigoPremio() {
     return codigo;
 }
 
-    // ==================== MODAL PREMIO DORADO ====================
-function mostrarPremioDorado(premio, codigo) {
-    document.getElementById('premio-dorado-texto').innerText = premio;
-    document.getElementById('codigo-dorado').innerText = codigo;
-    window.codigoPremioActual = codigo;
-
-    // Cerrar modal de ruleta dorada
-    document.getElementById('modal-ruleta-dorada').style.display = 'none';
-
-    // Mostrar modal dorado
-    document.getElementById('modal-premio-dorado').style.display = 'flex';
-
-    // Lanzar confeti dorado
-    lanzarConfetiDorada();
-}
-
-function copiarCodigoDorado() {
-    const codigo = window.codigoPremioActual;
-    if (!codigo) return;
-
-    navigator.clipboard.writeText(codigo).then(() => {
-        alert("✅ Código copiado");
-    }).catch(() => alert("No se pudo copiar"));
-}
-
-function reclamarPremioDorado() {
-    hideModalPremioDorado();
-    if (window.$chatwoot) {
-        window.$chatwoot.toggle("open");
-    } else {
-        alert("Chatwoot se está cargando...");
-    }
-}
-
-function hideModalPremioDorado() {
-    document.getElementById('modal-premio-dorado').style.display = 'none';
-}
-
-    // ==================== CONFETI DORADO ====================
+// ==================== CONFETI DORADO ====================
 function lanzarConfetiDorada() {
-    const duration = 2800;
+    const duration = 2600;
     const end = Date.now() + duration;
-
     const colors = ['#facc15', '#eab308', '#ca8a04', '#fefce8', '#fde047'];
 
     (function frame() {
         confetti({
-            particleCount: 5,
+            particleCount: 6,
             angle: 60,
-            spread: 70,
-            origin: { x: 0.1, y: 0.6 },
+            spread: 65,
+            origin: { x: 0.1, y: 0.65 },
             colors: colors
         });
         confetti({
-            particleCount: 5,
+            particleCount: 6,
             angle: 120,
-            spread: 70,
-            origin: { x: 0.9, y: 0.6 },
+            spread: 65,
+            origin: { x: 0.9, y: 0.65 },
             colors: colors
         });
 
@@ -1351,4 +1319,3 @@ function lanzarConfetiDorada() {
         }
     })();
 }
-</script>
