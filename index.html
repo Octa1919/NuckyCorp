@@ -993,53 +993,41 @@
         if (confirm("¿Cerrar sesión?")) location.reload();
     }
 
-// ==================== RULETA (NORMAL + DORADA) - VERSIÓN FINAL ====================
+// ==================== RULETA (NORMAL + DORADA) ====================
 let ruletaPremios = [];
 let ruletaPremiosDorados = [];
 
-// === ABRIR RULETA INTELIGENTE ===
+// === ABRIR RULETA (elige Normal o Dorada según racha) ===
 async function abrirRuleta() {
     if (!currentSubscriberId || !currentUsuario) {
         return alert("Error: No se detectó usuario o suscriptor");
     }
 
-    console.log("Consultando racha...");
-
-    // Obtenemos racha del usuario + configuración del suscriptor
-    const { data: userData, error: userError } = await _supabase
+    const { data: userData } = await _supabase
         .from('usuarios')
         .select('racha_ruleta')
         .eq('username', currentUsuario)
         .single();
 
-    const { data: subData, error: subError } = await _supabase
+    const { data: subData } = await _supabase
         .from('suscriptores')
         .select('dias_dorada, premios_normal, premios_dorada')
         .eq('id', currentSubscriberId)
         .single();
 
-    if (userError || subError) {
-        console.error("Error al consultar base de datos:", userError || subError);
-        alert("Error al consultar la base de datos");
-        return;
-    }
-
     const rachaActual = userData?.racha_ruleta || 0;
     const diasNecesarios = subData?.dias_dorada || 7;
 
-    console.log(`Racha actual: ${rachaActual} | Días necesarios para dorada: ${diasNecesarios}`);
-
     if (rachaActual >= diasNecesarios) {
-        // ===================== RULETA DORADA =====================
+        // RULETA DORADA
         ruletaPremiosDorados = (subData && subData.premios_dorada)
             ? subData.premios_dorada.split(',').map(p => p.trim())
             : ["50k Fichas", "Bono 100%", "Jackpot", "200k Fichas", "Bono 200%", "Ruleta Extra"];
 
         generarPremiosEnRuletaDorada();
         document.getElementById('modal-ruleta-dorada').style.display = 'flex';
-
     } else {
-        // ===================== RULETA NORMAL =====================
+        // RULETA NORMAL
         ruletaPremios = (subData && subData.premios_normal)
             ? subData.premios_normal.split(',').map(p => p.trim())
             : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
@@ -1049,14 +1037,13 @@ async function abrirRuleta() {
     }
 }
 
-// === GENERAR PREMIOS RULETA NORMAL ===
+// === GENERAR PREMIOS ===
 function generarPremiosEnRuleta() {
     const container = document.getElementById('ruleta-premios');
     if (!container) return;
     container.innerHTML = '';
 
     const radius = 85;
-
     ruletaPremios.forEach((premio, i) => {
         const div = document.createElement('div');
         const angle = (i * 60) + 2;
@@ -1076,7 +1063,6 @@ function generarPremiosEnRuleta() {
         div.style.whiteSpace = 'pre-wrap';
         div.style.maxWidth = '95px';
         div.textContent = textoConSaltos;
-
         container.appendChild(div);
     });
 }
@@ -1086,34 +1072,31 @@ function generarPremiosEnRuletaDorada() {
     if (!container) return;
     container.innerHTML = '';
 
-    const radius = 85; // Ajustá este valor si hace falta
-
+    const radius = 88;
     ruletaPremiosDorados.forEach((premio, i) => {
         const div = document.createElement('div');
-        const angle = (i * 60) + 2;
+        const angle = (i * 60) + 30;
         const textoConSaltos = premio.replace(/\//g, '\n');
 
         div.style.position = 'absolute';
-        div.style.left = '40%';
-        div.style.top = '42%';
+        div.style.left = '50%';
+        div.style.top = '50%';
         div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
         div.style.transformOrigin = 'center center';
         div.style.fontSize = '0.80rem';
         div.style.fontWeight = '800';
         div.style.color = '#fefce8';
-        div.style.textShadow = '2px 2px 8px #000000, 0 0 14px #facc15';
+        div.style.textShadow = '2px 2px 10px #000000, 0 0 16px #facc15';
         div.style.letterSpacing = '0.5px';
-        div.style.lineHeight = '1.2';
+        div.style.lineHeight = '1.25';
         div.style.textAlign = 'center';
         div.style.whiteSpace = 'pre-wrap';
-        div.style.maxWidth = '100px';
+        div.style.maxWidth = '102px';
         div.textContent = textoConSaltos;
-
         container.appendChild(div);
     });
 }
 
-    
 // === GIRAR RULETA NORMAL ===
 async function spinRuleta() {
     const wheel = document.getElementById('ruleta-wheel');
@@ -1139,10 +1122,11 @@ async function spinRuleta() {
             created_at: new Date().toISOString()
         });
     } catch (err) {
-        console.error("Error al guardar premio:", err);
+        console.error("Error guardando premio:", err);
     }
 
     window.premioActual = { premio: premioLimpio, codigo: codigo };
+    window.codigoPremioActual = codigo;
 
     const segmentCenter = (winningIndex * 60) + 30;
     const spins = 8 * 360;
@@ -1152,13 +1136,7 @@ async function spinRuleta() {
     wheel.style.transform = `rotate(${totalRotation}deg)`;
 
     setTimeout(() => {
-        document.getElementById('premio-ganado-texto').innerText = window.premioActual.premio;
-        document.getElementById('codigo-premio').innerText = window.premioActual.codigo;
-        window.codigoPremioActual = window.premioActual.codigo;
-
-        document.getElementById('modal-ruleta').style.display = 'none';
-        document.getElementById('modal-premio-ganado').style.display = 'flex';
-
+        mostrarPremioGanado(premioLimpio, codigo);
         btn.disabled = false;
         btn.innerText = "GIRAR RULETA";
     }, 5400);
@@ -1192,6 +1170,7 @@ async function spinRuletaDorada() {
     }
 
     window.premioActual = { premio: premioLimpio, codigo: codigo };
+    window.codigoPremioActual = codigo;
 
     const segmentCenter = (winningIndex * 60) + 30;
     const spins = 8 * 360;
@@ -1201,15 +1180,48 @@ async function spinRuletaDorada() {
     wheel.style.transform = `rotate(${totalRotation}deg)`;
 
     setTimeout(() => {
-        document.getElementById('premio-ganado-texto').innerText = window.premioActual.premio;
-        document.getElementById('codigo-premio').innerText = window.premioActual.codigo;
-        window.codigoPremioActual = window.premioActual.codigo;
-
-        document.getElementById('modal-ruleta-dorada').style.display = 'none';
-        document.getElementById('modal-premio-ganado').style.display = 'flex';
-
+        mostrarPremioGanado(premioLimpio, codigo);
         if (centerBtn) centerBtn.style.pointerEvents = 'auto';
     }, 5400);
+}
+
+// === MOSTRAR MODAL DE PREMIO ===
+function mostrarPremioGanado(premio, codigo) {
+    document.getElementById('premio-ganado-texto').innerText = premio;
+    document.getElementById('codigo-premio').innerText = codigo;
+    window.codigoPremioActual = codigo;
+
+    // Cerrar el modal de la ruleta que esté abierto
+    document.getElementById('modal-ruleta').style.display = 'none';
+    document.getElementById('modal-ruleta-dorada').style.display = 'none';
+
+    // Abrir modal de premio
+    document.getElementById('modal-premio-ganado').style.display = 'flex';
+}
+
+// === FUNCIONES DEL MODAL DE PREMIO ===
+function copiarCodigoPremio() {
+    const codigo = window.codigoPremioActual;
+    if (!codigo) return alert("No hay código para copiar");
+
+    navigator.clipboard.writeText(codigo).then(() => {
+        alert("✅ Código copiado al portapapeles");
+    }).catch(() => {
+        alert("No se pudo copiar. Intentalo de nuevo.");
+    });
+}
+
+function reclamarPremio() {
+    hideModalPremio();
+    if (window.$chatwoot) {
+        window.$chatwoot.toggle("open");
+    } else {
+        alert("Chatwoot se está cargando...");
+    }
+}
+
+function hideModalPremio() {
+    document.getElementById('modal-premio-ganado').style.display = 'none';
 }
 
 // Función para generar código
