@@ -599,47 +599,44 @@
     </div>
 </div>
 
-    <!-- MODAL RULETA DORADA -->
+   <!-- MODAL RULETA DORADA -->
 <div id="modal-ruleta-dorada" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); z-index:99999; align-items:center; justify-content:center;">
     <div style="background:#1c1408; max-width:420px; width:94%; border-radius:28px; padding:24px; border:4px solid #facc15; box-shadow:0 0 60px rgba(250, 204, 21, 0.4);">
         
-        <!-- Encabezado -->
         <div style="text-align:center; margin-bottom:16px;">
             <h2 style="color:#facc15; font-size:1.7rem; margin:0; text-shadow:0 0 20px #facc15;">⭐ RULETA DORADA ⭐</h2>
             <p style="color:#fde047; margin:6px 0 0 0; font-size:0.95rem;">¡Premios exclusivos!</p>
         </div>
 
-        <!-- Racha -->
         <div id="racha-dorada" style="text-align:center; margin-bottom:12px; color:#fde047; font-weight:600;"></div>
 
-        <!-- Ruleta -->
+        <!-- CONTENEDOR PRINCIPAL DE LA RULETA -->
         <div id="ruleta-box-dorada" style="position:relative; width:320px; height:320px; margin:0 auto 20px; border-radius:9999px; border:12px solid #facc15; box-shadow:0 0 40px rgba(250,204,21,0.6), inset 0 0 60px rgba(0,0,0,0.8); background:#1c1408;">
             
-            <!-- Círculo de la ruleta -->
-            <div id="ruleta-wheel-dorada" 
-                 style="position:absolute; top:50%; left:50%; width:280px; height:280px; margin:-140px 0 0 -140px; border-radius:9999px; 
+            <!-- RUEDA QUE ROTA (solo colores) -->
+            <div id="ruleta-wheel-dorada"
+                 style="position:absolute; top:50%; left:50%; width:280px; height:280px; margin:-140px 0 0 -140px; border-radius:9999px;
                         background: conic-gradient(#facc15 0deg 60deg, #eab308 60deg 120deg, #ca8a04 120deg 180deg, #854d0e 180deg 240deg, #451a03 240deg 300deg, #1c1408 300deg 360deg);
                         box-shadow: inset 0 0 80px rgba(0,0,0,0.9); transition: transform 5.2s cubic-bezier(0.25, 0.1, 0.25, 1);">
             </div>
 
-            <!-- Flecha fija superior -->
+            <!-- Flecha fija -->
             <div style="position:absolute; top:-18px; left:50%; transform:translateX(-50%); font-size:2.8rem; z-index:10; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));">🔻</div>
 
-            <!-- Contenedor de premios -->
-            <div id="ruleta-premios-dorada" 
+            <!-- CONTENEDOR DE PREMIOS (AFUERA DE LA RUEDA) -->
+            <div id="ruleta-premios-dorada"
                  style="position:absolute; top:0; left:0; width:100%; height:100%; border-radius:9999px; pointer-events:none; z-index:5;">
             </div>
-            
-            <!-- Centro (botón girar) -->
-            <div onclick="spinRuletaDorada()" 
+
+            <!-- Botón del centro -->
+            <div onclick="spinRuletaDorada()"
                  style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:78px; height:78px; background:#1c1408; border:6px solid #facc15; border-radius:9999px; display:flex; align-items:center; justify-content:center; z-index:20; box-shadow:0 0 30px rgba(250,204,21,0.7); cursor:pointer;">
                 <span style="color:#facc15; font-size:1.1rem; font-weight:800; text-align:center; line-height:1;">GIRAR</span>
             </div>
         </div>
 
-        <!-- Botón cerrar -->
         <div style="text-align:center;">
-            <button onclick="document.getElementById('modal-ruleta-dorada').style.display='none'" 
+            <button onclick="document.getElementById('modal-ruleta-dorada').style.display='none'"
                     style="background:#451a03; color:#fde047; border:2px solid #facc15; padding:12px 32px; border-radius:9999px; font-weight:700;">
                 Cerrar
             </button>
