@@ -1083,32 +1083,35 @@ function generarPremiosEnRuleta() {
     });
 }
 
-// === GENERAR PREMIOS RULETA DORADA ===
 function generarPremiosEnRuletaDorada() {
     const container = document.getElementById('ruleta-premios-dorada');
-    if (!container) return;
+    if (!container) {
+        console.error("No se encontró #ruleta-premios-dorada");
+        return;
+    }
     container.innerHTML = '';
 
-    const radius = 85;
+    const radius = 95; // Radio ajustado para que quede más centrado en el segmento
 
     ruletaPremiosDorados.forEach((premio, i) => {
         const div = document.createElement('div');
-        const angle = (i * 60) + 2;
+        const angle = (i * 60) + 30; // +30 para centrar mejor en el medio del segmento de 60°
         const textoConSaltos = premio.replace(/\//g, '\n');
 
         div.style.position = 'absolute';
-        div.style.left = '40%';
-        div.style.top = '42%';
+        div.style.left = '50%';
+        div.style.top = '50%';
         div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
-        div.style.fontSize = '0.78rem';
+        div.style.transformOrigin = 'center center';
+        div.style.fontSize = '0.82rem';
         div.style.fontWeight = '800';
         div.style.color = '#fefce8';
-        div.style.textShadow = '2px 2px 8px #000000, 0 0 12px #facc15';
-        div.style.letterSpacing = '0.4px';
-        div.style.lineHeight = '1.15';
+        div.style.textShadow = '2px 2px 10px #000000, 0 0 16px #facc15';
+        div.style.letterSpacing = '0.5px';
+        div.style.lineHeight = '1.25';
         div.style.textAlign = 'center';
         div.style.whiteSpace = 'pre-wrap';
-        div.style.maxWidth = '95px';
+        div.style.maxWidth = '105px';
         div.textContent = textoConSaltos;
 
         container.appendChild(div);
