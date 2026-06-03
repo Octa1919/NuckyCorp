@@ -1706,9 +1706,14 @@ function iniciarTour(forzar = false) {
             description: 'Este es tu panel de jugador. Desde acá podés cargar saldo, ingresar a las páginas de casino, contactarnos y demás.'
         },
        {
-            element: '.card:first-of-type > div',   // ← Más preciso (solo los botones)
-            title: 'Cargar y Retirar',
+            element: '.btn-cargar',
+            title: 'Cargar Saldo',
             description: 'Acá podés consultar el CBU activo para cargar saldo y solicitar retirar tus ganancias.'
+        },
+        {
+            element: '.btn-retirar',
+            title: 'Retirar Fondos',
+            description: 'Acá podés solicitar retirar tus ganancias.'
         },
         {
             element: '.btn-atencion',
@@ -1721,7 +1726,7 @@ function iniciarTour(forzar = false) {
             description: 'Elegí el casino donde querés jugar, en todos ingresas con tu mismo usuario y contraseña. Si alguno no está disponible, te avisaremos.'
         },
         {
-            element: '.btn-ruleta',                 // ← Ahora apunta directamente al botón
+            element: '.btn-ruleta',
             title: 'Ruleta VIP',
             description: 'Girala y ganá premios, hacelo cada día para mantener la racha y desbloquear la ruleta doorada, con la cual ganás aún mejores premios.'
         },
