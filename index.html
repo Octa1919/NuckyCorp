@@ -968,7 +968,11 @@
     document.getElementById('hamburger-btn').style.display = 'block';
 
     await cargarDatosSuscriptor(data.suscriptores);
-
+   // Inicializar Chatwoot con el token del suscriptor
+    if (data.suscriptores.chatwoot_website_token) {
+    inicializarChatwoot(data.suscriptores.chatwoot_website_token);
+}
+        
     // ==================== TOUR: Solo después de iniciar sesión ====================
     setTimeout(() => {
         iniciarTour(false); // false = solo si es la primera vez
@@ -1204,6 +1208,53 @@ function hideInstallIOSModal() {
 function isAppInstalled() {
     return window.matchMedia('(display-mode: standalone)').matches || 
            window.navigator.standalone === true;
+}
+
+// ==================== CHATWOOT DINÁMICO POR SUSCRIPTOR ====================
+
+let chatwootTokenActual = null;
+
+function inicializarChatwoot(websiteToken) {
+    if (!websiteToken) {
+        console.warn("[Chatwoot] No hay website_token para este suscriptor");
+        return;
+    }
+
+    chatwootTokenActual = websiteToken;
+
+    // Si ya existe una instancia anterior, la reseteamos
+    if (window.$chatwoot) {
+        try { window.$chatwoot.reset(); } catch(e) {}
+    }
+
+    // Cargamos el SDK de Chatwoot
+    (function(d,t) {
+        var BASE_URL = "https://app.chatwoot.com";
+        var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
+        g.src = BASE_URL + "/packs/js/sdk.js";
+        g.async = true;
+        s.parentNode.insertBefore(g, s);
+        g.onload = function() {
+            window.chatwootSDK.run({
+                websiteToken: websiteToken,
+                baseUrl: BASE_URL
+            });
+        };
+    })(document, "script");
+}
+
+// Función para abrir el chat
+function abrirChatwoot() {
+    if (window.$chatwoot) {
+        window.$chatwoot.toggle("open");
+    } else if (chatwootTokenActual) {
+        inicializarChatwoot(chatwootTokenActual);
+        setTimeout(() => {
+            if (window.$chatwoot) window.$chatwoot.toggle("open");
+        }, 1800);
+    } else {
+        alert("No se pudo conectar con el soporte en este momento.");
+    }
 }
     
     async function cargarSaldo() {
@@ -1939,7 +1990,10 @@ function finalizarTour() {
     
     window.onload = async () => {
     const restored = await restoreSession();
-
+    // Inicializar Chatwoot con el token del suscriptor
+    if (data.suscriptores.chatwoot_website_token) {
+    inicializarChatwoot(data.suscriptores.chatwoot_website_token);
+}
     // Verificar si ya tiene la App instalada
     checkIfAppIsInstalled();
 
