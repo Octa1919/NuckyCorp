@@ -865,6 +865,37 @@
         </div>
     </div>
 </div>
+
+    <!-- MODAL RULETA RESTRINGIDA (Solo App instalada) -->
+<div id="modal-ruleta-restringida" class="modal" style="display:none; z-index:100000;">
+    <div style="background:#1e2937; max-width:400px; width:92%; border-radius:24px; padding:32px 24px; text-align:center; border:3px solid #f97316; box-shadow:0 25px 70px rgba(0,0,0,0.9);">
+        
+        <h2 style="color:#f97316; margin-bottom:16px; font-size:1.6rem;">
+            🔒 Ruleta VIP Exclusiva
+        </h2>
+        
+        <p style="color:#e0e7ff; font-size:1.1rem; margin-bottom:24px; line-height:1.5;">
+            La <strong>Ruleta VIP</strong> solo está disponible para usuarios que tienen la <strong>App de Nucky instalada</strong>.
+        </p>
+
+        <div style="background:#0f172a; border-radius:16px; padding:20px; margin-bottom:28px;">
+            <p style="color:#94a3b8; margin-bottom:12px;">¿Por qué?</p>
+            <p style="color:#cbd5e1; font-size:0.95rem; line-height:1.5;">
+                La ruleta forma parte del sistema de rachas y premios exclusivos de la aplicación instalada.
+            </p>
+        </div>
+
+        <button onclick="instalarDesdeModalRuleta()" 
+                style="width:100%; padding:18px; background:linear-gradient(90deg, #22d3ee, #67e8f9); color:#0f172a; border:none; border-radius:16px; font-size:1.15rem; font-weight:700; margin-bottom:12px;">
+            📲 Instalar App Ahora
+        </button>
+
+        <button onclick="hideModalRuletaRestringida()" 
+                style="width:100%; padding:14px; background:#334155; color:#e2e8f0; border:none; border-radius:12px; font-size:1rem;">
+            Cerrar
+        </button>
+    </div>
+</div>
     
             <!-- MODAL CARGAR SALDO - VERSIÓN CORRECTA (Botones solo cuando hay CBU) -->
         <div id="modal-cargar-saldo" class="modal" style="display:none;">
@@ -1169,6 +1200,12 @@ function hideInstallIOSModal() {
     document.getElementById('modal-install-ios').style.display = 'none';
 }
 
+// ==================== DETECTAR SI LA APP ESTÁ INSTALADA ====================
+function isAppInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone === true;
+}
+    
     async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
 
@@ -1278,13 +1315,19 @@ async function abrirRuleta() {
         return alert("Error: No se detectó usuario o suscriptor");
     }
 
+    // ==================== RESTRICCIÓN ESTRICTA ====================
+    if (!isAppInstalled()) {
+        mostrarModalRuletaRestringida();
+        return; // No permite abrir la ruleta
+    }
+
     // 1. Verificar si tiene premio pendiente
     const tienePendiente = await mostrarModalPremioPendiente();
     if (tienePendiente) {
-        return; // Bloqueado por premio pendiente
+        return;
     }
 
-    // 2. Verificar cooldown de 24hs (basado en ultima_ruleta)
+    // 2. Verificar cooldown de 24hs
     const { data: userData } = await _supabase
         .from('usuarios')
         .select('racha_ruleta, ultima_ruleta')
@@ -1297,13 +1340,12 @@ async function abrirRuleta() {
         const horasPasadas = (ahora - ultima) / (1000 * 60 * 60);
 
         if (horasPasadas < 24) {
-            // Está en cooldown → mostrar modal con cuenta regresiva
             mostrarCooldownRuleta(userData.ultima_ruleta);
             return;
         }
     }
 
-    // 3. Si no está en cooldown ni tiene pendiente → flujo normal
+    // 3. Flujo normal de la ruleta
     const { data: subData } = await _supabase
         .from('suscriptores')
         .select('dias_dorada, premios_normal, premios_dorada')
@@ -1314,7 +1356,6 @@ async function abrirRuleta() {
     const diasNecesarios = subData?.dias_dorada || 7;
 
     if (rachaActual >= diasNecesarios) {
-        // Ruleta Dorada
         ruletaPremiosDorados = (subData && subData.premios_dorada)
             ? subData.premios_dorada.split(',').map(p => p.trim())
             : ["50k Fichas", "Bono 100%", "Jackpot", "200k Fichas", "Bono 200%", "Ruleta Extra"];
@@ -1322,7 +1363,6 @@ async function abrirRuleta() {
         generarPremiosEnRuletaDorada();
         document.getElementById('modal-ruleta-dorada').style.display = 'flex';
     } else {
-        // Ruleta Normal
         ruletaPremios = (subData && subData.premios_normal)
             ? subData.premios_normal.split(',').map(p => p.trim())
             : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
@@ -1693,6 +1733,20 @@ function lanzarConfetiDorada() {
             requestAnimationFrame(frame);
         }
     })();
+}
+
+    // ==================== MODAL RULETA RESTRINGIDA ====================
+function mostrarModalRuletaRestringida() {
+    document.getElementById('modal-ruleta-restringida').style.display = 'flex';
+}
+
+function hideModalRuletaRestringida() {
+    document.getElementById('modal-ruleta-restringida').style.display = 'none';
+}
+
+function instalarDesdeModalRuleta() {
+    hideModalRuletaRestringida();
+    instalarApp(); // Reutiliza la función que ya tenemos
 }
 
     // ==================== RESTAURAR SESIÓN ====================
