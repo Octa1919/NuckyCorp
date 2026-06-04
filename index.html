@@ -380,12 +380,37 @@
 </head>
 <body>
     <div class="header">
-        <h1 id="casino-name" class="casino-name">Nucky</h1>
-        <button id="hamburger-btn" onclick="toggleHamburgerMenu()" style="display:none; background:none; border:none; font-size:1.9rem; color:#c026d3;">
+    <h1 id="casino-name" class="casino-name">Nucky</h1>
+    
+    <div style="display: flex; align-items: center; gap: 10px;">
+        
+        <!-- BOTÓN INSTALAR APP -->
+        <button id="install-btn" 
+                onclick="instalarApp()"
+                style="display: none; 
+                       background: #22d3ee; 
+                       color: #0f172a; 
+                       border: none; 
+                       padding: 8px 14px; 
+                       border-radius: 10px; 
+                       font-weight: 600; 
+                       font-size: 0.9rem; 
+                       align-items: center; 
+                       gap: 6px; 
+                       cursor: pointer;">
+            <i class="fas fa-download"></i>
+            <span>Instalar</span>
+        </button>
+
+        <!-- Menú Hamburguesa -->
+        <button id="hamburger-btn" 
+                onclick="toggleHamburgerMenu()" 
+                style="display: none; background: none; border: none; font-size: 1.9rem; color: #c026d3;">
             <i class="fas fa-bars"></i>
         </button>
+        
     </div>
-    </div>
+</div>
 
     <!-- Línea separadora -->
     <div class="header-separator"></div>
@@ -1083,26 +1108,68 @@
         }
     }
 
-    // ==================== INSTALAR APP ====================
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-    });
+    // ==================== LÓGICA DE INSTALACIÓN DE APP ====================
 
-    function instalarApp() {
-        toggleHamburgerMenu();
+let deferredPrompt = null;
+
+// Detectar si se puede instalar la PWA
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Mostrar el botón de instalar
+    const installBtn = document.getElementById('install-btn');
+    if (installBtn) {
+        installBtn.style.display = 'flex';
+    }
+});
+
+// Ocultar el botón si ya está instalada la App
+function checkIfAppIsInstalled() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true;
+    
+    const installBtn = document.getElementById('install-btn');
+    
+    if (isStandalone && installBtn) {
+        installBtn.style.display = 'none';
+    }
+}
+
+// Función para instalar la App
+function instalarApp() {
+    const installBtn = document.getElementById('install-btn');
+    
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('✅ Usuario instaló la App');
+                if (installBtn) installBtn.style.display = 'none';
+            }
+            deferredPrompt = null;
+        });
+    } else {
+        // Si no hay deferredPrompt (ej: ya instalada o iOS)
         if (isIOS()) {
             showInstallIOSModal();
-        } else if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choice) => {
-                if (choice.outcome === 'accepted') alert("✅ App instalada!");
-                deferredPrompt = null;
-            });
         } else {
-            alert("📲 Usa el botón Compartir → Añadir a pantalla de inicio en Android/iOS");
+            alert("La aplicación ya está instalada o tu navegador no soporta instalación directa.\n\nEn Android: usa el menú del navegador → 'Instalar app'.");
         }
     }
+}
+
+function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+// Ocultar botón después de instalar la App
+window.addEventListener('appinstalled', () => {
+    const installBtn = document.getElementById('install-btn');
+    if (installBtn) installBtn.style.display = 'none';
+    console.log('✅ App instalada correctamente');
+});
 
     function isIOS() {
         return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -1832,7 +1899,8 @@ function finalizarTour() {
     
     window.onload = async () => {
     const restored = await restoreSession();
-    
+    // Verificar si ya tiene la App instalada
+checkIfAppIsInstalled();
     // Si no hay sesión guardada, mostramos el login (por defecto ya está visible)
     if (!restored) {
         document.getElementById('login-screen').style.display = 'block';
