@@ -940,8 +940,7 @@
 
     const { data, error } = await _supabase
         .from('usuarios')
-        .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp)')
-        .eq('username', username)
+        .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token)')        .eq('username', username)
         .eq('password', password)
         .single();
 
@@ -967,11 +966,17 @@
     document.getElementById('dashboard').style.display = 'block';
     document.getElementById('hamburger-btn').style.display = 'block';
 
-    await cargarDatosSuscriptor(data.suscriptores);
-   // Inicializar Chatwoot con el token del suscriptor
-    if (data.suscriptores.chatwoot_website_token) {
+   await cargarDatosSuscriptor(data.suscriptores);
+
+// Inicializar Chatwoot con el token del suscriptor
+if (data.suscriptores.chatwoot_website_token) {
     inicializarChatwoot(data.suscriptores.chatwoot_website_token);
 }
+
+// Tour
+setTimeout(() => {
+    iniciarTour(false);
+}, 1800);
         
     // ==================== TOUR: Solo después de iniciar sesión ====================
     setTimeout(() => {
@@ -1340,12 +1345,6 @@ function abrirChatwoot() {
     function abrirCronograma() {
         toggleHamburgerMenu();
         alert("📅 Cronograma - Se desarrollará más adelante");
-    }
-
-    function abrirChatwoot() {
-        toggleHamburgerMenu();
-        if (window.$chatwoot) window.$chatwoot.toggle("open");
-        else alert("🟢 Chatwoot se abrirá aquí");
     }
 
     function cerrarSesion() {
@@ -1821,7 +1820,7 @@ async function restoreSession() {
 
         const { data: subData, error } = await _supabase
             .from('suscriptores')
-            .select('*')
+            .select('*,chatwoot_website_token')
             .eq('id', currentSubscriberId)
             .single();
 
@@ -1838,7 +1837,10 @@ async function restoreSession() {
 
         await cargarDatosSuscriptor(subData);
         return true;
-
+        // Inicializar Chatwoot
+        if (subData.chatwoot_website_token) {
+            inicializarChatwoot(subData.chatwoot_website_token);
+}
     } catch (e) {
         localStorage.removeItem('nucky_session');
         sessionStorage.removeItem('nucky_session');
@@ -1990,10 +1992,7 @@ function finalizarTour() {
     
     window.onload = async () => {
     const restored = await restoreSession();
-    // Inicializar Chatwoot con el token del suscriptor
-    if (data.suscriptores.chatwoot_website_token) {
-    inicializarChatwoot(data.suscriptores.chatwoot_website_token);
-}
+
     // Verificar si ya tiene la App instalada
     checkIfAppIsInstalled();
 
