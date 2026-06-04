@@ -1109,9 +1109,6 @@
     }
 
 // ==================== LÓGICA DE INSTALACIÓN DE APP (LIMPIO) ====================
-
-let deferredPrompt = null;
-
 // Detectar si se puede instalar la PWA
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -1888,8 +1885,11 @@ function finalizarTour() {
     
     window.onload = async () => {
     const restored = await restoreSession();
-   
-    // Si no hay sesión guardada, mostramos el login (por defecto ya está visible)
+
+    // Verificar si ya tiene la App instalada
+    checkIfAppIsInstalled();
+
+    // Si no hay sesión guardada, mostramos el login
     if (!restored) {
         document.getElementById('login-screen').style.display = 'block';
     }
