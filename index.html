@@ -1820,7 +1820,7 @@ async function restoreSession() {
 
         const { data: subData, error } = await _supabase
             .from('suscriptores')
-            .select('*,chatwoot_website_token')
+            .select('chatwoot_website_token')
             .eq('id', currentSubscriberId)
             .single();
 
