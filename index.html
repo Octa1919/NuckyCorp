@@ -1108,7 +1108,7 @@
         }
     }
 
-    // ==================== LÓGICA DE INSTALACIÓN DE APP ====================
+  // ==================== LÓGICA DE INSTALACIÓN DE APP (LIMPIO) ====================
 
 let deferredPrompt = null;
 
@@ -1117,45 +1117,38 @@ window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
     
-    // Mostrar el botón de instalar
     const installBtn = document.getElementById('install-btn');
-    if (installBtn) {
-        installBtn.style.display = 'flex';
-    }
+    if (installBtn) installBtn.style.display = 'flex';
 });
 
-// Ocultar el botón si ya está instalada la App
+// Ocultar botón si ya está instalada
 function checkIfAppIsInstalled() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                          window.navigator.standalone === true;
     
     const installBtn = document.getElementById('install-btn');
-    
     if (isStandalone && installBtn) {
         installBtn.style.display = 'none';
     }
 }
 
-// Función para instalar la App
+// Instalar App
 function instalarApp() {
     const installBtn = document.getElementById('install-btn');
-    
+
     if (deferredPrompt) {
         deferredPrompt.prompt();
-        
         deferredPrompt.userChoice.then((choiceResult) => {
             if (choiceResult.outcome === 'accepted') {
-                console.log('✅ Usuario instaló la App');
                 if (installBtn) installBtn.style.display = 'none';
             }
             deferredPrompt = null;
         });
     } else {
-        // Si no hay deferredPrompt (ej: ya instalada o iOS)
         if (isIOS()) {
             showInstallIOSModal();
         } else {
-            alert("La aplicación ya está instalada o tu navegador no soporta instalación directa.\n\nEn Android: usa el menú del navegador → 'Instalar app'.");
+            alert("La aplicación ya está instalada o tu navegador no soporta instalación directa.");
         }
     }
 }
@@ -1164,11 +1157,10 @@ function isIOS() {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
 
-// Ocultar botón después de instalar la App
+// Ocultar botón cuando se instala
 window.addEventListener('appinstalled', () => {
     const installBtn = document.getElementById('install-btn');
     if (installBtn) installBtn.style.display = 'none';
-    console.log('✅ App instalada correctamente');
 });
 
     function isIOS() {
