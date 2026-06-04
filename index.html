@@ -1221,12 +1221,11 @@ function inicializarChatwoot(websiteToken) {
 
     chatwootTokenActual = websiteToken;
 
-    // Resetear si ya existe una instancia anterior
+    // Resetear instancia anterior si existe
     if (window.$chatwoot) {
         try { window.$chatwoot.reset(); } catch(e) {}
     }
 
-    // Cargar el SDK de Chatwoot
     (function(d,t) {
         var BASE_URL = "https://app.chatwoot.com";
         var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
@@ -1240,18 +1239,21 @@ function inicializarChatwoot(websiteToken) {
                 baseUrl: BASE_URL
             });
 
-            // ✅ Identificar al usuario para que el agente vea su nombre real
-            setTimeout(() => {
+            // ✅ Esperamos a que el widget esté listo y luego identificamos al usuario
+            const intentarIdentificar = setInterval(() => {
                 if (window.$chatwoot && currentUsuario) {
+                    clearInterval(intentarIdentificar);
+
                     window.$chatwoot.setUser(currentUsuario, {
                         name: currentUsuario,
-                        // Podés agregar más datos si querés:
+                        // Podés agregar más datos útiles para el agente:
                         // email: currentUsuario + "@nucky.app",
-                        // avatar_url: "https://...",
+                        // avatar_url: "...",
                     });
-                    console.log("%c[Chatwoot] Usuario identificado:", "color:#22c55e", currentUsuario);
+
+                    console.log("%c[Chatwoot] Usuario identificado correctamente:", "color:#22c55e", currentUsuario);
                 }
-            }, 1800);
+            }, 400);
         };
     })(document, "script");
 }
