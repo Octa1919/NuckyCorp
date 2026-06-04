@@ -1820,10 +1820,10 @@ async function restoreSession() {
 
         const { data: subData, error } = await _supabase
             .from('suscriptores')
-            .select('chatwoot_website_token')
+            .select('id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token')
             .eq('id', currentSubscriberId)
             .single();
-
+        
         if (error || !subData) {
             // Limpiamos ambas storages si los datos ya no son válidos
             localStorage.removeItem('nucky_session');
@@ -1840,6 +1840,7 @@ async function restoreSession() {
         // Inicializar Chatwoot
         if (subData.chatwoot_website_token) {
             inicializarChatwoot(subData.chatwoot_website_token);
+    }
 }
     } catch (e) {
         localStorage.removeItem('nucky_session');
