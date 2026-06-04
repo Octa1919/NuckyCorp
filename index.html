@@ -1163,10 +1163,6 @@ window.addEventListener('appinstalled', () => {
     if (installBtn) installBtn.style.display = 'none';
 });
 
-    function isIOS() {
-        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    }
-
     function showInstallIOSModal() {
         document.getElementById('modal-install-ios').style.display = 'flex';
     }
