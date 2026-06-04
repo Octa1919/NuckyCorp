@@ -1891,8 +1891,7 @@ function finalizarTour() {
     
     window.onload = async () => {
     const restored = await restoreSession();
-    // Verificar si ya tiene la App instalada
-checkIfAppIsInstalled();
+   
     // Si no hay sesión guardada, mostramos el login (por defecto ya está visible)
     if (!restored) {
         document.getElementById('login-screen').style.display = 'block';
