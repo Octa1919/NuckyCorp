@@ -1211,7 +1211,6 @@ function isAppInstalled() {
 }
 
 // ==================== CHATWOOT DINÁMICO POR SUSCRIPTOR ====================
-
 let chatwootTokenActual = null;
 
 function inicializarChatwoot(websiteToken) {
@@ -1222,27 +1221,41 @@ function inicializarChatwoot(websiteToken) {
 
     chatwootTokenActual = websiteToken;
 
-    // Si ya existe una instancia anterior, la reseteamos
+    // Resetear si ya existe una instancia anterior
     if (window.$chatwoot) {
         try { window.$chatwoot.reset(); } catch(e) {}
     }
 
-    // Cargamos el SDK de Chatwoot
+    // Cargar el SDK de Chatwoot
     (function(d,t) {
         var BASE_URL = "https://app.chatwoot.com";
         var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
         g.src = BASE_URL + "/packs/js/sdk.js";
         g.async = true;
         s.parentNode.insertBefore(g, s);
+
         g.onload = function() {
             window.chatwootSDK.run({
                 websiteToken: websiteToken,
                 baseUrl: BASE_URL
             });
+
+            // ✅ Identificar al usuario para que el agente vea su nombre real
+            setTimeout(() => {
+                if (window.$chatwoot && currentUsuario) {
+                    window.$chatwoot.setUser(currentUsuario, {
+                        name: currentUsuario,
+                        // Podés agregar más datos si querés:
+                        // email: currentUsuario + "@nucky.app",
+                        // avatar_url: "https://...",
+                    });
+                    console.log("%c[Chatwoot] Usuario identificado:", "color:#22c55e", currentUsuario);
+                }
+            }, 1800);
         };
     })(document, "script");
 }
-
+    
 // Función para abrir el chat
 function abrirChatwoot() {
     if (window.$chatwoot) {
@@ -1251,7 +1264,7 @@ function abrirChatwoot() {
         inicializarChatwoot(chatwootTokenActual);
         setTimeout(() => {
             if (window.$chatwoot) window.$chatwoot.toggle("open");
-        }, 1800);
+        }, 2000);
     } else {
         alert("No se pudo conectar con el soporte en este momento.");
     }
