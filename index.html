@@ -1108,7 +1108,7 @@
         }
     }
 
-  // ==================== LÓGICA DE INSTALACIÓN DE APP (LIMPIO) ====================
+// ==================== LÓGICA DE INSTALACIÓN DE APP (LIMPIO) ====================
 
 let deferredPrompt = null;
 
@@ -1116,16 +1116,16 @@ let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    
+
     const installBtn = document.getElementById('install-btn');
     if (installBtn) installBtn.style.display = 'flex';
 });
 
 // Ocultar botón si ya está instalada
 function checkIfAppIsInstalled() {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
                          window.navigator.standalone === true;
-    
+
     const installBtn = document.getElementById('install-btn');
     if (isStandalone && installBtn) {
         installBtn.style.display = 'none';
@@ -1163,13 +1163,14 @@ window.addEventListener('appinstalled', () => {
     if (installBtn) installBtn.style.display = 'none';
 });
 
-    function showInstallIOSModal() {
-        document.getElementById('modal-install-ios').style.display = 'flex';
-    }
+// ==================== FUNCIONES MODAL iOS ====================
+function showInstallIOSModal() {
+    document.getElementById('modal-install-ios').style.display = 'flex';
+}
 
-    function hideInstallIOSModal() {
-        document.getElementById('modal-install-ios').style.display = 'none';
-    }
+function hideInstallIOSModal() {
+    document.getElementById('modal-install-ios').style.display = 'none';
+}
 
     async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
