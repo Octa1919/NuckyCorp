@@ -1210,19 +1210,22 @@ function isAppInstalled() {
            window.navigator.standalone === true;
 }
 
-// ==================== CHATWOOT DINÁMICO POR SUSCRIPTOR (VERSIÓN ROBUSTA) ====================
+// ==================== CHATWOOT DINÁMICO POR SUSCRIPTOR (VERSIÓN CON ID) ====================
 let chatwootTokenActual = null;
+let chatwootIdentificado = false;
 
 function inicializarChatwoot(websiteToken) {
-    if (!websiteToken) return;
+    if (!websiteToken || !currentUsuario) return;
 
-    // Evitar reinicializar innecesariamente
-    if (chatwootTokenActual === websiteToken) return;
+    // Evitar reinicializaciones innecesarias
+    if (chatwootTokenActual === websiteToken && chatwootIdentificado) return;
     chatwootTokenActual = websiteToken;
 
     if (window.$chatwoot) {
         try { window.$chatwoot.reset(); } catch(e) {}
     }
+
+    chatwootIdentificado = false;
 
     (function(d,t) {
         var BASE_URL = "https://app.chatwoot.com";
@@ -1237,23 +1240,42 @@ function inicializarChatwoot(websiteToken) {
                 baseUrl: BASE_URL
             });
 
-            // Usamos el evento oficial + reintentos
-            const identificar = () => {
-                if (window.$chatwoot && currentUsuario) {
-                    window.$chatwoot.setUser(currentUsuario, {
-                        name: currentUsuario,
-                        identifier: currentUsuario
-                    });
-                    console.log("%c[Chatwoot] Usuario identificado:", "color:#22c55e", currentUsuario);
+            // Usamos el evento oficial + reintentos agresivos
+            const intentarIdentificar = async () => {
+                if (!window.$chatwoot || chatwootIdentificado) return;
+
+                try {
+                    // Obtenemos el ID numérico del usuario desde Supabase
+                    const { data: userData } = await _supabase
+                        .from('usuarios')
+                        .select('id')
+                        .eq('username', currentUsuario)
+                        .eq('subscriber_id', currentSubscriberId)
+                        .single();
+
+                    if (userData && userData.id) {
+                        const identifier = `user_${userData.id}`; // Ej: user_12345
+
+                        window.$chatwoot.setUser(identifier, {
+                            name: currentUsuario,
+                            identifier: identifier
+                        });
+
+                        chatwootIdentificado = true;
+                        console.log("%c[Chatwoot] Usuario identificado con ID:", "color:#22c55e", identifier);
+                    }
+                } catch (err) {
+                    console.warn("[Chatwoot] Error al identificar:", err);
                 }
             };
 
-            // 1. Con el evento oficial (más confiable)
-            window.addEventListener("chatwoot:ready", identificar, { once: true });
+            // 1. Con el evento oficial
+            window.addEventListener("chatwoot:ready", intentarIdentificar, { once: true });
 
-            // 2. Respaldo por si el evento no se dispara
-            setTimeout(identificar, 1800);
-            setTimeout(identificar, 3500);
+            // 2. Reintentos por si el evento falla
+            setTimeout(intentarIdentificar, 1500);
+            setTimeout(intentarIdentificar, 3000);
+            setTimeout(intentarIdentificar, 5000);
         };
     })(document, "script");
 }
