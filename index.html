@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nucky - App Jugadores</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <!-- Confeti para Ruleta Dorada -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
@@ -1210,22 +1211,20 @@ function isAppInstalled() {
            window.navigator.standalone === true;
 }
 
-// ==================== CHATWOOT DINÁMICO POR SUSCRIPTOR (VERSIÓN CON ID) ====================
+// ==================== CHATWOOT DINÁMICO POR SUSCRIPTOR (CON HMAC) ====================
 let chatwootTokenActual = null;
-let chatwootIdentificado = false;
+const CHATWOOT_HMAC_SECRET = "whhBfYUr6KmXYFR9jaqrqte7"; // ← Podés cambiar esta clave
 
 function inicializarChatwoot(websiteToken) {
     if (!websiteToken || !currentUsuario) return;
 
-    // Evitar reinicializaciones innecesarias
-    if (chatwootTokenActual === websiteToken && chatwootIdentificado) return;
+    // Evitar reinicializar innecesariamente
+    if (chatwootTokenActual === websiteToken) return;
     chatwootTokenActual = websiteToken;
 
     if (window.$chatwoot) {
         try { window.$chatwoot.reset(); } catch(e) {}
     }
-
-    chatwootIdentificado = false;
 
     (function(d,t) {
         var BASE_URL = "https://app.chatwoot.com";
@@ -1240,42 +1239,30 @@ function inicializarChatwoot(websiteToken) {
                 baseUrl: BASE_URL
             });
 
-            // Usamos el evento oficial + reintentos agresivos
-            const intentarIdentificar = async () => {
-                if (!window.$chatwoot || chatwootIdentificado) return;
+            // Esperamos a que esté listo y luego identificamos
+            const identificar = () => {
+                if (!window.$chatwoot || !currentUsuario) return;
 
                 try {
-                    // Obtenemos el ID numérico del usuario desde Supabase
-                    const { data: userData } = await _supabase
-                        .from('usuarios')
-                        .select('id')
-                        .eq('username', currentUsuario)
-                        .eq('subscriber_id', currentSubscriberId)
-                        .single();
+                    // Generamos el hash HMAC (igual que en tu app personal)
+                    const hash = CryptoJS.HmacSHA256(currentUsuario, CHATWOOT_HMAC_SECRET).toString();
 
-                    if (userData && userData.id) {
-                        const identifier = `user_${userData.id}`; // Ej: user_12345
+                    window.$chatwoot.setUser(currentUsuario, {
+                        identifier: currentUsuario,
+                        identifier_hash: hash,
+                        name: currentUsuario
+                    });
 
-                        window.$chatwoot.setUser(identifier, {
-                            name: currentUsuario,
-                            identifier: identifier
-                        });
-
-                        chatwootIdentificado = true;
-                        console.log("%c[Chatwoot] Usuario identificado con ID:", "color:#22c55e", identifier);
-                    }
+                    console.log("%c[Chatwoot] Usuario identificado con HMAC:", "color:#22c55e", currentUsuario);
                 } catch (err) {
-                    console.warn("[Chatwoot] Error al identificar:", err);
+                    console.error("[Chatwoot] Error en identificación:", err);
                 }
             };
 
-            // 1. Con el evento oficial
-            window.addEventListener("chatwoot:ready", intentarIdentificar, { once: true });
-
-            // 2. Reintentos por si el evento falla
-            setTimeout(intentarIdentificar, 1500);
-            setTimeout(intentarIdentificar, 3000);
-            setTimeout(intentarIdentificar, 5000);
+            // Usamos el evento oficial + reintentos
+            window.addEventListener("chatwoot:ready", identificar, { once: true });
+            setTimeout(identificar, 1800);
+            setTimeout(identificar, 3500);
         };
     })(document, "script");
 }
@@ -1289,7 +1276,7 @@ function abrirChatwoot() {
             if (window.$chatwoot) window.$chatwoot.toggle("open");
         }, 2800);
     } else {
-        alert("No se pudo conectar con el soporte.");
+        alert("No se pudo conectar con el soporte en este momento.");
     }
 }
     
