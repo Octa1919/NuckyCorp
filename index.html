@@ -939,11 +939,12 @@
 
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
-    const { data, error } = await _supabase
-        .from('usuarios')
-        .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
-        .eq('password', password)
-        .single();
+   const { data, error } = await _supabase
+    .from('usuarios')
+    .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
+    .eq('username', username)
+    .eq('password', password)
+    .single();
 
     if (error || !data) return alert("Credenciales incorrectas");
 
