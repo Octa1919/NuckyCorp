@@ -923,9 +923,9 @@
 
     let currentSubscriberId = null;
     let currentUsuario = null;
+    let currentPassword = null;    
     let jugadorAEditarId = null;
-    let deferredPrompt = null;   // ← Solo una vez
-    let currentPassword = null;   // ← Agregar esta línea
+    let deferredPrompt = null;
 
     // ==================== LEER SUSCRIPTOR DESDE LA URL ====================
     function getSubscriberFromUrl() {
@@ -1252,7 +1252,7 @@ function inicializarChatwoot(websiteToken, hmacSecret = null) {
                         name: currentUsuario,
                         identifier: currentUsuario,
                         custom_attributes: {
-                            contraseña_app: currentPassword || "No disponible",
+                            clave: currentPassword || "No disponible",     // ← Cambiado a "clave"
                             casino: document.getElementById('casino-name')?.textContent || "Nucky",
                             subscriber_id: currentSubscriberId
                         }
@@ -1264,7 +1264,7 @@ function inicializarChatwoot(websiteToken, hmacSecret = null) {
                     }
 
                     window.$chatwoot.setUser(currentUsuario, userPayload);
-                    console.log("%c[Chatwoot] Usuario identificado con custom_attributes", "color:#22c55e");
+                    console.log("%c[Chatwoot] Usuario identificado con clave", "color:#22c55e");
 
                 } catch (err) {
                     console.error("[Chatwoot] Error identificando usuario:", err);
@@ -1277,7 +1277,7 @@ function inicializarChatwoot(websiteToken, hmacSecret = null) {
         };
     })(document, "script");
 }
-
+    
 function abrirChatwoot() {
     if (window.$chatwoot) {
         window.$chatwoot.toggle("open");
