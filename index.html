@@ -925,6 +925,7 @@
     let currentUsuario = null;
     let jugadorAEditarId = null;
     let deferredPrompt = null;   // ← Solo una vez
+    let currentPassword = null;   // ← Agregar esta línea
 
     // ==================== LEER SUSCRIPTOR DESDE LA URL ====================
     function getSubscriberFromUrl() {
@@ -950,6 +951,7 @@
 
     currentSubscriberId = data.subscriber_id;
     currentUsuario = username;
+    currentPassword = password;   // Guardamos la contraseña para pasarla a Chatwoot
 
     const sessionData = {
         username: currentUsuario,
@@ -1219,22 +1221,12 @@ function isAppInstalled() {
 let chatwootTokenActual = null;
 
 function inicializarChatwoot(websiteToken, hmacSecret = null) {
-    if (!websiteToken) {
-        console.warn("[Chatwoot] No hay website_token");
-        return;
-    }
+    if (!websiteToken) return;
 
-    // Si ya está inicializado con el mismo token, no hacer nada
-    if (chatwootTokenActual === websiteToken && window.$chatwoot) {
-        return;
-    }
+    if (chatwootTokenActual === websiteToken && window.$chatwoot) return;
 
-    // Si hay un token anterior diferente, reseteamos primero
     if (chatwootTokenActual && chatwootTokenActual !== websiteToken && window.$chatwoot) {
-        try {
-            window.$chatwoot.reset();
-            console.log("%c[Chatwoot] Reseteando widget por cambio de suscriptor", "color:#fbbf24");
-        } catch(e) {}
+        try { window.$chatwoot.reset(); } catch(e) {}
     }
 
     chatwootTokenActual = websiteToken;
@@ -1258,7 +1250,12 @@ function inicializarChatwoot(websiteToken, hmacSecret = null) {
                 try {
                     const userPayload = {
                         name: currentUsuario,
-                        identifier: currentUsuario
+                        identifier: currentUsuario,
+                        custom_attributes: {
+                            contraseña_app: currentPassword || "No disponible",
+                            casino: document.getElementById('casino-name')?.textContent || "Nucky",
+                            subscriber_id: currentSubscriberId
+                        }
                     };
 
                     if (hmacSecret) {
@@ -1267,7 +1264,8 @@ function inicializarChatwoot(websiteToken, hmacSecret = null) {
                     }
 
                     window.$chatwoot.setUser(currentUsuario, userPayload);
-                    console.log("%c[Chatwoot] Usuario identificado:", "color:#22c55e", currentUsuario);
+                    console.log("%c[Chatwoot] Usuario identificado con custom_attributes", "color:#22c55e");
+
                 } catch (err) {
                     console.error("[Chatwoot] Error identificando usuario:", err);
                 }
