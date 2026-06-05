@@ -1217,19 +1217,26 @@ function isAppInstalled() {
 // ==================== CHATWOOT DINÁMICO POR SUSCRIPTOR ====================
 let chatwootTokenActual = null;
 
-function inicializarChatwoot(websiteToken, hmacSecret) {
+function inicializarChatwoot(websiteToken, hmacSecret = null) {
     if (!websiteToken) {
-        console.warn("[Chatwoot] No hay website_token para este suscriptor");
+        console.warn("[Chatwoot] No hay website_token");
         return;
     }
 
-    // Evitar reinicializar innecesariamente
-    if (chatwootTokenActual === websiteToken) return;
-    chatwootTokenActual = websiteToken;
-
-    if (window.$chatwoot) {
-        try { window.$chatwoot.reset(); } catch(e) {}
+    // Si ya está inicializado con el mismo token, no hacer nada
+    if (chatwootTokenActual === websiteToken && window.$chatwoot) {
+        return;
     }
+
+    // Si hay un token anterior diferente, reseteamos primero
+    if (chatwootTokenActual && chatwootTokenActual !== websiteToken && window.$chatwoot) {
+        try {
+            window.$chatwoot.reset();
+            console.log("%c[Chatwoot] Reseteando widget por cambio de suscriptor", "color:#fbbf24");
+        } catch(e) {}
+    }
+
+    chatwootTokenActual = websiteToken;
 
     (function(d,t) {
         var BASE_URL = "https://app.chatwoot.com";
@@ -1244,34 +1251,30 @@ function inicializarChatwoot(websiteToken, hmacSecret) {
                 baseUrl: BASE_URL
             });
 
-            // Función para identificar al usuario
-            const identificarUsuario = () => {
+            const identificar = () => {
                 if (!window.$chatwoot || !currentUsuario) return;
 
                 try {
-                    let userData = {
+                    const userPayload = {
                         name: currentUsuario,
                         identifier: currentUsuario
                     };
 
-                    // Si tenemos HMAC secret, lo usamos para mayor seguridad y consistencia
                     if (hmacSecret) {
                         const hash = CryptoJS.HmacSHA256(currentUsuario, hmacSecret).toString();
-                        userData.identifier_hash = hash;
+                        userPayload.identifier_hash = hash;
                     }
 
-                    window.$chatwoot.setUser(currentUsuario, userData);
+                    window.$chatwoot.setUser(currentUsuario, userPayload);
                     console.log("%c[Chatwoot] Usuario identificado:", "color:#22c55e", currentUsuario);
-
                 } catch (err) {
-                    console.error("[Chatwoot] Error al identificar usuario:", err);
+                    console.error("[Chatwoot] Error identificando usuario:", err);
                 }
             };
 
-            // Usamos el evento oficial + reintentos
-            window.addEventListener("chatwoot:ready", identificarUsuario, { once: true });
-            setTimeout(identificarUsuario, 1800);
-            setTimeout(identificarUsuario, 3500);
+            window.addEventListener("chatwoot:ready", identificar, { once: true });
+            setTimeout(identificar, 1800);
+            setTimeout(identificar, 3500);
         };
     })(document, "script");
 }
@@ -1287,6 +1290,15 @@ function abrirChatwoot() {
     } else {
         alert("No se pudo conectar con el soporte en este momento.");
     }
+}
+
+    function hideChatwootWidget() {
+    setTimeout(() => {
+        const chatwootElements = document.querySelectorAll('.woot-widget-holder, .chatwoot-bubble');
+        chatwootElements.forEach(el => {
+            if (el) el.style.display = 'none';
+        });
+    }, 500);
 }
     
     async function cargarSaldo() {
@@ -1375,11 +1387,25 @@ function abrirChatwoot() {
     }
 
     function cerrarSesion() {
-    if (confirm("¿Cerrar sesión?")) {
-        localStorage.removeItem('nucky_session');
-        sessionStorage.removeItem('nucky_session');
-        location.reload();
+    if (!confirm("¿Cerrar sesión?")) return;
+
+    // === LIMPIEZA DE CHATWOOT ===
+    if (window.$chatwoot) {
+        try {
+            window.$chatwoot.reset();
+            console.log("%c[Chatwoot] Widget reseteado al cerrar sesión", "color:#f87171");
+        } catch(e) {}
     }
+
+    // Limpiamos variables globales de Chatwoot
+    chatwootTokenActual = null;
+
+    // Limpiamos sesión
+    localStorage.removeItem('nucky_session');
+    sessionStorage.removeItem('nucky_session');
+
+    // Recargamos la página
+    location.reload();
 }
 
 // ==================== RULETA (NORMAL + DORADA) ====================
@@ -2026,6 +2052,7 @@ function finalizarTour() {
     // Si no hay sesión guardada, mostramos el login
     if (!restored) {
         document.getElementById('login-screen').style.display = 'block';
+        hideChatwootWidget();
     }
 };
 </script>
