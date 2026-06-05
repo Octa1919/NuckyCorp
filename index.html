@@ -1210,23 +1210,16 @@ function isAppInstalled() {
            window.navigator.standalone === true;
 }
 
-// ==================== CHATWOOT DINÁMICO POR SUSCRIPTOR (VERSIÓN FINAL) ====================
+// ==================== CHATWOOT DINÁMICO POR SUSCRIPTOR (VERSIÓN ROBUSTA) ====================
 let chatwootTokenActual = null;
 
 function inicializarChatwoot(websiteToken) {
-    if (!websiteToken) {
-        console.warn("[Chatwoot] No hay website_token para este suscriptor");
-        return;
-    }
+    if (!websiteToken) return;
 
-    // Si ya está inicializado con el mismo token, no hacer nada
-    if (chatwootTokenActual === websiteToken && window.$chatwoot) {
-        return;
-    }
-
+    // Evitar reinicializar innecesariamente
+    if (chatwootTokenActual === websiteToken) return;
     chatwootTokenActual = websiteToken;
 
-    // Resetear instancia anterior
     if (window.$chatwoot) {
         try { window.$chatwoot.reset(); } catch(e) {}
     }
@@ -1244,36 +1237,27 @@ function inicializarChatwoot(websiteToken) {
                 baseUrl: BASE_URL
             });
 
-            // Esperamos a que Chatwoot esté listo usando su propio evento
-            window.addEventListener("chatwoot:ready", function() {
-                identificarUsuarioEnChatwoot();
-            }, { once: true });
+            // Usamos el evento oficial + reintentos
+            const identificar = () => {
+                if (window.$chatwoot && currentUsuario) {
+                    window.$chatwoot.setUser(currentUsuario, {
+                        name: currentUsuario,
+                        identifier: currentUsuario
+                    });
+                    console.log("%c[Chatwoot] Usuario identificado:", "color:#22c55e", currentUsuario);
+                }
+            };
 
-            // Por si el evento no se dispara, intentamos también con delay
-            setTimeout(() => {
-                identificarUsuarioEnChatwoot();
-            }, 2500);
+            // 1. Con el evento oficial (más confiable)
+            window.addEventListener("chatwoot:ready", identificar, { once: true });
+
+            // 2. Respaldo por si el evento no se dispara
+            setTimeout(identificar, 1800);
+            setTimeout(identificar, 3500);
         };
     })(document, "script");
 }
 
-// Función separada para identificar al usuario
-function identificarUsuarioEnChatwoot() {
-    if (!window.$chatwoot || !currentUsuario) return;
-
-    try {
-        window.$chatwoot.setUser(currentUsuario, {
-            name: currentUsuario,
-            identifier: currentUsuario
-        });
-
-        console.log("%c[Chatwoot] ✅ Usuario identificado correctamente:", "color:#22c55e", currentUsuario);
-    } catch (error) {
-        console.warn("[Chatwoot] Error al identificar usuario:", error);
-    }
-}
-
-// Función para abrir el chat
 function abrirChatwoot() {
     if (window.$chatwoot) {
         window.$chatwoot.toggle("open");
@@ -1281,9 +1265,9 @@ function abrirChatwoot() {
         inicializarChatwoot(chatwootTokenActual);
         setTimeout(() => {
             if (window.$chatwoot) window.$chatwoot.toggle("open");
-        }, 2500);
+        }, 2800);
     } else {
-        alert("No se pudo conectar con el soporte en este momento.");
+        alert("No se pudo conectar con el soporte.");
     }
 }
     
