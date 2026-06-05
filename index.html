@@ -941,7 +941,7 @@
 
     const { data, error } = await _supabase
         .from('usuarios')
-        .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token)')        .eq('username', username)
+        .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
         .eq('password', password)
         .single();
 
@@ -1868,7 +1868,7 @@ async function restoreSession() {
 
         const { data: subData, error } = await _supabase
             .from('suscriptores')
-            .select('id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token')
+            .select('id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret')
             .eq('id', currentSubscriberId)
             .single();
 
