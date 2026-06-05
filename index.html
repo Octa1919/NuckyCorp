@@ -971,7 +971,10 @@
 
 // Inicializar Chatwoot con el token del suscriptor
 if (data.suscriptores.chatwoot_website_token) {
-    inicializarChatwoot(data.suscriptores.chatwoot_website_token);
+    inicializarChatwoot(
+        data.suscriptores.chatwoot_website_token, 
+        data.suscriptores.chatwoot_hmac_secret
+    );
 }
         
     // ==================== TOUR: Solo después de iniciar sesión ====================
@@ -1211,12 +1214,14 @@ function isAppInstalled() {
            window.navigator.standalone === true;
 }
 
-// ==================== CHATWOOT DINÁMICO POR SUSCRIPTOR (CON HMAC) ====================
+// ==================== CHATWOOT DINÁMICO POR SUSCRIPTOR ====================
 let chatwootTokenActual = null;
-const CHATWOOT_HMAC_SECRET = "FPEqtQkSwLdCcuhGBna7mD4c"; // ← Podés cambiar esta clave
 
-function inicializarChatwoot(websiteToken) {
-    if (!websiteToken || !currentUsuario) return;
+function inicializarChatwoot(websiteToken, hmacSecret) {
+    if (!websiteToken) {
+        console.warn("[Chatwoot] No hay website_token para este suscriptor");
+        return;
+    }
 
     // Evitar reinicializar innecesariamente
     if (chatwootTokenActual === websiteToken) return;
@@ -1239,30 +1244,34 @@ function inicializarChatwoot(websiteToken) {
                 baseUrl: BASE_URL
             });
 
-            // Esperamos a que esté listo y luego identificamos
-            const identificar = () => {
+            // Función para identificar al usuario
+            const identificarUsuario = () => {
                 if (!window.$chatwoot || !currentUsuario) return;
 
                 try {
-                    // Generamos el hash HMAC (igual que en tu app personal)
-                    const hash = CryptoJS.HmacSHA256(currentUsuario, CHATWOOT_HMAC_SECRET).toString();
+                    let userData = {
+                        name: currentUsuario,
+                        identifier: currentUsuario
+                    };
 
-                    window.$chatwoot.setUser(currentUsuario, {
-                        identifier: currentUsuario,
-                        identifier_hash: hash,
-                        name: currentUsuario
-                    });
+                    // Si tenemos HMAC secret, lo usamos para mayor seguridad y consistencia
+                    if (hmacSecret) {
+                        const hash = CryptoJS.HmacSHA256(currentUsuario, hmacSecret).toString();
+                        userData.identifier_hash = hash;
+                    }
 
-                    console.log("%c[Chatwoot] Usuario identificado con HMAC:", "color:#22c55e", currentUsuario);
+                    window.$chatwoot.setUser(currentUsuario, userData);
+                    console.log("%c[Chatwoot] Usuario identificado:", "color:#22c55e", currentUsuario);
+
                 } catch (err) {
-                    console.error("[Chatwoot] Error en identificación:", err);
+                    console.error("[Chatwoot] Error al identificar usuario:", err);
                 }
             };
 
             // Usamos el evento oficial + reintentos
-            window.addEventListener("chatwoot:ready", identificar, { once: true });
-            setTimeout(identificar, 1800);
-            setTimeout(identificar, 3500);
+            window.addEventListener("chatwoot:ready", identificarUsuario, { once: true });
+            setTimeout(identificarUsuario, 1800);
+            setTimeout(identificarUsuario, 3500);
         };
     })(document, "script");
 }
@@ -1851,7 +1860,10 @@ async function restoreSession() {
 
         // ✅ Inicializar Chatwoot (esto estaba mal ubicado)
         if (subData.chatwoot_website_token) {
-            inicializarChatwoot(subData.chatwoot_website_token);
+            inicializarChatwoot(
+                subData.chatwoot_website_token, 
+                subData.chatwoot_hmac_secret
+            );
         }
 
         return true;
