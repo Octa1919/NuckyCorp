@@ -1048,16 +1048,16 @@ if (data.suscriptores.chatwoot_website_token) {
     );
 }
         
-    // ==================== TOUR: Solo después de iniciar sesión ====================
+    // ==================== CONFIGURAR ONE SIGNAL ====================
     setTimeout(() => {
-        iniciarTour(false); // false = solo si es la primera vez
+        configurarOneSignalUsuario();
+    }, 1200);
+
+    // ==================== TOUR ====================
+    setTimeout(() => {
+        iniciarTour(false);
     }, 1800);
 }
-    // ==================== CONFIGURAR ONE SIGNAL ====================
-setTimeout(() => {
-    configurarOneSignalUsuario();
-}, 800);
-
     async function cargarDatosSuscriptor(sub) {
         document.getElementById('casino-name').textContent = sub.nombre_casino || "Nucky";
         document.getElementById('bienvenida').innerHTML = `¡Hola <strong>${currentUsuario}</strong>!`;
@@ -2044,6 +2044,11 @@ async function restoreSession() {
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(subData);
+
+        // Configurar OneSignal al restaurar sesión
+        setTimeout(() => {
+            configurarOneSignalUsuario();
+        }, 1200);
 
         // ✅ Inicializar Chatwoot (esto estaba mal ubicado)
         if (subData.chatwoot_website_token) {
