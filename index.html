@@ -1979,39 +1979,39 @@ function instalarDesdeModalRuleta() {
     instalarApp(); // Reutiliza la función que ya tenemos
 }
 
-    // ==================== ONE SIGNAL - CONFIGURAR USUARIO ====================
+// ==================== ONE SIGNAL - CONFIGURAR USUARIO ====================
 async function configurarOneSignalUsuario() {
-    if (typeof OneSignal === 'undefined' || !currentUsuario || !currentSubscriberId) {
-        console.warn("OneSignal no está listo o falta información del usuario");
+    if (typeof OneSignal === 'undefined') {
+        console.warn("OneSignal aún no está cargado");
+        return;
+    }
+
+    if (!currentUsuario || !currentSubscriberId) {
+        console.warn("Falta usuario o subscriber_id para configurar OneSignal");
         return;
     }
 
     try {
-        // 1. Login con External User ID (el username del jugador)
         await OneSignal.login(currentUsuario);
-        console.log("✅ OneSignal: Usuario logueado →", currentUsuario);
+        console.log("✅ OneSignal: Usuario identificado →", currentUsuario);
 
-        // 2. Asignar Tags para segmentación por suscriptor
         await OneSignal.User.addTags({
             subscriber_id: currentSubscriberId,
             app_type: "saas"
         });
-        console.log("✅ OneSignal: Tags asignados → subscriber_id:", currentSubscriberId);
+        console.log("✅ OneSignal: Tags asignados correctamente");
+
+        // Intentar mostrar el prompt nativo
+        setTimeout(() => {
+            OneSignal.User.pushSubscription.optIn().catch(() => {
+                console.log("El usuario ya tiene permiso o rechazó las notificaciones");
+            });
+        }, 1800);
 
     } catch (error) {
         console.error("Error configurando OneSignal:", error);
     }
 }
-
-    // Mostrar prompt nativo (solo si aún no aceptó)
-setTimeout(async () => {
-    try {
-        const permission = await OneSignal.User.pushSubscription.optIn();
-        console.log("Estado de permiso de notificaciones:", permission);
-    } catch (e) {
-        console.log("El usuario ya tiene permiso o rechazó el prompt");
-    }
-}, 2500);
     
     // ==================== RESTAURAR SESIÓN ====================
 async function restoreSession() {
