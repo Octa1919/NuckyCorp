@@ -593,6 +593,25 @@
             </div>
         </div>
 
+    <!-- MODAL CRONOGRAMA - APP JUGADORES -->
+<div id="modal-cronograma-jugador" class="modal" style="display:none; z-index:10000;">
+    <div style="background:#1e2937; max-width:420px; width:94%; border-radius:24px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
+        
+        <h2 style="text-align:center; color:#e0e7ff; margin-bottom:20px;">📅 Cronograma de Pagos</h2>
+
+        <!-- Contenedor de la imagen -->
+        <div id="cronograma-imagen-container" 
+             style="background:#0f172a; border-radius:16px; padding:12px; min-height:220px; display:flex; align-items:center; justify-content:center; margin-bottom:24px; border:2px dashed #475569;">
+            <!-- Aquí se carga la imagen -->
+        </div>
+
+        <button onclick="hideCronogramaJugadorModal()" 
+                style="width:100%; padding:16px; background:#334155; color:white; border:none; border-radius:14px; font-weight:600; font-size:1.1rem;">
+            Cerrar
+        </button>
+    </div>
+</div>
+
     <!-- Modales -->
     <div id="modal-sala-no-disponible" class="modal" style="display:none;">
         <div style="background:#1e2937; max-width:380px; width:90%; border-radius:24px; padding:40px 30px; color:white; text-align:center;">
@@ -1380,10 +1399,47 @@ function abrirChatwoot() {
         showPerfilModal();
     }
 
-    function abrirCronograma() {
-        toggleHamburgerMenu();
-        alert("📅 Cronograma - Se desarrollará más adelante");
+   // ==================== CRONOGRAMA - APP JUGADORES ====================
+async function abrirCronograma() {
+    toggleHamburgerMenu(); // Cierra el menú
+
+    const container = document.getElementById('cronograma-imagen-container');
+    container.innerHTML = `<p style="color:#64748b; text-align:center;">Cargando cronograma...</p>`;
+
+    document.getElementById('modal-cronograma-jugador').style.display = 'flex';
+
+    if (!currentSubscriberId) {
+        container.innerHTML = `<p style="color:#f87171; text-align:center;">Error: No se detectó el suscriptor.</p>`;
+        return;
     }
+
+    const { data, error } = await _supabase
+        .from('suscriptores')
+        .select('cronograma_url')
+        .eq('id', currentSubscriberId)
+        .single();
+
+    if (error || !data || !data.cronograma_url) {
+        container.innerHTML = `
+            <div style="text-align:center; padding:30px 10px;">
+                <i class="fas fa-image" style="font-size:3rem; color:#475569; margin-bottom:16px;"></i>
+                <p style="color:#94a3b8; font-size:1.1rem;">El suscriptor aún no subió el cronograma de pagos.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Mostrar la imagen
+    container.innerHTML = `
+        <img src="${data.cronograma_url}" 
+             style="max-width:100%; max-height:420px; border-radius:12px; object-fit:contain;"
+             onerror="this.parentElement.innerHTML='<p style=color:#f87171; text-align:center; padding:40px 10px;'>No se pudo cargar la imagen del cronograma.</p>'">
+    `;
+}
+
+function hideCronogramaJugadorModal() {
+    document.getElementById('modal-cronograma-jugador').style.display = 'none';
+}
 
     function cerrarSesion() {
     if (!confirm("¿Cerrar sesión?")) return;
