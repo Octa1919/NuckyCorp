@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <style>
         :root {
             --primary: #a855f7;
@@ -975,6 +976,18 @@
     const SUPABASE_URL = "https://vevptiayzleigkjtmyhc.supabase.co";
     const SUPABASE_KEY = "sb_publishable_VBu6hcwr-NKDyxcOc60wDQ_RFDkKQjd";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // ==================== ONE SIGNAL ====================
+    const ONESIGNAL_APP_ID = "f1d17c3e-a156-4a64-a288-c1a4f04f686d";
+
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+            appId: ONESIGNAL_APP_ID,
+            allowLocalhostAsSecureOrigin: true,
+            notifyButton: { enable: false } // Desactivamos el botón flotante por ahora
+        });
+        console.log("✅ OneSignal SDK inicializado");
+    });
 
     let currentSubscriberId = null;
     let currentUsuario = null;
@@ -1040,6 +1053,10 @@ if (data.suscriptores.chatwoot_website_token) {
         iniciarTour(false); // false = solo si es la primera vez
     }, 1800);
 }
+    // ==================== CONFIGURAR ONE SIGNAL ====================
+setTimeout(() => {
+    configurarOneSignalUsuario();
+}, 800);
 
     async function cargarDatosSuscriptor(sub) {
         document.getElementById('casino-name').textContent = sub.nombre_casino || "Nucky";
@@ -1962,6 +1979,40 @@ function instalarDesdeModalRuleta() {
     instalarApp(); // Reutiliza la función que ya tenemos
 }
 
+    // ==================== ONE SIGNAL - CONFIGURAR USUARIO ====================
+async function configurarOneSignalUsuario() {
+    if (typeof OneSignal === 'undefined' || !currentUsuario || !currentSubscriberId) {
+        console.warn("OneSignal no está listo o falta información del usuario");
+        return;
+    }
+
+    try {
+        // 1. Login con External User ID (el username del jugador)
+        await OneSignal.login(currentUsuario);
+        console.log("✅ OneSignal: Usuario logueado →", currentUsuario);
+
+        // 2. Asignar Tags para segmentación por suscriptor
+        await OneSignal.User.addTags({
+            subscriber_id: currentSubscriberId,
+            app_type: "saas"
+        });
+        console.log("✅ OneSignal: Tags asignados → subscriber_id:", currentSubscriberId);
+
+    } catch (error) {
+        console.error("Error configurando OneSignal:", error);
+    }
+}
+
+    // Mostrar prompt nativo (solo si aún no aceptó)
+setTimeout(async () => {
+    try {
+        const permission = await OneSignal.User.pushSubscription.optIn();
+        console.log("Estado de permiso de notificaciones:", permission);
+    } catch (e) {
+        console.log("El usuario ya tiene permiso o rechazó el prompt");
+    }
+}, 2500);
+    
     // ==================== RESTAURAR SESIÓN ====================
 async function restoreSession() {
     let savedSession = localStorage.getItem('nucky_session');
