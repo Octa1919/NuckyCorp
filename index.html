@@ -1456,7 +1456,7 @@ async function abrirCronograma() {
 
     const { data, error } = await _supabase
         .from('suscriptores')
-        .select('cronograma_url')
+        .select('cronograma_url, cronograma_updated_at')
         .eq('id', currentSubscriberId)
         .single();
 
@@ -1472,9 +1472,15 @@ async function abrirCronograma() {
         return;
     }
 
-    // Mostrar imagen adaptativa
+    // === CACHE BUSTER ===
+    const cacheBuster = data.cronograma_updated_at 
+        ? `?v=${new Date(data.cronograma_updated_at).getTime()}` 
+        : `?v=${Date.now()}`;
+
+    const imagenUrl = data.cronograma_url + cacheBuster;
+
     container.innerHTML = `
-        <img src="${data.cronograma_url}" 
+        <img src="${imagenUrl}" 
              style="max-width: 100%; 
                     max-height: 100%; 
                     width: auto;
