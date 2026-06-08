@@ -1,0 +1,22 @@
+name: Ruleta Notifications (Scheduled)
+
+on:
+  schedule:
+    # Ejecuta cada 30 minutos
+    - cron: '*/30 * * * *'
+    
+  # Permite ejecutarlo manualmente desde GitHub
+  workflow_dispatch:
+
+jobs:
+  trigger-ruleta-notifications:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Supabase Edge Function - Ruleta Notifications
+        run: |
+          curl -X POST \
+            'https://vevptiayzleigkjtmyhc.supabase.co/functions/v1/ruleta-notifications' \
+            -H 'apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}' \
+            -H 'Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}' \
+            -H 'Content-Type: application/json' \
+            -d '{}'
