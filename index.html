@@ -1317,31 +1317,36 @@ function inicializarChatwoot(websiteToken, hmacSecret = null) {
             });
 
             const identificar = () => {
-                if (!window.$chatwoot || !currentUsuario) return;
+    if (!window.$chatwoot || !currentUsuario || !currentSubscriberId) return;
 
-                try {
-                    const userPayload = {
-                        name: currentUsuario,
-                        identifier: currentUsuario,
-                        custom_attributes: {
-                            clave: currentPassword || "No disponible",     // ← Cambiado a "clave"
-                            casino: document.getElementById('casino-name')?.textContent || "Nucky",
-                            subscriber_id: currentSubscriberId
-                        }
-                    };
+    try {
+        // === Identificador compuesto (igual que en OneSignal) ===
+        const chatwootIdentifier = `${currentUsuario}__${currentSubscriberId}`;
 
-                    if (hmacSecret) {
-                        const hash = CryptoJS.HmacSHA256(currentUsuario, hmacSecret).toString();
-                        userPayload.identifier_hash = hash;
-                    }
+        const userPayload = {
+            name: currentUsuario,                    // Nombre real del jugador
+            identifier: chatwootIdentifier,          // Identificador compuesto
+            custom_attributes: {
+                clave: currentPassword || "No disponible",
+                casino: document.getElementById('casino-name')?.textContent || "Nucky",
+                subscriber_id: currentSubscriberId,
+                username: currentUsuario
+            }
+        };
 
-                    window.$chatwoot.setUser(currentUsuario, userPayload);
-                    console.log("%c[Chatwoot] Usuario identificado con clave", "color:#22c55e");
+        if (hmacSecret) {
+            // === HMAC calculado sobre el identificador compuesto ===
+            const hash = CryptoJS.HmacSHA256(chatwootIdentifier, hmacSecret).toString();
+            userPayload.identifier_hash = hash;
+        }
 
-                } catch (err) {
-                    console.error("[Chatwoot] Error identificando usuario:", err);
-                }
-            };
+        window.$chatwoot.setUser(chatwootIdentifier, userPayload);
+        console.log("%c[Chatwoot] Usuario identificado:", "color:#22c55e", chatwootIdentifier);
+
+    } catch (err) {
+        console.error("[Chatwoot] Error identificando usuario:", err);
+    }
+};
 
             window.addEventListener("chatwoot:ready", identificar, { once: true });
             setTimeout(identificar, 1800);
