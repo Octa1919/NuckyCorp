@@ -1981,25 +1981,24 @@ function instalarDesdeModalRuleta() {
 
 // ==================== ONE SIGNAL - CONFIGURAR USUARIO ====================
 async function configurarOneSignalUsuario() {
-    if (typeof OneSignal === 'undefined') {
-        console.warn("OneSignal aún no está cargado");
-        return;
-    }
-
-    if (!currentUsuario || !currentSubscriberId) {
-        console.warn("Falta usuario o subscriber_id para configurar OneSignal");
-        return;
-    }
-
     try {
-        await OneSignal.login(currentUsuario);
-        console.log("✅ OneSignal: Usuario identificado →", currentUsuario);
+        if (typeof OneSignal === "undefined") {
+            console.warn("OneSignal aún no está cargado");
+            return;
+        }
+
+        // === CAMBIO IMPORTANTE ===
+        const externalUserId = `${currentUsuario}__${currentSubscriberId}`;
+
+        await OneSignal.login(externalUserId);
 
         await OneSignal.User.addTags({
             subscriber_id: currentSubscriberId,
+            username: currentUsuario,        // Guardamos el username real como tag
             app_type: "saas"
         });
-        console.log("✅ OneSignal: Tags asignados correctamente");
+
+        console.log("✅ OneSignal configurado correctamente para:", externalUserId);
 
         // Intentar mostrar el prompt nativo
         setTimeout(() => {
@@ -2009,7 +2008,7 @@ async function configurarOneSignalUsuario() {
         }, 1800);
 
     } catch (error) {
-        console.error("Error configurando OneSignal:", error);
+        console.error("Error al configurar OneSignal:", error);
     }
 }
     
