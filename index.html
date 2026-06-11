@@ -1069,21 +1069,23 @@ async function obtenerIP() {
             "https://vevptiayzleigkjtmyhc.supabase.co/functions/v1/get-client-ip"
         );
 
-        if (!response.ok) {
-            console.error("Error en Edge Function:", response.status);
-            return null;
-        }
+        if (!response.ok) throw new Error("Edge Function falló");
 
         const data = await response.json();
-        console.log("IP obtenida desde Edge Function:", data.ip);
         return data.ip || null;
-
     } catch (error) {
-        console.error("Error al llamar a la Edge Function:", error);
-        return null;
+        console.warn("No se pudo obtener IP desde Edge Function, usando fallback...");
+        // Fallback temporal (puedes quitarlo después)
+        try {
+            const fallback = await fetch('https://api.ipify.org?format=json');
+            const data = await fallback.json();
+            return data.ip || null;
+        } catch {
+            return null;
+        }
     }
 }
-
+    
     // ==================== LEER SUSCRIPTOR DESDE LA URL ====================
     function getSubscriberFromUrl() {
         const params = new URLSearchParams(window.location.search);
