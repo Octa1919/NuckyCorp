@@ -1015,6 +1015,18 @@
     let cuentaActiva = true;  
     let suscripcionEstadoCuenta = null;
 
+    // ==================== OBTENER IP DEL CLIENTE ====================
+async function obtenerIP() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch (error) {
+        console.error("Error al obtener IP:", error);
+        return null;
+    }
+}
+
     // ==================== LEER SUSCRIPTOR DESDE LA URL ====================
     function getSubscriberFromUrl() {
         const params = new URLSearchParams(window.location.search);
@@ -1037,7 +1049,6 @@ async function loginJugador() {
             .single();
 
         if (error || !data) {
-            console.error("Error en login:", error);
             return alert("Credenciales incorrectas");
         }
 
@@ -1045,11 +1056,8 @@ async function loginJugador() {
         currentUsuario = username;
         currentPassword = password;
 
-        const sessionData = {
-            username: currentUsuario,
-            subscriber_id: currentSubscriberId
-        };
-
+        // Guardar sesión
+        const sessionData = { username: currentUsuario, subscriber_id: currentSubscriberId };
         if (recordar) {
             localStorage.setItem('nucky_session', JSON.stringify(sessionData));
             sessionStorage.removeItem('nucky_session');
@@ -1058,16 +1066,23 @@ async function loginJugador() {
             localStorage.removeItem('nucky_session');
         }
 
-        // Detectar si es plan premium
+        // === REGISTRAR IP SI NO TIENE ===
+        if (!data.ultima_ip) {
+            const ip = await obtenerIP();
+            if (ip) {
+                await _supabase
+                    .from('usuarios')
+                    .update({ ultima_ip: ip })
+                    .eq('username', username)
+                    .eq('subscriber_id', currentSubscriberId);
+            }
+        }
+
+        // Verificar plan y estado de cuenta
         await detectarPlanPremium();
         await verificarEstadoCuenta();
-        iniciarSuscripcionEstadoCuenta();
-        iniciarSuscripcionPlanJugador();
-        actualizarEstadoBotonRuleta();
 
-        console.log("%c[LOGIN] Usuario:", "color:#22c55e", currentUsuario);
-        console.log("%c[LOGIN] ¿Es Plan Premium?:", "color:#22c55e", esPlanPremium);
-
+        // Mostrar dashboard
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
@@ -1075,16 +1090,14 @@ async function loginJugador() {
         await cargarDatosSuscriptor(data.suscriptores);
 
         if (data.suscriptores?.chatwoot_website_token) {
-            inicializarChatwoot(
-                data.suscriptores.chatwoot_website_token,
-                data.suscriptores.chatwoot_hmac_secret
-            );
+            inicializarChatwoot(data.suscriptores.chatwoot_website_token, data.suscriptores.chatwoot_hmac_secret);
         }
 
     } catch (err) {
-        console.error("Error general en loginJugador():", err);
-        alert("Ocurrió un error al iniciar sesión. Revisá la consola (F12).");
+        console.error("Error en loginJugador():", err);
+        alert("Ocurrió un error al iniciar sesión.");
     }
+
         
     // ==================== CONFIGURAR ONE SIGNAL ====================
     setTimeout(() => {
