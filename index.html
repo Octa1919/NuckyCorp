@@ -996,6 +996,7 @@
     let jugadorAEditarId = null;
     let deferredPrompt = null;
     let esPlanPremium = false;
+    let suscripcionPlanJugador = null;
 
     // ==================== LEER SUSCRIPTOR DESDE LA URL ====================
     function getSubscriberFromUrl() {
@@ -1042,6 +1043,7 @@ async function loginJugador() {
 
         // Detectar si es plan premium
         await detectarPlanPremium();
+        iniciarSuscripcionPlanJugador();
 
         console.log("%c[LOGIN] Usuario:", "color:#22c55e", currentUsuario);
         console.log("%c[LOGIN] ¿Es Plan Premium?:", "color:#22c55e", esPlanPremium);
@@ -1073,6 +1075,37 @@ async function loginJugador() {
     setTimeout(() => {
         iniciarTour(false);
     }, 1800);
+}
+
+    // ==================== SUSCRIPCIÓN EN TIEMPO REAL AL PLAN (JUGADOR) ====================
+function iniciarSuscripcionPlanJugador() {
+    if (suscripcionPlanJugador) {
+        _supabase.removeChannel(suscripcionPlanJugador);
+    }
+
+    suscripcionPlanJugador = _supabase
+        .channel('plan-jugador-' + currentSubscriberId)
+        .on(
+            'postgres_changes',
+            {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'suscriptores_users',
+                filter: `subscriber_id=eq.${currentSubscriberId}`
+            },
+            async (payload) => {
+                console.log('%c[REALTIME] Cambio de plan detectado', 'color:#f59e0b', payload);
+
+                // Si cambió el plan_id
+                if (payload.new.plan_id !== payload.old.plan_id) {
+                    await detectarPlanPremium();
+
+                    // Mostramos un aviso lindo al jugador
+                    mostrarAvisoPlanActualizadoJugador();
+                }
+            }
+        )
+        .subscribe();
 }
     
     async function cargarDatosSuscriptor(sub) {
@@ -1579,6 +1612,10 @@ function hideCronogramaJugadorModal() {
             window.$chatwoot.reset();
             console.log("%c[Chatwoot] Widget reseteado al cerrar sesión", "color:#f87171");
         } catch(e) {}
+    }
+    if (suscripcionPlanJugador) {
+        _supabase.removeChannel(suscripcionPlanJugador);
+        suscripcionPlanJugador = null;
     }
 
     // Limpiamos variables globales de Chatwoot
@@ -2109,6 +2146,7 @@ async function restoreSession() {
 
         await cargarDatosSuscriptor(subData);
         await detectarPlanPremium();
+        iniciarSuscripcionPlanJugador();
 
         // Configurar OneSignal al restaurar sesión
         setTimeout(() => {
@@ -2272,6 +2310,29 @@ function finalizarTour() {
     if (popover) popover.remove();
 
     localStorage.setItem('nucky_jugador_tour_completado', 'true');
+}
+
+    function mostrarAvisoPlanActualizadoJugador() {
+    const aviso = document.createElement('div');
+    aviso.style.cssText = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1e2937; color:#e5e7eb; padding:16px 24px; border-radius:14px; border:1px solid #334155; box-shadow:0 10px 15px -3px rgb(0 0 0 / 0.3); z-index:99999; max-width:92%; text-align:center;';
+    
+    aviso.innerHTML = `
+        <div style="display:flex; align-items:center; gap:12px; justify-content:center;">
+            <i class="fas fa-sync-alt" style="color:#22d3ee; font-size:1.3rem;"></i>
+            <div>
+                <strong style="color:#22d3ee;">¡Tu plan fue actualizado!</strong><br>
+                <span style="font-size:0.95rem;">Las funciones Premium se actualizaron automáticamente.</span>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(aviso);
+
+    setTimeout(() => {
+        aviso.style.transition = 'all 0.4s ease';
+        aviso.style.opacity = '0';
+        setTimeout(() => aviso.remove(), 400);
+    }, 4200);
 }
     
     window.onload = async () => {
