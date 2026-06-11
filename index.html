@@ -1185,7 +1185,7 @@ function iniciarSuscripcionPlanJugador() {
         .subscribe();
 }
 
-    // ==================== SUSCRIPCIÓN EN TIEMPO REAL AL ESTADO DE LA CUENTA ====================
+// ==================== SUSCRIPCIÓN EN TIEMPO REAL AL ESTADO DE LA CUENTA ====================
 function iniciarSuscripcionEstadoCuenta() {
     if (suscripcionEstadoCuenta) {
         _supabase.removeChannel(suscripcionEstadoCuenta);
@@ -1202,17 +1202,21 @@ function iniciarSuscripcionEstadoCuenta() {
                 filter: `subscriber_id=eq.${currentSubscriberId}`
             },
             async (payload) => {
-                if (payload.new.activo !== payload.old.activo) {
-                    console.log('%c[REALTIME] Cambio de estado de cuenta detectado', 'color:#f59e0b', payload.new.activo);
+                console.log('%c[REALTIME] Cambio de estado de cuenta detectado', 'color:#f59e0b', payload);
 
-                    cuentaActiva = payload.new.activo === true;
+                const estabaActiva = payload.old.activo;
+                const estaActivaAhora = payload.new.activo;
 
-                    if (!cuentaActiva) {
-                        mostrarPantallaBloqueo();
+                if (estabaActiva !== estaActivaAhora) {
+                    
+                    if (estaActivaAhora === true) {
+                        // ✅ Se activó la cuenta → Refrescamos la página para que todo se cargue correctamente
+                        console.log('%c[REALTIME] Cuenta reactivada. Recargando página...', 'color:#22c55e');
+                        location.reload();
                     } else {
-                        ocultarPantallaBloqueo();
-                        // Opcional: recargar datos si se activó la cuenta
-                        await cargarDatosSuscriptor(); 
+                        // ❌ Se suspendió la cuenta → Mostramos pantalla de bloqueo
+                        cuentaActiva = false;
+                        mostrarPantallaBloqueo();
                     }
                 }
             }
