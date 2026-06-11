@@ -987,6 +987,40 @@
                 </button>
             </div>
         </div>
+
+    <!-- MODAL REGISTRO DE USUARIO -->
+<div id="modal-registro" class="modal" style="display:none; z-index:10000;">
+    <div style="background:#1e2937; max-width:420px; width:94%; border-radius:24px; padding:32px 28px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:2px solid #67e8f9;">
+        
+        <h2 style="text-align:center; color:#e0e7ff; margin-bottom:24px;">Crear cuenta nueva</h2>
+
+        <input type="text" id="registro-username" placeholder="Nombre de usuario" style="width:100%; padding:16px; background:#0f172a; border:1px solid #475569; border-radius:14px; color:white; margin-bottom:16px; font-size:1.05rem;">
+
+        <div style="position:relative; margin-bottom:16px;">
+            <input type="password" id="registro-password" placeholder="Contraseña" style="width:100%; padding:16px; background:#0f172a; border:1px solid #475569; border-radius:14px; color:white; font-size:1.05rem;">
+        </div>
+
+        <div style="position:relative; margin-bottom:20px;">
+            <input type="password" id="registro-confirmar-password" placeholder="Confirmar contraseña" style="width:100%; padding:16px; background:#0f172a; border:1px solid #475569; border-radius:14px; color:white; font-size:1.05rem;">
+        </div>
+
+        <small style="color:#f87171; display:block; margin-bottom:24px; line-height:1.5;">
+            • Mínimo 8 caracteres<br>
+            • Al menos 1 mayúscula, 1 minúscula y 1 número
+        </small>
+
+        <div style="display:flex; gap:12px;">
+            <button onclick="hideRegistroModal()" 
+                    style="flex:1; padding:15px; background:#334155; color:white; border:none; border-radius:14px; font-weight:600;">
+                Cancelar
+            </button>
+            <button onclick="crearNuevoUsuario()" 
+                    style="flex:1; padding:15px; background:linear-gradient(90deg, #67e8f9, #22d3ee); color:#0f172a; border:none; border-radius:14px; font-weight:700;">
+                Crear cuenta
+            </button>
+        </div>
+    </div>
+</div>
     
 <script>
     const SUPABASE_URL = "https://vevptiayzleigkjtmyhc.supabase.co";
@@ -2507,6 +2541,98 @@ function finalizarTour() {
         </div>
     `;
     document.body.appendChild(modal);
+}
+
+    // ==================== CREAR NUEVO USUARIO ====================
+async function crearNuevoUsuario() {
+    const username = document.getElementById('registro-username').value.trim();
+    const password = document.getElementById('registro-password').value.trim();
+    const confirmarPassword = document.getElementById('registro-confirmar-password').value.trim();
+
+    // Validaciones básicas
+    if (!username || !password || !confirmarPassword) {
+        return alert("Todos los campos son obligatorios");
+    }
+
+    if (password !== confirmarPassword) {
+        return alert("Las contraseñas no coinciden");
+    }
+
+    // Validación de contraseña
+    if (password.length < 8) {
+        return alert("La contraseña debe tener al menos 8 caracteres");
+    }
+    if (!/[A-Z]/.test(password)) {
+        return alert("La contraseña debe contener al menos una letra mayúscula");
+    }
+    if (!/[a-z]/.test(password)) {
+        return alert("La contraseña debe contener al menos una letra minúscula");
+    }
+    if (!/[0-9]/.test(password)) {
+        return alert("La contraseña debe contener al menos un número");
+    }
+
+    // Obtener subscriber_id desde la URL
+    const subscriberId = getSubscriberFromUrl();
+    if (!subscriberId) {
+        return alert("No se pudo identificar al suscriptor. Usa el link correcto.");
+    }
+
+    try {
+        // Obtener IP del cliente
+        const ip = await obtenerIP();
+
+        // Verificar si ya existe un usuario con la misma IP + mismo suscriptor
+        if (ip) {
+            const { data: usuariosExistentes } = await _supabase
+                .from('usuarios')
+                .select('id')
+                .eq('subscriber_id', subscriberId)
+                .eq('ultima_ip', ip);
+
+            if (usuariosExistentes && usuariosExistentes.length > 0) {
+                return alert("Ya tienes un usuario registrado desde este dispositivo con este agente.");
+            }
+        }
+
+        // Crear el usuario
+        const { error } = await _supabase.from('usuarios').insert({
+            username: username,
+            password: password,
+            subscriber_id: subscriberId,
+            ultima_ip: ip || null,
+            created_at: new Date().toISOString()
+        });
+
+        if (error) {
+            if (error.code === '23505') { // Violación de restricción única
+                return alert("Ese nombre de usuario ya está en uso.");
+            }
+            console.error("Error al crear usuario:", error);
+            return alert("Ocurrió un error al crear el usuario.");
+        }
+
+        alert("✅ Usuario creado correctamente");
+
+        // Cerrar modal de registro
+        hideRegistroModal();
+
+        // Autocompletar el usuario en el login
+        document.getElementById('login-user').value = username;
+        document.getElementById('login-pass').focus();
+
+    } catch (err) {
+        console.error("Error general al crear usuario:", err);
+        alert("Ocurrió un error inesperado.");
+    }
+}
+
+    function showRegistroModal() {
+    document.getElementById('modal-registro').style.display = 'flex';
+}
+
+function hideRegistroModal() {
+    document.getElementById('modal-registro').style.display = 'none';
 }
     
     window.onload = async () => {
