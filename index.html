@@ -1068,10 +1068,18 @@ async function obtenerIP() {
         const response = await fetch(
             "https://vevptiayzleigkjtmyhc.supabase.co/functions/v1/get-client-ip"
         );
+
+        if (!response.ok) {
+            console.error("Error en Edge Function:", response.status);
+            return null;
+        }
+
         const data = await response.json();
+        console.log("IP obtenida desde Edge Function:", data.ip);
         return data.ip || null;
+
     } catch (error) {
-        console.error("Error al obtener IP desde Edge Function:", error);
+        console.error("Error al llamar a la Edge Function:", error);
         return null;
     }
 }
@@ -2564,7 +2572,6 @@ async function crearNuevoUsuario() {
     const password = document.getElementById('registro-password').value.trim();
     const confirmarPassword = document.getElementById('registro-confirmar-password').value.trim();
 
-    // Validaciones básicas
     if (!username || !password || !confirmarPassword) {
         return alert("Todos los campos son obligatorios");
     }
@@ -2574,36 +2581,37 @@ async function crearNuevoUsuario() {
     }
 
     // Validación de contraseña
-    if (password.length < 8) {
-        return alert("La contraseña debe tener al menos 8 caracteres");
-    }
-    if (!/[A-Z]/.test(password)) {
-        return alert("La contraseña debe contener al menos una letra mayúscula");
-    }
-    if (!/[a-z]/.test(password)) {
-        return alert("La contraseña debe contener al menos una letra minúscula");
-    }
-    if (!/[0-9]/.test(password)) {
-        return alert("La contraseña debe contener al menos un número");
-    }
+    if (password.length < 8) return alert("La contraseña debe tener al menos 8 caracteres");
+    if (!/[A-Z]/.test(password)) return alert("La contraseña debe contener al menos una mayúscula");
+    if (!/[a-z]/.test(password)) return alert("La contraseña debe contener al menos una minúscula");
+    if (!/[0-9]/.test(password)) return alert("La contraseña debe contener al menos un número");
 
-    // Obtener subscriber_id desde la URL
     const subscriberId = getSubscriberFromUrl();
     if (!subscriberId) {
         return alert("No se pudo identificar al suscriptor. Usa el link correcto.");
     }
 
+    console.log("=== INTENTANDO CREAR USUARIO ===");
+    console.log("Username:", username);
+    console.log("Subscriber ID:", subscriberId);
+
     try {
-        // Obtener IP del cliente
         const ip = await obtenerIP();
+        console.log("IP obtenida:", ip);
 
         // Verificar si ya existe un usuario con la misma IP + mismo suscriptor
         if (ip) {
-            const { data: usuariosExistentes } = await _supabase
+            const { data: usuariosExistentes, error: errorCheck } = await _supabase
                 .from('usuarios')
                 .select('id')
                 .eq('subscriber_id', subscriberId)
                 .eq('ultima_ip', ip);
+
+            if (errorCheck) {
+                console.error("Error al verificar IP duplicada:", errorCheck);
+            }
+
+            console.log("Usuarios existentes con misma IP:", usuariosExistentes);
 
             if (usuariosExistentes && usuariosExistentes.length > 0) {
                 return alert("Ya tienes un usuario registrado desde este dispositivo con este agente.");
@@ -2620,19 +2628,17 @@ async function crearNuevoUsuario() {
         });
 
         if (error) {
-            if (error.code === '23505') { // Violación de restricción única
+            console.error("Error al insertar usuario:", error);
+            if (error.code === '23505') {
                 return alert("Ese nombre de usuario ya está en uso.");
             }
-            console.error("Error al crear usuario:", error);
             return alert("Ocurrió un error al crear el usuario.");
         }
 
         alert("✅ Usuario creado correctamente");
-
-        // Cerrar modal de registro
         hideRegistroModal();
 
-        // Autocompletar el usuario en el login
+        // Autocompletar en el login
         document.getElementById('login-user').value = username;
         document.getElementById('login-pass').focus();
 
