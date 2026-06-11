@@ -1145,38 +1145,41 @@ function iniciarSuscripcionPlanJugador() {
         alert("📝 Crear cuenta nueva\n\nAquí se abrirá el formulario de registro.");
     }
 
-    // ==================== DETECTAR PLAN PREMIUM (FUNCIÓN REUTILIZABLE) ====================
-async function detectarPlanPremium() {
+// ==================== VERIFICAR ACCESO A RULETA (PLAN + ESTADO ACTIVO) ====================
+async function verificarAccesoRuleta() {
     esPlanPremium = false;
+    cuentaActiva = true;
 
-    if (!currentSubscriberId) return false;
+    if (!currentSubscriberId) return;
 
     try {
-        // Paso 1: Obtener el plan_id del suscriptor
+        // Obtenemos plan_id y estado activo del suscriptor
         const { data: susUser } = await _supabase
             .from('suscriptores_users')
-            .select('plan_id')
+            .select('plan_id, activo')
             .eq('subscriber_id', currentSubscriberId)
             .single();
 
-        if (susUser?.plan_id) {
-            // Paso 2: Consultar la tabla planes
-            const { data: plan } = await _supabase
-                .from('planes')
-                .select('es_premium')
-                .eq('id', susUser.plan_id)
-                .single();
+        if (susUser) {
+            cuentaActiva = susUser.activo === true;
 
-            esPlanPremium = plan?.es_premium === true;
+            if (susUser.plan_id) {
+                const { data: plan } = await _supabase
+                    .from('planes')
+                    .select('es_premium')
+                    .eq('id', susUser.plan_id)
+                    .single();
+
+                esPlanPremium = plan?.es_premium === true;
+            }
         }
 
-        console.log("%c[PLAN] ¿Es Plan Premium?:", "color:#22c55e", esPlanPremium);
-        return esPlanPremium;
+        console.log(`%c[ACCESO RULETA] Premium: ${esPlanPremium} | Cuenta Activa: ${cuentaActiva}`, 'color:#22c55e');
 
     } catch (err) {
-        console.error("Error detectando plan premium:", err);
+        console.error("Error verificando acceso a ruleta:", err);
         esPlanPremium = false;
-        return false;
+        cuentaActiva = false;
     }
 }
 
