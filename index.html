@@ -994,6 +994,7 @@
     let currentPassword = null;    
     let jugadorAEditarId = null;
     let deferredPrompt = null;
+    let esPlanPremium = false;
 
     // ==================== LEER SUSCRIPTOR DESDE LA URL ====================
     function getSubscriberFromUrl() {
@@ -1033,6 +1034,18 @@
         sessionStorage.setItem('nucky_session', JSON.stringify(sessionData));
         localStorage.removeItem('nucky_session');
     }
+
+    if (data.subscriber_id) {
+    const { data: suscriptorData } = await _supabase
+        .from('suscriptores_users')
+        .select('plan_id, planes(es_premium)')
+        .eq('subscriber_id', data.subscriber_id)
+        .single();
+
+    esPlanPremium = suscriptorData?.planes?.es_premium === true;
+}
+
+console.log("¿Plan Premium?:", esPlanPremium);
 
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
@@ -1549,7 +1562,11 @@ async function abrirRuleta() {
     if (!currentSubscriberId || !currentUsuario) {
         return alert("Error: No se detectó usuario o suscriptor");
     }
-
+    // === NUEVO: BLOQUEO POR PLAN PREMIUM ===
+    if (!esPlanPremium) {
+        mostrarModalPremiumJugador();
+        return;
+    }
     // ==================== RESTRICCIÓN ESTRICTA ====================
     if (!isAppInstalled()) {
         mostrarModalRuletaRestringida();
@@ -2225,4 +2242,25 @@ function finalizarTour() {
         hideChatwootWidget();
     }
 };
+
+    function mostrarModalPremiumJugador() {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:99999;';
+    
+    modal.innerHTML = `
+        <div style="background:#111827; border:1px solid #334155; border-radius:20px; padding:32px 28px; max-width:360px; text-align:center; box-shadow:0 25px 50px -12px rgb(0 0 0 / 0.4);">
+            <div style="font-size:3rem; margin-bottom:12px;">⭐</div>
+            <h3 style="margin:0 0 12px 0; color:#fbbf24; font-size:1.3rem;">Función Exclusiva Premium</h3>
+            <p style="color:#94a3b8; margin-bottom:24px; line-height:1.5;">
+                La Ruleta VIP está disponible solo para agentes con plan <strong>Premium</strong> (Anual+ o Premium).
+            </p>
+            
+            <button onclick="this.closest('div[style*=\'position:fixed\']').remove()" 
+                    style="background:#22c55e; color:white; border:none; padding:13px 32px; border-radius:12px; font-weight:700; cursor:pointer; font-size:1rem;">
+                Entendido
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
 </script>
