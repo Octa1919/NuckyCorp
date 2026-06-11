@@ -997,7 +997,6 @@
     let deferredPrompt = null;
     let esPlanPremium = false;
     let suscripcionPlanJugador = null;
-    let cuentaActiva = true;
 
     // ==================== LEER SUSCRIPTOR DESDE LA URL ====================
     function getSubscriberFromUrl() {
@@ -1079,6 +1078,7 @@ async function loginJugador() {
     }, 1800);
 }
 
+    // ==================== SUSCRIPCIÓN EN TIEMPO REAL AL PLAN (JUGADOR) ====================
 // ==================== SUSCRIPCIÓN EN TIEMPO REAL AL PLAN (JUGADOR) ====================
 function iniciarSuscripcionPlanJugador() {
     if (suscripcionPlanJugador) {
@@ -1145,41 +1145,38 @@ function iniciarSuscripcionPlanJugador() {
         alert("📝 Crear cuenta nueva\n\nAquí se abrirá el formulario de registro.");
     }
 
-// ==================== VERIFICAR ACCESO A RULETA (PLAN + ESTADO ACTIVO) ====================
-async function verificarAccesoRuleta() {
+    // ==================== DETECTAR PLAN PREMIUM (FUNCIÓN REUTILIZABLE) ====================
+async function detectarPlanPremium() {
     esPlanPremium = false;
-    cuentaActiva = true;
 
-    if (!currentSubscriberId) return;
+    if (!currentSubscriberId) return false;
 
     try {
-        // Obtenemos plan_id y estado activo del suscriptor
+        // Paso 1: Obtener el plan_id del suscriptor
         const { data: susUser } = await _supabase
             .from('suscriptores_users')
-            .select('plan_id, activo')
+            .select('plan_id')
             .eq('subscriber_id', currentSubscriberId)
             .single();
 
-        if (susUser) {
-            cuentaActiva = susUser.activo === true;
+        if (susUser?.plan_id) {
+            // Paso 2: Consultar la tabla planes
+            const { data: plan } = await _supabase
+                .from('planes')
+                .select('es_premium')
+                .eq('id', susUser.plan_id)
+                .single();
 
-            if (susUser.plan_id) {
-                const { data: plan } = await _supabase
-                    .from('planes')
-                    .select('es_premium')
-                    .eq('id', susUser.plan_id)
-                    .single();
-
-                esPlanPremium = plan?.es_premium === true;
-            }
+            esPlanPremium = plan?.es_premium === true;
         }
 
-        console.log(`%c[ACCESO RULETA] Premium: ${esPlanPremium} | Cuenta Activa: ${cuentaActiva}`, 'color:#22c55e');
+        console.log("%c[PLAN] ¿Es Plan Premium?:", "color:#22c55e", esPlanPremium);
+        return esPlanPremium;
 
     } catch (err) {
-        console.error("Error verificando acceso a ruleta:", err);
+        console.error("Error detectando plan premium:", err);
         esPlanPremium = false;
-        cuentaActiva = false;
+        return false;
     }
 }
 
@@ -1645,17 +1642,9 @@ async function abrirRuleta() {
     if (!currentSubscriberId || !currentUsuario) {
         return alert("Error: No se detectó usuario o suscriptor");
     }
-
-    // Verificamos ambos estados
-    await verificarAccesoRuleta();
-
-    // === BLOQUEO POR PLAN O POR CUENTA SUSPENDIDA ===
-    if (!esPlanPremium || !cuentaActiva) {
-        if (!cuentaActiva) {
-            mostrarModalCuentaSuspendida();
-        } else {
-            mostrarModalPremiumJugador();
-        }
+    // === NUEVO: BLOQUEO POR PLAN PREMIUM ===
+    if (!esPlanPremium) {
+        mostrarModalPremiumJugador();
         return;
     }
     // ==================== RESTRICCIÓN ESTRICTA ====================
@@ -2388,29 +2377,7 @@ function finalizarTour() {
     `;
     document.body.appendChild(modal);
 }
-
-    function mostrarModalCuentaSuspendida() {
-    const modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:99999;';
-
-    modal.innerHTML = `
-        <div style="background:#1e2937; border:1px solid #334155; border-radius:20px; padding:32px 28px; max-width:360px; text-align:center; box-shadow:0 25px 50px -12px rgb(0 0 0 / 0.4);">
-            <div style="font-size:3rem; margin-bottom:12px;">🚫</div>
-            <h3 style="margin:0 0 12px 0; color:#f87171; font-size:1.3rem;">Cuenta Suspendida</h3>
-            <p style="color:#94a3b8; margin-bottom:24px; line-height:1.5;">
-                Tu cuenta se encuentra actualmente <strong>suspendida</strong>.<br>
-                Por favor contactá con el administrador.
-            </p>
-            
-            <button onclick="this.closest('div[style*=\'position:fixed\']').remove()" 
-                    style="background:#ef4444; color:white; border:none; padding:13px 32px; border-radius:12px; font-weight:700; cursor:pointer; font-size:1rem;">
-                Entendido
-            </button>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
+    
     window.onload = async () => {
     const restored = await restoreSession();
 
