@@ -1002,7 +1002,7 @@
         return params.get('s') || params.get('subscriber') || params.get('subscriber_id');
     }
 
- async function loginJugador() {
+async function loginJugador() {
     const username = document.getElementById('login-user').value.trim();
     const password = document.getElementById('login-pass').value.trim();
     const recordar = document.getElementById('recordarme').checked;
@@ -1010,7 +1010,6 @@
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
     try {
-        // 1. Login del usuario
         const { data, error } = await _supabase
             .from('usuarios')
             .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
@@ -1027,7 +1026,6 @@
         currentUsuario = username;
         currentPassword = password;
 
-        // Guardar sesión
         const sessionData = {
             username: currentUsuario,
             subscriber_id: currentSubscriberId
@@ -1041,13 +1039,10 @@
             localStorage.removeItem('nucky_session');
         }
 
-        // =============================================
-        // DETECCIÓN DE PLAN PREMIUM (VERSIÓN SEGURA)
-        // =============================================
+        // === DETECCIÓN DE PLAN PREMIUM ===
         esPlanPremium = false;
 
         if (currentSubscriberId) {
-            // Paso 1: Obtener plan_id
             const { data: susUser } = await _supabase
                 .from('suscriptores_users')
                 .select('plan_id')
@@ -1055,7 +1050,6 @@
                 .single();
 
             if (susUser?.plan_id) {
-                // Paso 2: Consultar directamente la tabla planes
                 const { data: plan } = await _supabase
                     .from('planes')
                     .select('es_premium')
@@ -1069,14 +1063,12 @@
         console.log("%c[LOGIN] Usuario:", "color:#22c55e", currentUsuario);
         console.log("%c[LOGIN] ¿Es Plan Premium?:", "color:#22c55e", esPlanPremium);
 
-        // Mostrar dashboard
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(data.suscriptores);
 
-        // Inicializar Chatwoot
         if (data.suscriptores?.chatwoot_website_token) {
             inicializarChatwoot(
                 data.suscriptores.chatwoot_website_token,
