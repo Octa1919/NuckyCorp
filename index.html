@@ -1099,7 +1099,15 @@ function iniciarSuscripcionPlanJugador() {
                 // Si cambió el plan_id
                 if (payload.new.plan_id !== payload.old.plan_id) {
                     await detectarPlanPremium();
-
+                    const ruletaBtn = document.querySelector('.btn-ruleta');
+                    if (ruletaBtn) {
+                        if (esPlanPremium) {
+                            ruletaBtn.style.opacity = '1';
+                            ruletaBtn.style.pointerEvents = 'auto';
+                        } else {
+                            ruletaBtn.style.opacity = '0.6';
+                        }
+                    }
                     // Mostramos un aviso lindo al jugador
                     mostrarAvisoPlanActualizadoJugador();
                 }
