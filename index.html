@@ -1008,19 +1008,21 @@
 
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
-   const { data, error } = await _supabase
-    .from('usuarios')
-    .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
-    .eq('username', username)
-    .eq('password', password)
-    .single();
+    // 1. Login del usuario
+    const { data, error } = await _supabase
+        .from('usuarios')
+        .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
+        .eq('username', username)
+        .eq('password', password)
+        .single();
 
     if (error || !data) return alert("Credenciales incorrectas");
 
     currentSubscriberId = data.subscriber_id;
     currentUsuario = username;
-    currentPassword = password;   // Guardamos la contraseña para pasarla a Chatwoot
+    currentPassword = password;
 
+    // Guardar sesión
     const sessionData = {
         username: currentUsuario,
         subscriber_id: currentSubscriberId
@@ -1034,30 +1036,49 @@
         localStorage.removeItem('nucky_session');
     }
 
-    if (data.subscriber_id) {
-    const { data: suscriptorData } = await _supabase
-        .from('suscriptores_users')
-        .select('plan_id, planes(es_premium)')
-        .eq('subscriber_id', data.subscriber_id)
-        .single();
+    // =============================================
+    // DETECCIÓN DE PLAN PREMIUM (VERSIÓN ROBUSTA)
+    // =============================================
+    esPlanPremium = false;
 
-    esPlanPremium = suscriptorData?.planes?.es_premium === true;
-}
+    if (currentSubscriberId) {
+        // Primero traemos el plan_id del suscriptor
+        const { data: suscriptorUser } = await _supabase
+            .from('suscriptores_users')
+            .select('plan_id')
+            .eq('subscriber_id', currentSubscriberId)
+            .single();
 
-console.log("¿Plan Premium?:", esPlanPremium);
+        if (suscriptorUser?.plan_id) {
+            // Luego consultamos directamente la tabla planes
+            const { data: planData } = await _supabase
+                .from('planes')
+                .select('es_premium')
+                .eq('id', suscriptorUser.plan_id)
+                .single();
 
+            esPlanPremium = planData?.es_premium === true;
+        }
+    }
+
+    console.log("=== LOGIN JUGADOR ===");
+    console.log("Usuario:", username);
+    console.log("¿Es Plan Premium?:", esPlanPremium);
+
+    // Ocultar login y mostrar dashboard
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
     document.getElementById('hamburger-btn').style.display = 'block';
 
-   await cargarDatosSuscriptor(data.suscriptores);
+    await cargarDatosSuscriptor(data.suscriptores);
 
-// Inicializar Chatwoot con el token del suscriptor
-if (data.suscriptores.chatwoot_website_token) {
-    inicializarChatwoot(
-        data.suscriptores.chatwoot_website_token, 
-        data.suscriptores.chatwoot_hmac_secret
-    );
+    // Inicializar Chatwoot
+    if (data.suscriptores?.chatwoot_website_token) {
+        inicializarChatwoot(
+            data.suscriptores.chatwoot_website_token,
+            data.suscriptores.chatwoot_hmac_secret
+        );
+    }
 }
         
     // ==================== CONFIGURAR ONE SIGNAL ====================
