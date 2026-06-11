@@ -1027,7 +1027,11 @@
         currentPassword = password;
 
         // Guardar sesión
-        const sessionData = { username: currentUsuario, subscriber_id: currentSubscriberId };
+        const sessionData = {
+            username: currentUsuario,
+            subscriber_id: currentSubscriberId
+        };
+
         if (recordar) {
             localStorage.setItem('nucky_session', JSON.stringify(sessionData));
             sessionStorage.removeItem('nucky_session');
@@ -1042,6 +1046,7 @@
         esPlanPremium = false;
 
         if (currentSubscriberId) {
+            // Paso 1: Obtener plan_id
             const { data: susUser } = await _supabase
                 .from('suscriptores_users')
                 .select('plan_id')
@@ -1049,6 +1054,7 @@
                 .single();
 
             if (susUser?.plan_id) {
+                // Paso 2: Consultar directamente la tabla planes
                 const { data: plan } = await _supabase
                     .from('planes')
                     .select('es_premium')
@@ -1060,7 +1066,7 @@
         }
 
         console.log("%c[LOGIN] Usuario:", "color:#22c55e", currentUsuario);
-        console.log("%c[LOGIN] ¿Es Premium?:", "color:#22c55e", esPlanPremium);
+        console.log("%c[LOGIN] ¿Es Plan Premium?:", "color:#22c55e", esPlanPremium);
 
         // Mostrar dashboard
         document.getElementById('login-screen').style.display = 'none';
@@ -1069,7 +1075,7 @@
 
         await cargarDatosSuscriptor(data.suscriptores);
 
-        // Chatwoot
+        // Inicializar Chatwoot
         if (data.suscriptores?.chatwoot_website_token) {
             inicializarChatwoot(
                 data.suscriptores.chatwoot_website_token,
