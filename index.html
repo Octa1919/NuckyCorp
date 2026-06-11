@@ -1039,26 +1039,8 @@ async function loginJugador() {
             localStorage.removeItem('nucky_session');
         }
 
-        // === DETECCIÓN DE PLAN PREMIUM ===
-        esPlanPremium = false;
-
-        if (currentSubscriberId) {
-            const { data: susUser } = await _supabase
-                .from('suscriptores_users')
-                .select('plan_id')
-                .eq('subscriber_id', currentSubscriberId)
-                .single();
-
-            if (susUser?.plan_id) {
-                const { data: plan } = await _supabase
-                    .from('planes')
-                    .select('es_premium')
-                    .eq('id', susUser.plan_id)
-                    .single();
-
-                esPlanPremium = plan?.es_premium === true;
-            }
-        }
+        // Detectar si es plan premium
+        await detectarPlanPremium();
 
         console.log("%c[LOGIN] Usuario:", "color:#22c55e", currentUsuario);
         console.log("%c[LOGIN] ¿Es Plan Premium?:", "color:#22c55e", esPlanPremium);
@@ -1124,6 +1106,41 @@ async function loginJugador() {
     function crearCuenta() {
         alert("📝 Crear cuenta nueva\n\nAquí se abrirá el formulario de registro.");
     }
+
+    // ==================== DETECTAR PLAN PREMIUM (FUNCIÓN REUTILIZABLE) ====================
+async function detectarPlanPremium() {
+    esPlanPremium = false;
+
+    if (!currentSubscriberId) return false;
+
+    try {
+        // Paso 1: Obtener el plan_id del suscriptor
+        const { data: susUser } = await _supabase
+            .from('suscriptores_users')
+            .select('plan_id')
+            .eq('subscriber_id', currentSubscriberId)
+            .single();
+
+        if (susUser?.plan_id) {
+            // Paso 2: Consultar la tabla planes
+            const { data: plan } = await _supabase
+                .from('planes')
+                .select('es_premium')
+                .eq('id', susUser.plan_id)
+                .single();
+
+            esPlanPremium = plan?.es_premium === true;
+        }
+
+        console.log("%c[PLAN] ¿Es Plan Premium?:", "color:#22c55e", esPlanPremium);
+        return esPlanPremium;
+
+    } catch (err) {
+        console.error("Error detectando plan premium:", err);
+        esPlanPremium = false;
+        return false;
+    }
+}
 
     // ==================== MENÚ HAMBURGUESA ====================
     function toggleHamburgerMenu() {
@@ -2090,6 +2107,7 @@ async function restoreSession() {
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(subData);
+        await detectarPlanPremium();
 
         // Configurar OneSignal al restaurar sesión
         setTimeout(() => {
