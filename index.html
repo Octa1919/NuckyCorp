@@ -1044,6 +1044,7 @@ async function loginJugador() {
         // Detectar si es plan premium
         await detectarPlanPremium();
         iniciarSuscripcionPlanJugador();
+        actualizarEstadoBotonRuleta();
 
         console.log("%c[LOGIN] Usuario:", "color:#22c55e", currentUsuario);
         console.log("%c[LOGIN] ¿Es Plan Premium?:", "color:#22c55e", esPlanPremium);
@@ -1078,6 +1079,7 @@ async function loginJugador() {
 }
 
     // ==================== SUSCRIPCIÓN EN TIEMPO REAL AL PLAN (JUGADOR) ====================
+// ==================== SUSCRIPCIÓN EN TIEMPO REAL AL PLAN (JUGADOR) ====================
 function iniciarSuscripcionPlanJugador() {
     if (suscripcionPlanJugador) {
         _supabase.removeChannel(suscripcionPlanJugador);
@@ -1096,19 +1098,13 @@ function iniciarSuscripcionPlanJugador() {
             async (payload) => {
                 console.log('%c[REALTIME] Cambio de plan detectado', 'color:#f59e0b', payload);
 
-                // Si cambió el plan_id
                 if (payload.new.plan_id !== payload.old.plan_id) {
                     await detectarPlanPremium();
-                    const ruletaBtn = document.querySelector('.btn-ruleta');
-                    if (ruletaBtn) {
-                        if (esPlanPremium) {
-                            ruletaBtn.style.opacity = '1';
-                            ruletaBtn.style.pointerEvents = 'auto';
-                        } else {
-                            ruletaBtn.style.opacity = '0.6';
-                        }
-                    }
-                    // Mostramos un aviso lindo al jugador
+
+                    // Actualizar visualmente el botón de la ruleta
+                    actualizarEstadoBotonRuleta();
+
+                    // Mostrar aviso
                     mostrarAvisoPlanActualizadoJugador();
                 }
             }
@@ -2158,6 +2154,7 @@ async function restoreSession() {
         await cargarDatosSuscriptor(subData);
         await detectarPlanPremium();
         iniciarSuscripcionPlanJugador();
+        actualizarEstadoBotonRuleta();
 
         // Configurar OneSignal al restaurar sesión
         setTimeout(() => {
@@ -2345,19 +2342,20 @@ function finalizarTour() {
         setTimeout(() => aviso.remove(), 400);
     }, 4200);
 }
-    
-    window.onload = async () => {
-    const restored = await restoreSession();
+    function actualizarEstadoBotonRuleta() {
+    const ruletaBtn = document.querySelector('.btn-ruleta');
+    if (!ruletaBtn) return;
 
-    // Verificar si ya tiene la App instalada
-    checkIfAppIsInstalled();
-
-    // Si no hay sesión guardada, mostramos el login
-    if (!restored) {
-        document.getElementById('login-screen').style.display = 'block';
-        hideChatwootWidget();
+    if (esPlanPremium) {
+        ruletaBtn.style.opacity = '1';
+        ruletaBtn.style.pointerEvents = 'auto';
+        ruletaBtn.style.cursor = 'pointer';
+    } else {
+        ruletaBtn.style.opacity = '0.6';
+        ruletaBtn.style.pointerEvents = 'none';
+        ruletaBtn.style.cursor = 'not-allowed';
     }
-};
+}
 
     function mostrarModalPremiumJugador() {
     const modal = document.createElement('div');
@@ -2379,4 +2377,17 @@ function finalizarTour() {
     `;
     document.body.appendChild(modal);
 }
+    
+    window.onload = async () => {
+    const restored = await restoreSession();
+
+    // Verificar si ya tiene la App instalada
+    checkIfAppIsInstalled();
+
+    // Si no hay sesión guardada, mostramos el login
+    if (!restored) {
+        document.getElementById('login-screen').style.display = 'block';
+        hideChatwootWidget();
+    }
+};
 </script>
