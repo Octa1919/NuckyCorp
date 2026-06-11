@@ -2073,7 +2073,10 @@ function mostrarModalRuletaRestringida() {
 }
 
 function hideModalRuletaRestringida() {
-    document.getElementById('modal-ruleta-restringida').style.display = 'none';
+    const modal = document.getElementById('modal-ruleta-restringida');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 function instalarDesdeModalRuleta() {
