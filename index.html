@@ -1645,9 +1645,17 @@ async function abrirRuleta() {
     if (!currentSubscriberId || !currentUsuario) {
         return alert("Error: No se detectó usuario o suscriptor");
     }
-    // === NUEVO: BLOQUEO POR PLAN PREMIUM ===
-    if (!esPlanPremium) {
-        mostrarModalPremiumJugador();
+
+    // Verificamos ambos estados
+    await verificarAccesoRuleta();
+
+    // === BLOQUEO POR PLAN O POR CUENTA SUSPENDIDA ===
+    if (!esPlanPremium || !cuentaActiva) {
+        if (!cuentaActiva) {
+            mostrarModalCuentaSuspendida();
+        } else {
+            mostrarModalPremiumJugador();
+        }
         return;
     }
     // ==================== RESTRICCIÓN ESTRICTA ====================
@@ -2380,7 +2388,29 @@ function finalizarTour() {
     `;
     document.body.appendChild(modal);
 }
-    
+
+    function mostrarModalCuentaSuspendida() {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:99999;';
+
+    modal.innerHTML = `
+        <div style="background:#1e2937; border:1px solid #334155; border-radius:20px; padding:32px 28px; max-width:360px; text-align:center; box-shadow:0 25px 50px -12px rgb(0 0 0 / 0.4);">
+            <div style="font-size:3rem; margin-bottom:12px;">🚫</div>
+            <h3 style="margin:0 0 12px 0; color:#f87171; font-size:1.3rem;">Cuenta Suspendida</h3>
+            <p style="color:#94a3b8; margin-bottom:24px; line-height:1.5;">
+                Tu cuenta se encuentra actualmente <strong>suspendida</strong>.<br>
+                Por favor contactá con el administrador.
+            </p>
+            
+            <button onclick="this.closest('div[style*=\'position:fixed\']').remove()" 
+                    style="background:#ef4444; color:white; border:none; padding:13px 32px; border-radius:12px; font-weight:700; cursor:pointer; font-size:1rem;">
+                Entendido
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
     window.onload = async () => {
     const restored = await restoreSession();
 
