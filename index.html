@@ -1001,83 +1001,85 @@
         return params.get('s') || params.get('subscriber') || params.get('subscriber_id');
     }
 
-    async function loginJugador() {
+ async function loginJugador() {
     const username = document.getElementById('login-user').value.trim();
     const password = document.getElementById('login-pass').value.trim();
     const recordar = document.getElementById('recordarme').checked;
 
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
-    // 1. Login del usuario
-    const { data, error } = await _supabase
-        .from('usuarios')
-        .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
-        .eq('username', username)
-        .eq('password', password)
-        .single();
-
-    if (error || !data) return alert("Credenciales incorrectas");
-
-    currentSubscriberId = data.subscriber_id;
-    currentUsuario = username;
-    currentPassword = password;
-
-    // Guardar sesión
-    const sessionData = {
-        username: currentUsuario,
-        subscriber_id: currentSubscriberId
-    };
-
-    if (recordar) {
-        localStorage.setItem('nucky_session', JSON.stringify(sessionData));
-        sessionStorage.removeItem('nucky_session');
-    } else {
-        sessionStorage.setItem('nucky_session', JSON.stringify(sessionData));
-        localStorage.removeItem('nucky_session');
-    }
-
-    // =============================================
-    // DETECCIÓN DE PLAN PREMIUM (VERSIÓN ROBUSTA)
-    // =============================================
-    esPlanPremium = false;
-
-    if (currentSubscriberId) {
-        // Primero traemos el plan_id del suscriptor
-        const { data: suscriptorUser } = await _supabase
-            .from('suscriptores_users')
-            .select('plan_id')
-            .eq('subscriber_id', currentSubscriberId)
+    try {
+        // 1. Login del usuario
+        const { data, error } = await _supabase
+            .from('usuarios')
+            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
+            .eq('username', username)
+            .eq('password', password)
             .single();
 
-        if (suscriptorUser?.plan_id) {
-            // Luego consultamos directamente la tabla planes
-            const { data: planData } = await _supabase
-                .from('planes')
-                .select('es_premium')
-                .eq('id', suscriptorUser.plan_id)
+        if (error || !data) {
+            console.error("Error en login:", error);
+            return alert("Credenciales incorrectas");
+        }
+
+        currentSubscriberId = data.subscriber_id;
+        currentUsuario = username;
+        currentPassword = password;
+
+        // Guardar sesión
+        const sessionData = { username: currentUsuario, subscriber_id: currentSubscriberId };
+        if (recordar) {
+            localStorage.setItem('nucky_session', JSON.stringify(sessionData));
+            sessionStorage.removeItem('nucky_session');
+        } else {
+            sessionStorage.setItem('nucky_session', JSON.stringify(sessionData));
+            localStorage.removeItem('nucky_session');
+        }
+
+        // =============================================
+        // DETECCIÓN DE PLAN PREMIUM (VERSIÓN SEGURA)
+        // =============================================
+        esPlanPremium = false;
+
+        if (currentSubscriberId) {
+            const { data: susUser } = await _supabase
+                .from('suscriptores_users')
+                .select('plan_id')
+                .eq('subscriber_id', currentSubscriberId)
                 .single();
 
-            esPlanPremium = planData?.es_premium === true;
+            if (susUser?.plan_id) {
+                const { data: plan } = await _supabase
+                    .from('planes')
+                    .select('es_premium')
+                    .eq('id', susUser.plan_id)
+                    .single();
+
+                esPlanPremium = plan?.es_premium === true;
+            }
         }
-    }
 
-    console.log("=== LOGIN JUGADOR ===");
-    console.log("Usuario:", username);
-    console.log("¿Es Plan Premium?:", esPlanPremium);
+        console.log("%c[LOGIN] Usuario:", "color:#22c55e", currentUsuario);
+        console.log("%c[LOGIN] ¿Es Premium?:", "color:#22c55e", esPlanPremium);
 
-    // Ocultar login y mostrar dashboard
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    document.getElementById('hamburger-btn').style.display = 'block';
+        // Mostrar dashboard
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('hamburger-btn').style.display = 'block';
 
-    await cargarDatosSuscriptor(data.suscriptores);
+        await cargarDatosSuscriptor(data.suscriptores);
 
-    // Inicializar Chatwoot
-    if (data.suscriptores?.chatwoot_website_token) {
-        inicializarChatwoot(
-            data.suscriptores.chatwoot_website_token,
-            data.suscriptores.chatwoot_hmac_secret
-        );
+        // Chatwoot
+        if (data.suscriptores?.chatwoot_website_token) {
+            inicializarChatwoot(
+                data.suscriptores.chatwoot_website_token,
+                data.suscriptores.chatwoot_hmac_secret
+            );
+        }
+
+    } catch (err) {
+        console.error("Error general en loginJugador():", err);
+        alert("Ocurrió un error al iniciar sesión. Revisá la consola (F12).");
     }
 }
         
@@ -1091,6 +1093,7 @@
         iniciarTour(false);
     }, 1800);
 }
+    
     async function cargarDatosSuscriptor(sub) {
         document.getElementById('casino-name').textContent = sub.nombre_casino || "Nucky";
         document.getElementById('bienvenida').innerHTML = `¡Hola <strong>${currentUsuario}</strong>!`;
