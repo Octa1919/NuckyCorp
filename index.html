@@ -1653,6 +1653,10 @@ function generarPremiosEnRuleta() {
     });
 }
 
+function hideRuletaModal() {
+    document.getElementById('modal-ruleta').style.display = 'none';
+}
+
 function generarPremiosEnRuletaDorada() {
     const container = document.getElementById('ruleta-premios-dorada');
     if (!container) return;
