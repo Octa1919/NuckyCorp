@@ -1172,29 +1172,12 @@ async function loginJugador() {
                 data.suscriptores.chatwoot_hmac_secret
             );
         }
-    }
-    
-    } catch (err) {
-        console.error("Error en loginJugador():", err);
-        alert("Ocurrió un error al iniciar sesión.");
-    }
-    
-    } catch (err) {
-        console.error("Error en loginJugador():", err);
-        alert("Ocurrió un error al iniciar sesión.");
-    }
-        
-    // ==================== CONFIGURAR ONE SIGNAL ====================
-    setTimeout(() => {
-        configurarOneSignalUsuario();
-    }, 1200);
 
-    // ==================== TOUR ====================
-    setTimeout(() => {
-        iniciarTour(false);
-    }, 1800);
+    } catch (err) {
+        console.error("Error en loginJugador():", err);
+        alert("Ocurrió un error al iniciar sesión.");
+    }
 }
-
     // ==================== VERIFICAR ESTADO DE LA CUENTA (ACTIVO / SUSPENDIDO) ====================
 async function verificarEstadoCuenta() {
     if (!currentSubscriberId) {
@@ -1229,7 +1212,10 @@ async function verificarEstadoCuenta() {
     }
 }
 
-    function mostrarPantallaBloqueo() {
+    {{}0
+        0.
+            f02
+                unction mostrarPantallaBloqueo() {
     const pantalla = document.getElementById('pantalla-bloqueo-cuenta');
     if (pantalla) {
         pantalla.style.display = 'flex';
