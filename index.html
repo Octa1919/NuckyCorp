@@ -1115,10 +1115,17 @@ async function loginJugador() {
         // =============================================
         // VALIDACIÓN DE SUSCRIPTOR (USANDO CONTEXTO DE INSTALACIÓN)
         // =============================================
-        if (subscriberIdInstalacion && data.subscriber_id !== subscriberIdInstalacion) {
+        if (!subscriberIdInstalacion) {
+            return alert(
+                "Esta App no está vinculada a ningún agente.\n\n" +
+                "Por favor, abrí la aplicación desde el link personalizado que te proporcionó tu agente e instalala nuevamente."
+            );
+        }
+
+        if (data.subscriber_id !== subscriberIdInstalacion) {
             return alert(
                 "Estas credenciales no corresponden a este agente.\n\n" +
-                "Por favor, abre la aplicación desde el link correcto de tu agente."
+                "Esta App instalada solo permite el acceso con usuarios del agente desde el cual la instalaste."
             );
         }
 
