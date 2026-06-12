@@ -1061,7 +1061,6 @@
     let suscripcionPlanJugador = null;
     let cuentaActiva = true;  
     let suscripcionEstadoCuenta = null;
-    let subscriberIdInstalacion = null;
 
 // ==================== OBTENER IP DEL CLIENTE (Edge Function) ====================
 async function obtenerIP() {
@@ -1117,10 +1116,10 @@ async function loginJugador() {
         const urlSubscriberId = getSubscriberFromUrl();
 
         // 3. Validar que el usuario pertenezca al suscriptor del link
-        if (subscriberIdInstalacion && data.subscriber_id !== subscriberIdInstalacion) {
+        if (urlSubscriberId && data.subscriber_id !== urlSubscriberId) {
             return alert(
-                "Estas credenciales no corresponden a este agente.\n\n" +
-                "Por favor, abre la aplicación desde el link correcto de tu agente."
+                "Estas credenciales no corresponden a este agente.\n" +
+                "Por favor, utiliza el link correcto de tu agente o tocá en olvidé mis datos y pedí el link para ingresar."
             );
         }
 
@@ -1580,31 +1579,6 @@ function hideInstallIOSModal() {
 function isAppInstalled() {
     return window.matchMedia('(display-mode: standalone)').matches || 
            window.navigator.standalone === true;
-}
-
-    // ==================== INICIALIZAR CONTEXTO DE INSTALACIÓN ====================
-function inicializarContextoInstalacion() {
-    const urlSubscriberId = getSubscriberFromUrl();
-
-    // Si hay subscriber_id en la URL, lo usamos
-    if (urlSubscriberId) {
-        subscriberIdInstalacion = urlSubscriberId;
-        localStorage.setItem('subscriber_id_instalacion', urlSubscriberId);
-    } 
-    // Si no hay en la URL, intentamos recuperarlo del localStorage
-    else {
-        const guardado = localStorage.getItem('subscriber_id_instalacion');
-        if (guardado) {
-            subscriberIdInstalacion = guardado;
-        } else {
-            // Si nunca se guardó nada, usamos el Suscriptor Padre
-            // ⚠️ Reemplazá este ID por el de tu Suscriptor Padre
-            subscriberIdInstalacion = "ID_DEL_SUSCRIPTOR_PADRE_AQUI";
-            localStorage.setItem('subscriber_id_instalacion', subscriberIdInstalacion);
-        }
-    }
-
-    console.log("%c[INSTALACIÓN] Suscriptor de esta App:", "color:#a78bfa", subscriberIdInstalacion);
 }
 
 // ==================== CHATWOOT DINÁMICO POR SUSCRIPTOR ====================
