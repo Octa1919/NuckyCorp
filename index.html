@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script>
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        const urlId = params.get('s') || params.get('subscriber') || params.get('subscriber_id');
+        const saved = localStorage.getItem('subscriber_id_instalacion');
+
+        if (urlId) {
+            localStorage.setItem('subscriber_id_instalacion', urlId);
+            window.__subscriberIdInstalacion = urlId;
+        } else if (saved) {
+            window.__subscriberIdInstalacion = saved;
+        } else {
+            window.__subscriberIdInstalacion = null;
+        }
+    })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nucky - App Jugadores</title>
@@ -1063,27 +1079,19 @@
     let suscripcionEstadoCuenta = null;
     let subscriberIdInstalacion = null;
 
-    // ==================== CONTEXTO DE INSTALACIÓN (VERSIÓN ROBUSTA Y CLARA) ====================
 function inicializarContextoInstalacion() {
-    const urlSubscriberId = getSubscriberFromUrl();           // Lee el ?s= de la URL actual
-    const SUSCRIPTOR_PADRE_ID = "15f988d1-cbbc-4c43-85f6-0c1c662defd3";
+    const urlSubscriberId = getSubscriberFromUrl();
     const guardado = localStorage.getItem('subscriber_id_instalacion');
 
     if (urlSubscriberId) {
-        // Caso normal: el usuario abrió desde un link personalizado
         subscriberIdInstalacion = urlSubscriberId;
         localStorage.setItem('subscriber_id_instalacion', urlSubscriberId);
-        console.log("%c[CONTEXTO] App ligada al suscriptor desde URL:", "color:#22c55e", urlSubscriberId);
-
+    } else if (window.__subscriberIdInstalacion) {
+        subscriberIdInstalacion = window.__subscriberIdInstalacion;
     } else if (guardado) {
-        // Caso PWA instalada: recuperamos el suscriptor con el que se instaló originalmente
         subscriberIdInstalacion = guardado;
-        console.log("%c[CONTEXTO] Recuperado de instalación anterior:", "color:#22c55e", guardado);
-
     } else {
-        // Caso problemático: nunca se abrió desde un link válido
         subscriberIdInstalacion = null;
-        console.warn("%c[CONTEXTO] Esta instalación no tiene suscriptor vinculado", "color:#ef4444");
     }
 }
 
@@ -2830,5 +2838,7 @@ window.onload = async () => {
         document.getElementById('login-screen').style.display = 'block';
         hideChatwootWidget();
     }
+    document.addEventListener('DOMContentLoaded', () => {
+    inicializarContextoInstalacion();
 };
 </script>
