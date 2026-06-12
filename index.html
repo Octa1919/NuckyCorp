@@ -2730,32 +2730,32 @@ function validarContextoSuscriptorActivo() {
     return true;
 }
 
-    // ==================== CONTEXTO DE INSTALACIÓN (PERSISTENTE) ====================
+// ==================== CONTEXTO DE INSTALACIÓN (PERSISTENTE) ====================
 function inicializarContextoInstalacion() {
     const urlSubscriberId = getSubscriberFromUrl();
     const SUSCRIPTOR_PADRE_ID = "15f988d1-cbbc-4c43-85f6-0c1c662defd3";
 
-    // Si hay subscriber_id en la URL actual, lo usamos y lo guardamos
     if (urlSubscriberId) {
+        // Caso normal: viene con ?s= en la URL
         subscriberIdInstalacion = urlSubscriberId;
         localStorage.setItem('subscriber_id_instalacion', urlSubscriberId);
         console.log("%c[CONTEXTO] Guardado desde URL:", "color:#22c55e", urlSubscriberId);
-    } 
-    // Si no hay en la URL, intentamos recuperar el que ya estaba guardado
-    else {
+    } else {
+        // Caso PWA instalada o sin parámetro en la URL
         const guardado = localStorage.getItem('subscriber_id_instalacion');
+        
         if (guardado) {
             subscriberIdInstalacion = guardado;
             console.log("%c[CONTEXTO] Recuperado de localStorage:", "color:#22c55e", guardado);
         } else {
-            // Primera vez sin ?s= → usamos el Suscriptor Padre
+            // Primera vez sin link personalizado → usamos Suscriptor Padre
             subscriberIdInstalacion = SUSCRIPTOR_PADRE_ID;
             localStorage.setItem('subscriber_id_instalacion', SUSCRIPTOR_PADRE_ID);
             console.log("%c[CONTEXTO] Usando Suscriptor Padre (primera vez)", "color:#f59e0b");
         }
     }
 }
-
+    
 // Función auxiliar para mostrar mensaje rápido (sin alert)
 function mostrarMensajeCierreSesion() {
     const mensaje = document.createElement('div');
@@ -2814,7 +2814,7 @@ window.addEventListener('pageshow', () => {
 window.onload = async () => {
     checkIfAppIsInstalled();
 
-    // Inicializar contexto de instalación (lo más importante)
+    // ← ESTA LÍNEA ES CLAVE (estaba faltando)
     inicializarContextoInstalacion();
 
     // Validación activa
