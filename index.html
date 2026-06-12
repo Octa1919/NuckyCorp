@@ -1095,6 +1095,10 @@ function inicializarContextoInstalacion() {
     }
 }
 
+    document.addEventListener('DOMContentLoaded', () => {
+    inicializarContextoInstalacion();
+});
+
 // ==================== OBTENER IP DEL CLIENTE (Edge Function) ====================
 async function obtenerIP() {
     try {
