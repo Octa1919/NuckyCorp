@@ -1192,16 +1192,6 @@ async function loginJugador() {
         console.error("Error en loginJugador():", err);
         alert("Ocurrió un error al iniciar sesión.");
     }
-        
-    // ==================== CONFIGURAR ONE SIGNAL ====================
-    setTimeout(() => {
-        configurarOneSignalUsuario();
-    }, 1200);
-
-    // ==================== TOUR ====================
-    setTimeout(() => {
-        iniciarTour(false);
-    }, 1800);
 }
 
     // ==================== VERIFICAR ESTADO DE LA CUENTA (ACTIVO / SUSPENDIDO) ====================
