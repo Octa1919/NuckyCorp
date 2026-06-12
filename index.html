@@ -2,26 +2,21 @@
 <html lang="es">
 <head>
     <script>
-        (function() {
-            const params = new URLSearchParams(window.location.search);
-            const urlId = params.get('s') || params.get('subscriber') || params.get('subscriber_id');
-            const yaVinculado = localStorage.getItem('subscriber_id_instalacion');
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        const urlId = params.get('s') || params.get('subscriber') || params.get('subscriber_id');
+        const saved = localStorage.getItem('subscriber_id_instalacion');
 
-            // Solo vinculamos si todavía NO hay nada guardado
-            if (urlId && !yaVinculado) {
-                localStorage.setItem('subscriber_id_instalacion', urlId);
-                window.__subscriberIdInstalacion = urlId;
-                console.log("%c[CONTEXTO] Primera vinculación desde URL:", "color:#22c55e", urlId);
-            } 
-            else if (yaVinculado) {
-                window.__subscriberIdInstalacion = yaVinculado;
-                console.log("%c[CONTEXTO] Ya estaba vinculada a:", "color:#22c55e", yaVinculado);
-            } 
-            else {
-                window.__subscriberIdInstalacion = null;
-            }
-        })();
-        </script>
+        if (urlId) {
+            localStorage.setItem('subscriber_id_instalacion', urlId);
+            window.__subscriberIdInstalacion = urlId;
+        } else if (saved) {
+            window.__subscriberIdInstalacion = saved;
+        } else {
+            window.__subscriberIdInstalacion = null;
+        }
+    })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nucky - App Jugadores</title>
@@ -1085,14 +1080,23 @@
     let subscriberIdInstalacion = null;
 
 function inicializarContextoInstalacion() {
+    const urlSubscriberId = getSubscriberFromUrl();
     const guardado = localStorage.getItem('subscriber_id_instalacion');
 
-    if (guardado) {
-        subscriberIdInstalacion = guardado;
+    if (urlSubscriberId) {
+        subscriberIdInstalacion = urlSubscriberId;
+        localStorage.setItem('subscriber_id_instalacion', urlSubscriberId);
+        console.log("%c[CONTEXTO iOS] Guardado desde URL:", "color:#22c55e", urlSubscriberId);
+
     } else if (window.__subscriberIdInstalacion) {
         subscriberIdInstalacion = window.__subscriberIdInstalacion;
+
+    } else if (guardado) {
+        subscriberIdInstalacion = guardado;
+
     } else {
         subscriberIdInstalacion = null;
+        console.warn("%c[CONTEXTO iOS] No hay suscriptor vinculado", "color:#ef4444");
     }
 }
 
@@ -1150,16 +1154,16 @@ async function loginJugador() {
         }
 
         // =============================================
-        // VALIDACIÓN DE SUSCRIPTOR + VINCULACIÓN (inmutable)
+        // VALIDACIÓN DE SUSCRIPTOR + VINCULACIÓN EN PRIMER LOGIN (iOS compatible)
         // =============================================
         if (!subscriberIdInstalacion) {
-            // Solo vinculamos si todavía no tiene suscriptor asignado
+            // No hay contexto previo → vinculamos la App al suscriptor de este usuario
             subscriberIdInstalacion = data.subscriber_id;
             localStorage.setItem('subscriber_id_instalacion', data.subscriber_id);
             console.log("%c[CONTEXTO] App vinculada por primer login al suscriptor:", "color:#22c55e", data.subscriber_id);
         }
 
-        // A partir de acá ya está vinculada (o ya lo estaba)
+        // A partir de acá ya tenemos subscriberIdInstalacion (ya sea por URL, localStorage o por el login actual)
         if (data.subscriber_id !== subscriberIdInstalacion) {
             return alert(
                 "Estas credenciales no corresponden a este agente.\n\n" +
