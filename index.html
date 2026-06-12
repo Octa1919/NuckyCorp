@@ -1100,7 +1100,6 @@ async function loginJugador() {
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
     try {
-        // 1. Validar credenciales
         const { data, error } = await _supabase
             .from('usuarios')
             .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
@@ -1113,33 +1112,15 @@ async function loginJugador() {
         }
 
         // =============================================
-        // VALIDACIÓN DE SUSCRIPTOR (LINK PERSONALIZADO + SUSCRIPTOR PADRE)
+        // VALIDACIÓN DE SUSCRIPTOR (USANDO CONTEXTO DE INSTALACIÓN)
         // =============================================
-        const urlSubscriberId = getSubscriberFromUrl();
+        if (subscriberIdInstalacion && data.subscriber_id !== subscriberIdInstalacion) {
+            return alert(
+                "Estas credenciales no corresponden a este agente.\n\n" +
+                "Por favor, abre la aplicación desde el link correcto de tu agente."
+            );
+        }
 
-        // ID del Suscriptor Padre (fallback cuando no hay ?s= en la URL)
-        const SUSCRIPTOR_PADRE_ID = "15f988d1-cbbc-4c43-85f6-0c1c662defd3";
-
-        // Determinar contra qué suscriptor vamos a validar
-        let suscriptorRequerido = urlSubscriberId || SUSCRIPTOR_PADRE_ID;
-
-        // Validar que el usuario pertenezca al suscriptor correcto
-        if (data.subscriber_id !== suscriptorRequerido) {
-            if (urlSubscriberId) {
-                // Caso: abrió con link personalizado pero usó credenciales de otro suscriptor
-                return alert(
-                    "Estas credenciales no corresponden a este agente.\n\n" +
-                    "Por favor, abre la aplicación desde el link correcto de tu agente."
-                );
-            } else {
-                // Caso: abrió sin link personalizado y no es usuario del Suscriptor Padre
-                return alert(
-                    "Esta aplicación solo permite el acceso a usuarios registrados desde el link oficial.\n\n" +
-                    "Por favor, utiliza el link personalizado que te proporcionó tu agente."
-                );
-            }
-    }
-        // 4. Si todo está bien, continuar con el login normal
         currentSubscriberId = data.subscriber_id;
         currentUsuario = username;
         currentPassword = password;
@@ -1181,11 +1162,20 @@ async function loginJugador() {
 
         await cargarDatosSuscriptor(data.suscriptores);
 
+        // Inicializar Chatwoot
         if (data.suscriptores?.chatwoot_website_token) {
             inicializarChatwoot(
                 data.suscriptores.chatwoot_website_token,
                 data.suscriptores.chatwoot_hmac_secret
             );
+        }
+
+        // === INICIAR SUSCRIPCIONES EN TIEMPO REAL ===
+        if (typeof iniciarSuscripcionPlanJugador === 'function') {
+            iniciarSuscripcionPlanJugador();
+        }
+        if (typeof iniciarSuscripcionEstadoCuenta === 'function') {
+            iniciarSuscripcionEstadoCuenta();
         }
 
     } catch (err) {
