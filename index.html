@@ -2374,12 +2374,10 @@ async function configurarOneSignalUsuario() {
     }
 }
     
-    // ==================== RESTAURAR SESIÓN ====================
+// ==================== RESTAURAR SESIÓN (CON VINCULACIÓN Y AISLAMIENTO) ====================
 async function restoreSession() {
-    // === VALIDACIÓN ACTIVA DE SUSCRIPTOR ===
-    if (!validarContextoSuscriptorActivo()) {
-        return false;
-    }
+    // 1. Aseguramos que el contexto de instalación esté inicializado
+    inicializarContextoInstalacion();
 
     let savedSession = localStorage.getItem('nucky_session');
     if (!savedSession) {
@@ -2390,9 +2388,29 @@ async function restoreSession() {
 
     try {
         const session = JSON.parse(savedSession);
-        currentUsuario = session.username;
-        currentSubscriberId = session.subscriber_id;
+        const savedSubscriberId = session.subscriber_id;
+        const savedUsername = session.username;
 
+        // 2. Si no hay contexto todavía → lo vinculamos al de la sesión guardada
+        if (!subscriberIdInstalacion) {
+            subscriberIdInstalacion = savedSubscriberId;
+            localStorage.setItem('subscriber_id_instalacion', savedSubscriberId);
+            console.log("%c[RESTORE] App vinculada por sesión guardada al suscriptor:", "color:#22c55e", savedSubscriberId);
+        }
+
+        // 3. Validación de seguridad: la sesión guardada debe coincidir con el suscriptor de esta App
+        if (savedSubscriberId !== subscriberIdInstalacion) {
+            console.warn("%c[RESTORE] Sesión de otro suscriptor detectada. Limpiando...", "color:#ef4444");
+            localStorage.removeItem('nucky_session');
+            sessionStorage.removeItem('nucky_session');
+            return false;
+        }
+
+        // 4. Todo coincide → restauramos la sesión
+        currentUsuario = savedUsername;
+        currentSubscriberId = savedSubscriberId;
+
+        // Cargamos datos del suscriptor
         const { data: subData, error } = await _supabase
             .from('suscriptores')
             .select('id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret')
@@ -2405,30 +2423,27 @@ async function restoreSession() {
             return false;
         }
 
+        // Mostramos dashboard
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(subData);
 
-        // Verificar plan premium y estado de cuenta
+        // Verificar plan y estado de cuenta
         await detectarPlanPremium();
         await verificarEstadoCuenta();
 
-        // Iniciar suscripciones en tiempo real (si las tenés)
-        if (typeof iniciarSuscripcionPlanJugador === 'function') {
-            iniciarSuscripcionPlanJugador();
-        }
-        if (typeof iniciarSuscripcionEstadoCuenta === 'function') {
-            iniciarSuscripcionEstadoCuenta();
-        }
+        // Iniciar suscripciones en tiempo real
+        if (typeof iniciarSuscripcionPlanJugador === 'function') iniciarSuscripcionPlanJugador();
+        if (typeof iniciarSuscripcionEstadoCuenta === 'function') iniciarSuscripcionEstadoCuenta();
 
-        // Configurar OneSignal
+        // OneSignal
         setTimeout(() => {
             configurarOneSignalUsuario();
         }, 1200);
 
-        // Inicializar Chatwoot
+        // Chatwoot
         if (subData.chatwoot_website_token) {
             inicializarChatwoot(
                 subData.chatwoot_website_token,
@@ -2436,6 +2451,7 @@ async function restoreSession() {
             );
         }
 
+        console.log("%c[RESTORE] Sesión restaurada correctamente para:", "color:#22c55e", currentUsuario);
         return true;
 
     } catch (e) {
