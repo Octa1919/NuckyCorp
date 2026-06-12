@@ -1101,7 +1101,6 @@ async function loginJugador() {
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
     try {
-        // 1. Validar credenciales
         const { data, error } = await _supabase
             .from('usuarios')
             .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
@@ -1113,9 +1112,7 @@ async function loginJugador() {
             return alert("Credenciales incorrectas");
         }
 
-        // =============================================
-        // VALIDACIÓN DE SUSCRIPTOR (USANDO CONTEXTO DE INSTALACIÓN)
-        // =============================================
+        // Validación de suscriptor usando contexto de instalación
         if (subscriberIdInstalacion && data.subscriber_id !== subscriberIdInstalacion) {
             return alert(
                 "Estas credenciales no corresponden a este agente.\n\n" +
@@ -1123,7 +1120,6 @@ async function loginJugador() {
             );
         }
 
-        // 2. Si todo está bien, continuar con el login
         currentSubscriberId = data.subscriber_id;
         currentUsuario = username;
         currentPassword = password;
@@ -1154,7 +1150,7 @@ async function loginJugador() {
             }
         }
 
-        // Verificar plan premium y estado de cuenta
+        // Verificar plan y estado de cuenta
         await detectarPlanPremium();
         await verificarEstadoCuenta();
 
@@ -1171,6 +1167,14 @@ async function loginJugador() {
                 data.suscriptores.chatwoot_website_token,
                 data.suscriptores.chatwoot_hmac_secret
             );
+        }
+
+        // === INICIAR SUSCRIPCIONES EN TIEMPO REAL (IMPORTANTE) ===
+        if (typeof iniciarSuscripcionPlanJugador === 'function') {
+            iniciarSuscripcionPlanJugador();
+        }
+        if (typeof iniciarSuscripcionEstadoCuenta === 'function') {
+            iniciarSuscripcionEstadoCuenta();
         }
 
     } catch (err) {
@@ -1212,10 +1216,6 @@ async function verificarEstadoCuenta() {
     }
 }
 
-    {{}0
-        0.
-            f02
-                unction mostrarPantallaBloqueo() {
     const pantalla = document.getElementById('pantalla-bloqueo-cuenta');
     if (pantalla) {
         pantalla.style.display = 'flex';
