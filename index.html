@@ -2730,29 +2730,26 @@ function validarContextoSuscriptorActivo() {
     return true;
 }
 
-// ==================== CONTEXTO DE INSTALACIÓN (VERSIÓN ROBUSTA) ====================
+// ==================== CONTEXTO DE INSTALACIÓN (VERSIÓN ESTRICTA) ====================
 function inicializarContextoInstalacion() {
     const urlSubscriberId = getSubscriberFromUrl();
-    const SUSCRIPTOR_PADRE_ID = "15f988d1-cbbc-4c43-85f6-0c1c662defd3";
     const savedSubscriberId = localStorage.getItem('subscriber_id_instalacion');
 
     if (urlSubscriberId) {
-        // Caso 1: Hay parámetro en la URL → siempre lo respetamos y guardamos
+        // Caso ideal: viene con ?s= → guardamos y usamos este suscriptor
         subscriberIdInstalacion = urlSubscriberId;
         localStorage.setItem('subscriber_id_instalacion', urlSubscriberId);
-        console.log("%c[CONTEXTO] Guardado desde URL:", "color:#22c55e", urlSubscriberId);
+        console.log("%c[CONTEXTO] App ligada al suscriptor:", "color:#22c55e", urlSubscriberId);
     } 
     else if (savedSubscriberId) {
-        // Caso 2: No hay parámetro en URL (PWA instalada o link sin ?s=)
-        // pero ya teníamos uno guardado previamente → lo usamos
+        // Caso PWA instalada: usamos el suscriptor con el que se instaló originalmente
         subscriberIdInstalacion = savedSubscriberId;
-        console.log("%c[CONTEXTO] Recuperado de localStorage:", "color:#22c55e", savedSubscriberId);
+        console.log("%c[CONTEXTO] Usando suscriptor guardado de la instalación:", "color:#22c55e", savedSubscriberId);
     } 
     else {
-        // Caso 3: Primera vez y sin parámetro → usamos Suscriptor Padre como fallback
-        subscriberIdInstalacion = SUSCRIPTOR_PADRE_ID;
-        localStorage.setItem('subscriber_id_instalacion', SUSCRIPTOR_PADRE_ID);
-        console.log("%c[CONTEXTO] Usando Suscriptor Padre (sin contexto previo)", "color:#f59e0b");
+        // Caso problemático: App instalada sin contexto previo
+        subscriberIdInstalacion = null;
+        console.warn("%c[CONTEXTO] No hay suscriptor vinculado a esta instalación", "color:#ef4444");
     }
 }
     
