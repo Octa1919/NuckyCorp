@@ -2752,28 +2752,29 @@ function validarContextoSuscriptorActivo() {
     return true;
 }
 
-    // Validación activa cuando el usuario vuelve a la pestaña
+// =============================================
+// VALIDACIÓN ACTIVA CUANDO EL USUARIO VUELVE A LA PESTAÑA
+// =============================================
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
         validarContextoSuscriptorActivo();
     }
 });
-    
-    window.onload = async () => {
-    const restored = await restoreSession();
 
-    // Verificar si ya tiene la App instalada
+// =============================================
+// INICIO DE LA APLICACIÓN
+// =============================================
+window.onload = async () => {
+    // 1. Verificar si ya tiene la App instalada (PWA)
     checkIfAppIsInstalled();
 
-    // Validación activa al cargar
+    // 2. Validación activa de suscriptor (importante)
     validarContextoSuscriptorActivo();
 
+    // 3. Intentar restaurar sesión
     const restored = await restoreSession();
-    if (!restored) {
-        document.getElementById('login-screen').style.display = 'block';
-        hideChatwootWidget();
 
-    // Si no hay sesión guardada, mostramos el login
+    // 4. Si no había sesión válida, mostramos el login
     if (!restored) {
         document.getElementById('login-screen').style.display = 'block';
         hideChatwootWidget();
