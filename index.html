@@ -1154,15 +1154,16 @@ async function loginJugador() {
         }
 
         // =============================================
-        // VALIDACIÓN DE SUSCRIPTOR (USANDO CONTEXTO DE INSTALACIÓN)
+        // VALIDACIÓN DE SUSCRIPTOR + VINCULACIÓN EN PRIMER LOGIN (iOS compatible)
         // =============================================
         if (!subscriberIdInstalacion) {
-            return alert(
-                "Esta App no está vinculada a ningún agente.\n\n" +
-                "Por favor, abrí la aplicación desde el link personalizado que te proporcionó tu agente e instalala nuevamente."
-            );
+            // No hay contexto previo → vinculamos la App al suscriptor de este usuario
+            subscriberIdInstalacion = data.subscriber_id;
+            localStorage.setItem('subscriber_id_instalacion', data.subscriber_id);
+            console.log("%c[CONTEXTO] App vinculada por primer login al suscriptor:", "color:#22c55e", data.subscriber_id);
         }
 
+        // A partir de acá ya tenemos subscriberIdInstalacion (ya sea por URL, localStorage o por el login actual)
         if (data.subscriber_id !== subscriberIdInstalacion) {
             return alert(
                 "Estas credenciales no corresponden a este agente.\n\n" +
