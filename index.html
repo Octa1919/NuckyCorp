@@ -1063,6 +1063,30 @@
     let suscripcionEstadoCuenta = null;
     let subscriberIdInstalacion = null;
 
+    // ==================== CONTEXTO DE INSTALACIÓN (VERSIÓN ROBUSTA Y CLARA) ====================
+function inicializarContextoInstalacion() {
+    const urlSubscriberId = getSubscriberFromUrl();           // Lee el ?s= de la URL actual
+    const SUSCRIPTOR_PADRE_ID = "15f988d1-cbbc-4c43-85f6-0c1c662defd3";
+    const guardado = localStorage.getItem('subscriber_id_instalacion');
+
+    if (urlSubscriberId) {
+        // Caso normal: el usuario abrió desde un link personalizado
+        subscriberIdInstalacion = urlSubscriberId;
+        localStorage.setItem('subscriber_id_instalacion', urlSubscriberId);
+        console.log("%c[CONTEXTO] App ligada al suscriptor desde URL:", "color:#22c55e", urlSubscriberId);
+
+    } else if (guardado) {
+        // Caso PWA instalada: recuperamos el suscriptor con el que se instaló originalmente
+        subscriberIdInstalacion = guardado;
+        console.log("%c[CONTEXTO] Recuperado de instalación anterior:", "color:#22c55e", guardado);
+
+    } else {
+        // Caso problemático: nunca se abrió desde un link válido
+        subscriberIdInstalacion = null;
+        console.warn("%c[CONTEXTO] Esta instalación no tiene suscriptor vinculado", "color:#ef4444");
+    }
+}
+
 // ==================== OBTENER IP DEL CLIENTE (Edge Function) ====================
 async function obtenerIP() {
     try {
@@ -2736,29 +2760,6 @@ function validarContextoSuscriptorActivo() {
 
     return true;
 }
-
-// ==================== CONTEXTO DE INSTALACIÓN (VERSIÓN ESTRICTA) ====================
-function inicializarContextoInstalacion() {
-    const urlSubscriberId = getSubscriberFromUrl();
-    const savedSubscriberId = localStorage.getItem('subscriber_id_instalacion');
-
-    if (urlSubscriberId) {
-        // Caso ideal: viene con ?s= → guardamos y usamos este suscriptor
-        subscriberIdInstalacion = urlSubscriberId;
-        localStorage.setItem('subscriber_id_instalacion', urlSubscriberId);
-        console.log("%c[CONTEXTO] App ligada al suscriptor:", "color:#22c55e", urlSubscriberId);
-    } 
-    else if (savedSubscriberId) {
-        // Caso PWA instalada: usamos el suscriptor con el que se instaló originalmente
-        subscriberIdInstalacion = savedSubscriberId;
-        console.log("%c[CONTEXTO] Usando suscriptor guardado de la instalación:", "color:#22c55e", savedSubscriberId);
-    } 
-    else {
-        // Caso problemático: App instalada sin contexto previo
-        subscriberIdInstalacion = null;
-        console.warn("%c[CONTEXTO] No hay suscriptor vinculado a esta instalación", "color:#ef4444");
-    }
-}
     
 // Función auxiliar para mostrar mensaje rápido (sin alert)
 function mostrarMensajeCierreSesion() {
@@ -2816,11 +2817,10 @@ window.addEventListener('pageshow', () => {
 // INICIO DE LA APLICACIÓN
 // =============================================
 window.onload = async () => {
-    checkIfAppIsInstalled();
-
-    // ← ESTA LÍNEA ES CLAVE (estaba faltando)
     inicializarContextoInstalacion();
 
+    checkIfAppIsInstalled();
+    
     // Validación activa
     validarContextoSuscriptorActivo();
 
