@@ -1061,6 +1061,7 @@
     let suscripcionPlanJugador = null;
     let cuentaActiva = true;  
     let suscripcionEstadoCuenta = null;
+    let subscriberIdInstalacion = null;
 
 // ==================== OBTENER IP DEL CLIENTE (Edge Function) ====================
 async function obtenerIP() {
@@ -1113,33 +1114,16 @@ async function loginJugador() {
         }
 
         // =============================================
-        // VALIDACIÓN DE SUSCRIPTOR (LINK PERSONALIZADO + SUSCRIPTOR PADRE)
+        // VALIDACIÓN DE SUSCRIPTOR (USANDO CONTEXTO DE INSTALACIÓN)
         // =============================================
-        const urlSubscriberId = getSubscriberFromUrl();
+        if (subscriberIdInstalacion && data.subscriber_id !== subscriberIdInstalacion) {
+            return alert(
+                "Estas credenciales no corresponden a este agente.\n\n" +
+                "Por favor, abre la aplicación desde el link correcto de tu agente."
+            );
+        }
 
-        // ID del Suscriptor Padre (fallback cuando no hay ?s= en la URL)
-        const SUSCRIPTOR_PADRE_ID = "15f988d1-cbbc-4c43-85f6-0c1c662defd3";
-
-        // Determinar contra qué suscriptor vamos a validar
-        let suscriptorRequerido = urlSubscriberId || SUSCRIPTOR_PADRE_ID;
-
-        // Validar que el usuario pertenezca al suscriptor correcto
-        if (data.subscriber_id !== suscriptorRequerido) {
-            if (urlSubscriberId) {
-                // Caso: abrió con link personalizado pero usó credenciales de otro suscriptor
-                return alert(
-                    "Estas credenciales no corresponden a este agente.\n\n" +
-                    "Por favor, abre la aplicación desde el link correcto de tu agente."
-                );
-            } else {
-                // Caso: abrió sin link personalizado y no es usuario del Suscriptor Padre
-                return alert(
-                    "Esta aplicación solo permite el acceso a usuarios registrados desde el link oficial.\n\n" +
-                    "Por favor, utiliza el link personalizado que te proporcionó tu agente."
-                );
-            }
-    }
-        // 4. Si todo está bien, continuar con el login normal
+        // 2. Si todo está bien, continuar con el login
         currentSubscriberId = data.subscriber_id;
         currentUsuario = username;
         currentPassword = password;
@@ -1170,7 +1154,7 @@ async function loginJugador() {
             }
         }
 
-        // Verificar plan y estado de cuenta
+        // Verificar plan premium y estado de cuenta
         await detectarPlanPremium();
         await verificarEstadoCuenta();
 
@@ -1181,6 +1165,7 @@ async function loginJugador() {
 
         await cargarDatosSuscriptor(data.suscriptores);
 
+        // Inicializar Chatwoot
         if (data.suscriptores?.chatwoot_website_token) {
             inicializarChatwoot(
                 data.suscriptores.chatwoot_website_token,
@@ -1188,6 +1173,11 @@ async function loginJugador() {
             );
         }
 
+    } catch (err) {
+        console.error("Error en loginJugador():", err);
+        alert("Ocurrió un error al iniciar sesión.");
+    }
+    
     } catch (err) {
         console.error("Error en loginJugador():", err);
         alert("Ocurrió un error al iniciar sesión.");
@@ -2749,6 +2739,32 @@ function validarContextoSuscriptorActivo() {
     return true;
 }
 
+    // ==================== CONTEXTO DE INSTALACIÓN (PERSISTENTE) ====================
+function inicializarContextoInstalacion() {
+    const urlSubscriberId = getSubscriberFromUrl();
+    const SUSCRIPTOR_PADRE_ID = "15f988d1-cbbc-4c43-85f6-0c1c662defd3";
+
+    // Si hay subscriber_id en la URL actual, lo usamos y lo guardamos
+    if (urlSubscriberId) {
+        subscriberIdInstalacion = urlSubscriberId;
+        localStorage.setItem('subscriber_id_instalacion', urlSubscriberId);
+        console.log("%c[CONTEXTO] Guardado desde URL:", "color:#22c55e", urlSubscriberId);
+    } 
+    // Si no hay en la URL, intentamos recuperar el que ya estaba guardado
+    else {
+        const guardado = localStorage.getItem('subscriber_id_instalacion');
+        if (guardado) {
+            subscriberIdInstalacion = guardado;
+            console.log("%c[CONTEXTO] Recuperado de localStorage:", "color:#22c55e", guardado);
+        } else {
+            // Primera vez sin ?s= → usamos el Suscriptor Padre
+            subscriberIdInstalacion = SUSCRIPTOR_PADRE_ID;
+            localStorage.setItem('subscriber_id_instalacion', SUSCRIPTOR_PADRE_ID);
+            console.log("%c[CONTEXTO] Usando Suscriptor Padre (primera vez)", "color:#f59e0b");
+        }
+    }
+}
+
 // Función auxiliar para mostrar mensaje rápido (sin alert)
 function mostrarMensajeCierreSesion() {
     const mensaje = document.createElement('div');
@@ -2806,7 +2822,13 @@ window.addEventListener('pageshow', () => {
 // =============================================
 window.onload = async () => {
     checkIfAppIsInstalled();
+
+    // Inicializar contexto de instalación (lo más importante)
+    inicializarContextoInstalacion();
+
+    // Validación activa
     validarContextoSuscriptorActivo();
+
     const restored = await restoreSession();
 
     if (!restored) {
