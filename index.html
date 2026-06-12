@@ -1100,6 +1100,7 @@ async function loginJugador() {
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
     try {
+        // 1. Validar credenciales
         const { data, error } = await _supabase
             .from('usuarios')
             .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
@@ -1111,12 +1112,28 @@ async function loginJugador() {
             return alert("Credenciales incorrectas");
         }
 
+        // 2. Obtener el subscriber_id desde la URL actual
+        const urlSubscriberId = getSubscriberFromUrl();
+
+        // 3. Validar que el usuario pertenezca al suscriptor del link
+        if (urlSubscriberId && data.subscriber_id !== urlSubscriberId) {
+            return alert(
+                "Estas credenciales no corresponden a este agente.\n" +
+                "Por favor, utiliza el link correcto de tu agente o inicia sesión con el usuario correspondiente."
+            );
+        }
+
+        // 4. Si todo está bien, continuar con el login normal
         currentSubscriberId = data.subscriber_id;
         currentUsuario = username;
         currentPassword = password;
 
         // Guardar sesión
-        const sessionData = { username: currentUsuario, subscriber_id: currentSubscriberId };
+        const sessionData = {
+            username: currentUsuario,
+            subscriber_id: currentSubscriberId
+        };
+
         if (recordar) {
             localStorage.setItem('nucky_session', JSON.stringify(sessionData));
             sessionStorage.removeItem('nucky_session');
@@ -1125,7 +1142,7 @@ async function loginJugador() {
             localStorage.removeItem('nucky_session');
         }
 
-        // === REGISTRAR IP SI NO TIENE ===
+        // Registrar IP si no tiene
         if (!data.ultima_ip) {
             const ip = await obtenerIP();
             if (ip) {
@@ -1149,14 +1166,17 @@ async function loginJugador() {
         await cargarDatosSuscriptor(data.suscriptores);
 
         if (data.suscriptores?.chatwoot_website_token) {
-            inicializarChatwoot(data.suscriptores.chatwoot_website_token, data.suscriptores.chatwoot_hmac_secret);
+            inicializarChatwoot(
+                data.suscriptores.chatwoot_website_token,
+                data.suscriptores.chatwoot_hmac_secret
+            );
         }
 
     } catch (err) {
         console.error("Error en loginJugador():", err);
         alert("Ocurrió un error al iniciar sesión.");
     }
-
+}
         
     // ==================== CONFIGURAR ONE SIGNAL ====================
     setTimeout(() => {
