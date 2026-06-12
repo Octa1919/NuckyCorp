@@ -2718,63 +2718,97 @@ function hideRegistroModal() {
     document.getElementById('modal-registro').style.display = 'none';
 }
 
-    // ==================== VALIDACIÓN ACTIVA DE SUSCRIPTOR ====================
+// ==================== VALIDACIÓN ACTIVA DE SUSCRIPTOR (OPTIMIZADA) ====================
 function validarContextoSuscriptorActivo() {
     const urlSubscriberId = getSubscriberFromUrl();
     const SUSCRIPTOR_PADRE_ID = "15f988d1-cbbc-4c43-85f6-0c1c662defd3";
 
-    // Determinar qué suscriptor debería estar activo según la URL actual
     const suscriptorEsperado = urlSubscriberId || SUSCRIPTOR_PADRE_ID;
 
-    // Si hay una sesión activa en memoria
     if (currentSubscriberId && currentSubscriberId !== suscriptorEsperado) {
         console.warn("%c[VALIDACIÓN ACTIVA] Sesión de otro suscriptor detectada. Forzando logout...", "color:#ef4444");
 
-        // Limpiar sesión
+        // Limpiar sesión inmediatamente
         localStorage.removeItem('nucky_session');
         sessionStorage.removeItem('nucky_session');
         currentSubscriberId = null;
         currentUsuario = null;
         currentPassword = null;
 
-        // Mostrar mensaje claro
-        alert(
-            "Se detectó que estás abriendo la App desde un link de otro agente.\n\n" +
-            "Por seguridad, se cerró la sesión anterior.\n" +
-            "Por favor, inicia sesión nuevamente con tu usuario correspondiente a este agente."
-        );
+        // Mostrar mensaje rápido (sin alert bloqueante)
+        mostrarMensajeCierreSesion();
 
-        // Recargar para mostrar pantalla de login limpia
-        location.reload();
+        // Recargar después de un breve delay para que se vea el mensaje
+        setTimeout(() => {
+            location.reload();
+        }, 1200);
+
         return false;
     }
 
     return true;
 }
 
+// Función auxiliar para mostrar mensaje rápido (sin alert)
+function mostrarMensajeCierreSesion() {
+    const mensaje = document.createElement('div');
+    mensaje.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.95);
+        color: #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999999;
+        text-align: center;
+        padding: 20px;
+        font-size: 1.1rem;
+        line-height: 1.5;
+    `;
+    mensaje.innerHTML = `
+        <div>
+            <div style="font-size: 2.2rem; margin-bottom: 16px;">🔄</div>
+            <strong>Se detectó un cambio de agente</strong><br><br>
+            Por seguridad se cerró la sesión anterior.<br>
+            Por favor iniciá sesión nuevamente.
+        </div>
+    `;
+    document.body.appendChild(mensaje);
+}
+
 // =============================================
-// VALIDACIÓN ACTIVA CUANDO EL USUARIO VUELVE A LA PESTAÑA
+// VALIDACIÓN ACTIVA - EVENTOS RÁPIDOS
 // =============================================
+
+// Cuando vuelve a la pestaña (más rápido en muchos casos)
+window.addEventListener('focus', () => {
+    validarContextoSuscriptorActivo();
+});
+
+// Cuando cambia la visibilidad
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
         validarContextoSuscriptorActivo();
     }
 });
 
+// Respaldo adicional
+window.addEventListener('pageshow', () => {
+    validarContextoSuscriptorActivo();
+});
+
 // =============================================
 // INICIO DE LA APLICACIÓN
 // =============================================
 window.onload = async () => {
-    // 1. Verificar si ya tiene la App instalada (PWA)
     checkIfAppIsInstalled();
-
-    // 2. Validación activa de suscriptor (importante)
     validarContextoSuscriptorActivo();
-
-    // 3. Intentar restaurar sesión
     const restored = await restoreSession();
 
-    // 4. Si no había sesión válida, mostramos el login
     if (!restored) {
         document.getElementById('login-screen').style.display = 'block';
         hideChatwootWidget();
