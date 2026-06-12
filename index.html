@@ -1112,17 +1112,33 @@ async function loginJugador() {
             return alert("Credenciales incorrectas");
         }
 
-        // 2. Obtener el subscriber_id desde la URL actual
+        // =============================================
+        // VALIDACIÓN DE SUSCRIPTOR (LINK PERSONALIZADO + SUSCRIPTOR PADRE)
+        // =============================================
         const urlSubscriberId = getSubscriberFromUrl();
 
-        // 3. Validar que el usuario pertenezca al suscriptor del link
-        if (urlSubscriberId && data.subscriber_id !== urlSubscriberId) {
-            return alert(
-                "Estas credenciales no corresponden a este agente.\n" +
-                "Por favor, utiliza el link correcto de tu agente o tocá en olvidé mis datos y pedí el link para ingresar."
-            );
-        }
+        // ID del Suscriptor Padre (fallback cuando no hay ?s= en la URL)
+        const SUSCRIPTOR_PADRE_ID = "15f988d1-cbbc-4c43-85f6-0c1c662defd3";
 
+        // Determinar contra qué suscriptor vamos a validar
+        let suscriptorRequerido = urlSubscriberId || SUSCRIPTOR_PADRE_ID;
+
+        // Validar que el usuario pertenezca al suscriptor correcto
+        if (data.subscriber_id !== suscriptorRequerido) {
+            if (urlSubscriberId) {
+                // Caso: abrió con link personalizado pero usó credenciales de otro suscriptor
+                return alert(
+                    "Estas credenciales no corresponden a este agente.\n\n" +
+                    "Por favor, abre la aplicación desde el link correcto de tu agente."
+                );
+            } else {
+                // Caso: abrió sin link personalizado y no es usuario del Suscriptor Padre
+                return alert(
+                    "Esta aplicación solo permite el acceso a usuarios registrados desde el link oficial.\n\n" +
+                    "Por favor, utiliza el link personalizado que te proporcionó tu agente."
+                );
+            }
+    }
         // 4. Si todo está bien, continuar con el login normal
         currentSubscriberId = data.subscriber_id;
         currentUsuario = username;
