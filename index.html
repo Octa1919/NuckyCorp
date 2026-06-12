@@ -1086,12 +1086,17 @@ function inicializarContextoInstalacion() {
     if (urlSubscriberId) {
         subscriberIdInstalacion = urlSubscriberId;
         localStorage.setItem('subscriber_id_instalacion', urlSubscriberId);
+        console.log("%c[CONTEXTO iOS] Guardado desde URL:", "color:#22c55e", urlSubscriberId);
+
     } else if (window.__subscriberIdInstalacion) {
         subscriberIdInstalacion = window.__subscriberIdInstalacion;
+
     } else if (guardado) {
         subscriberIdInstalacion = guardado;
+
     } else {
         subscriberIdInstalacion = null;
+        console.warn("%c[CONTEXTO iOS] No hay suscriptor vinculado", "color:#ef4444");
     }
 }
 
