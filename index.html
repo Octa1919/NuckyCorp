@@ -1061,7 +1061,6 @@
     let suscripcionPlanJugador = null;
     let cuentaActiva = true;  
     let suscripcionEstadoCuenta = null;
-    let subscriberIdInstalacion = null;
 
 // ==================== OBTENER IP DEL CLIENTE (Edge Function) ====================
 async function obtenerIP() {
@@ -1101,6 +1100,7 @@ async function loginJugador() {
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
     try {
+        // 1. Validar credenciales
         const { data, error } = await _supabase
             .from('usuarios')
             .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
@@ -1112,14 +1112,34 @@ async function loginJugador() {
             return alert("Credenciales incorrectas");
         }
 
-        // Validación de suscriptor usando contexto de instalación
-        if (subscriberIdInstalacion && data.subscriber_id !== subscriberIdInstalacion) {
-            return alert(
-                "Estas credenciales no corresponden a este agente.\n\n" +
-                "Por favor, abre la aplicación desde el link correcto de tu agente."
-            );
-        }
+        // =============================================
+        // VALIDACIÓN DE SUSCRIPTOR (LINK PERSONALIZADO + SUSCRIPTOR PADRE)
+        // =============================================
+        const urlSubscriberId = getSubscriberFromUrl();
 
+        // ID del Suscriptor Padre (fallback cuando no hay ?s= en la URL)
+        const SUSCRIPTOR_PADRE_ID = "15f988d1-cbbc-4c43-85f6-0c1c662defd3";
+
+        // Determinar contra qué suscriptor vamos a validar
+        let suscriptorRequerido = urlSubscriberId || SUSCRIPTOR_PADRE_ID;
+
+        // Validar que el usuario pertenezca al suscriptor correcto
+        if (data.subscriber_id !== suscriptorRequerido) {
+            if (urlSubscriberId) {
+                // Caso: abrió con link personalizado pero usó credenciales de otro suscriptor
+                return alert(
+                    "Estas credenciales no corresponden a este agente.\n\n" +
+                    "Por favor, abre la aplicación desde el link correcto de tu agente."
+                );
+            } else {
+                // Caso: abrió sin link personalizado y no es usuario del Suscriptor Padre
+                return alert(
+                    "Esta aplicación solo permite el acceso a usuarios registrados desde el link oficial.\n\n" +
+                    "Por favor, utiliza el link personalizado que te proporcionó tu agente."
+                );
+            }
+    }
+        // 4. Si todo está bien, continuar con el login normal
         currentSubscriberId = data.subscriber_id;
         currentUsuario = username;
         currentPassword = password;
@@ -1161,7 +1181,6 @@ async function loginJugador() {
 
         await cargarDatosSuscriptor(data.suscriptores);
 
-        // Inicializar Chatwoot
         if (data.suscriptores?.chatwoot_website_token) {
             inicializarChatwoot(
                 data.suscriptores.chatwoot_website_token,
@@ -1169,19 +1188,22 @@ async function loginJugador() {
             );
         }
 
-        // === INICIAR SUSCRIPCIONES EN TIEMPO REAL (IMPORTANTE) ===
-        if (typeof iniciarSuscripcionPlanJugador === 'function') {
-            iniciarSuscripcionPlanJugador();
-        }
-        if (typeof iniciarSuscripcionEstadoCuenta === 'function') {
-            iniciarSuscripcionEstadoCuenta();
-        }
-
     } catch (err) {
         console.error("Error en loginJugador():", err);
         alert("Ocurrió un error al iniciar sesión.");
     }
+        
+    // ==================== CONFIGURAR ONE SIGNAL ====================
+    setTimeout(() => {
+        configurarOneSignalUsuario();
+    }, 1200);
+
+    // ==================== TOUR ====================
+    setTimeout(() => {
+        iniciarTour(false);
+    }, 1800);
 }
+
     // ==================== VERIFICAR ESTADO DE LA CUENTA (ACTIVO / SUSPENDIDO) ====================
 async function verificarEstadoCuenta() {
     if (!currentSubscriberId) {
@@ -1214,7 +1236,9 @@ async function verificarEstadoCuenta() {
         mostrarPantallaBloqueo();
         return false;
     }
+}
 
+    function mostrarPantallaBloqueo() {
     const pantalla = document.getElementById('pantalla-bloqueo-cuenta');
     if (pantalla) {
         pantalla.style.display = 'flex';
@@ -2322,11 +2346,6 @@ async function configurarOneSignalUsuario() {
     
     // ==================== RESTAURAR SESIÓN ====================
 async function restoreSession() {
-    // === VALIDACIÓN ACTIVA DE SUSCRIPTOR ===
-    if (!validarContextoSuscriptorActivo()) {
-        return false;
-    }
-
     let savedSession = localStorage.getItem('nucky_session');
     if (!savedSession) {
         savedSession = sessionStorage.getItem('nucky_session');
@@ -2356,28 +2375,21 @@ async function restoreSession() {
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(subData);
-
-        // Verificar plan premium y estado de cuenta
         await detectarPlanPremium();
         await verificarEstadoCuenta();
+        iniciarSuscripcionEstadoCuenta();
+        iniciarSuscripcionPlanJugador();
+        actualizarEstadoBotonRuleta();
 
-        // Iniciar suscripciones en tiempo real (si las tenés)
-        if (typeof iniciarSuscripcionPlanJugador === 'function') {
-            iniciarSuscripcionPlanJugador();
-        }
-        if (typeof iniciarSuscripcionEstadoCuenta === 'function') {
-            iniciarSuscripcionEstadoCuenta();
-        }
-
-        // Configurar OneSignal
+        // Configurar OneSignal al restaurar sesión
         setTimeout(() => {
             configurarOneSignalUsuario();
         }, 1200);
 
-        // Inicializar Chatwoot
+        // ✅ Inicializar Chatwoot (esto estaba mal ubicado)
         if (subData.chatwoot_website_token) {
             inicializarChatwoot(
-                subData.chatwoot_website_token,
+                subData.chatwoot_website_token, 
                 subData.chatwoot_hmac_secret
             );
         }
@@ -2385,7 +2397,6 @@ async function restoreSession() {
         return true;
 
     } catch (e) {
-        console.error("Error en restoreSession():", e);
         localStorage.removeItem('nucky_session');
         sessionStorage.removeItem('nucky_session');
         return false;
@@ -2693,130 +2704,14 @@ function showRegistroModal() {
 function hideRegistroModal() {
     document.getElementById('modal-registro').style.display = 'none';
 }
-
-// ==================== VALIDACIÓN ACTIVA DE SUSCRIPTOR (OPTIMIZADA) ====================
-function validarContextoSuscriptorActivo() {
-    const urlSubscriberId = getSubscriberFromUrl();
-    const SUSCRIPTOR_PADRE_ID = "15f988d1-cbbc-4c43-85f6-0c1c662defd3";
-
-    const suscriptorEsperado = urlSubscriberId || SUSCRIPTOR_PADRE_ID;
-
-    if (currentSubscriberId && currentSubscriberId !== suscriptorEsperado) {
-        console.warn("%c[VALIDACIÓN ACTIVA] Sesión de otro suscriptor detectada. Forzando logout...", "color:#ef4444");
-
-        // Limpiar sesión inmediatamente
-        localStorage.removeItem('nucky_session');
-        sessionStorage.removeItem('nucky_session');
-        currentSubscriberId = null;
-        currentUsuario = null;
-        currentPassword = null;
-
-        // Mostrar mensaje rápido (sin alert bloqueante)
-        mostrarMensajeCierreSesion();
-
-        // Recargar después de un breve delay para que se vea el mensaje
-        setTimeout(() => {
-            location.reload();
-        }, 1200);
-
-        return false;
-    }
-
-    return true;
-}
-
-    // ==================== CONTEXTO DE INSTALACIÓN (PERSISTENTE) ====================
-function inicializarContextoInstalacion() {
-    const urlSubscriberId = getSubscriberFromUrl();
-    const SUSCRIPTOR_PADRE_ID = "15f988d1-cbbc-4c43-85f6-0c1c662defd3";
-
-    // Si hay subscriber_id en la URL actual, lo usamos y lo guardamos
-    if (urlSubscriberId) {
-        subscriberIdInstalacion = urlSubscriberId;
-        localStorage.setItem('subscriber_id_instalacion', urlSubscriberId);
-        console.log("%c[CONTEXTO] Guardado desde URL:", "color:#22c55e", urlSubscriberId);
-    } 
-    // Si no hay en la URL, intentamos recuperar el que ya estaba guardado
-    else {
-        const guardado = localStorage.getItem('subscriber_id_instalacion');
-        if (guardado) {
-            subscriberIdInstalacion = guardado;
-            console.log("%c[CONTEXTO] Recuperado de localStorage:", "color:#22c55e", guardado);
-        } else {
-            // Primera vez sin ?s= → usamos el Suscriptor Padre
-            subscriberIdInstalacion = SUSCRIPTOR_PADRE_ID;
-            localStorage.setItem('subscriber_id_instalacion', SUSCRIPTOR_PADRE_ID);
-            console.log("%c[CONTEXTO] Usando Suscriptor Padre (primera vez)", "color:#f59e0b");
-        }
-    }
-}
-
-// Función auxiliar para mostrar mensaje rápido (sin alert)
-function mostrarMensajeCierreSesion() {
-    const mensaje = document.createElement('div');
-    mensaje.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(15, 23, 42, 0.95);
-        color: #e2e8f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 999999;
-        text-align: center;
-        padding: 20px;
-        font-size: 1.1rem;
-        line-height: 1.5;
-    `;
-    mensaje.innerHTML = `
-        <div>
-            <div style="font-size: 2.2rem; margin-bottom: 16px;">🔄</div>
-            <strong>Se detectó un cambio de agente</strong><br><br>
-            Por seguridad se cerró la sesión anterior.<br>
-            Por favor iniciá sesión nuevamente.
-        </div>
-    `;
-    document.body.appendChild(mensaje);
-}
-
-// =============================================
-// VALIDACIÓN ACTIVA - EVENTOS RÁPIDOS
-// =============================================
-
-// Cuando vuelve a la pestaña (más rápido en muchos casos)
-window.addEventListener('focus', () => {
-    validarContextoSuscriptorActivo();
-});
-
-// Cuando cambia la visibilidad
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        validarContextoSuscriptorActivo();
-    }
-});
-
-// Respaldo adicional
-window.addEventListener('pageshow', () => {
-    validarContextoSuscriptorActivo();
-});
-
-// =============================================
-// INICIO DE LA APLICACIÓN
-// =============================================
-window.onload = async () => {
-    checkIfAppIsInstalled();
-
-    // Inicializar contexto de instalación (lo más importante)
-    inicializarContextoInstalacion();
-
-    // Validación activa
-    validarContextoSuscriptorActivo();
-
+    
+    window.onload = async () => {
     const restored = await restoreSession();
 
+    // Verificar si ya tiene la App instalada
+    checkIfAppIsInstalled();
+
+    // Si no hay sesión guardada, mostramos el login
     if (!restored) {
         document.getElementById('login-screen').style.display = 'block';
         hideChatwootWidget();
