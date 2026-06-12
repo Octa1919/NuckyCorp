@@ -5,14 +5,18 @@
     (function() {
         const params = new URLSearchParams(window.location.search);
         const urlId = params.get('s') || params.get('subscriber') || params.get('subscriber_id');
-        const saved = localStorage.getItem('subscriber_id_instalacion');
+        const yaVinculado = localStorage.getItem('subscriber_id_instalacion');
 
-        if (urlId) {
+        // Solo vinculamos si todavía NO hay nada guardado (primera vez)
+        if (urlId && !yaVinculado) {
             localStorage.setItem('subscriber_id_instalacion', urlId);
             window.__subscriberIdInstalacion = urlId;
-        } else if (saved) {
-            window.__subscriberIdInstalacion = saved;
-        } else {
+            console.log("%c[CONTEXTO] Vinculación inicial desde URL:", "color:#22c55e", urlId);
+        } 
+        else if (yaVinculado) {
+            window.__subscriberIdInstalacion = yaVinculado;
+        } 
+        else {
             window.__subscriberIdInstalacion = null;
         }
     })();
@@ -1080,23 +1084,14 @@
     let subscriberIdInstalacion = null;
 
 function inicializarContextoInstalacion() {
-    const urlSubscriberId = getSubscriberFromUrl();
     const guardado = localStorage.getItem('subscriber_id_instalacion');
 
-    if (urlSubscriberId) {
-        subscriberIdInstalacion = urlSubscriberId;
-        localStorage.setItem('subscriber_id_instalacion', urlSubscriberId);
-        console.log("%c[CONTEXTO iOS] Guardado desde URL:", "color:#22c55e", urlSubscriberId);
-
+    if (guardado) {
+        subscriberIdInstalacion = guardado;
     } else if (window.__subscriberIdInstalacion) {
         subscriberIdInstalacion = window.__subscriberIdInstalacion;
-
-    } else if (guardado) {
-        subscriberIdInstalacion = guardado;
-
     } else {
         subscriberIdInstalacion = null;
-        console.warn("%c[CONTEXTO iOS] No hay suscriptor vinculado", "color:#ef4444");
     }
 }
 
