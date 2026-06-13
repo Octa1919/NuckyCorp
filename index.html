@@ -2635,8 +2635,14 @@ function finalizarTour() {
     }
 }
 
-    function mostrarModalPremiumJugador() {
+ // ==================== MODAL PLAN PREMIUM (JUGADOR) ====================
+function mostrarModalPremiumJugador() {
+    // Si ya existe un modal, lo eliminamos primero
+    const existente = document.getElementById('modal-premium-jugador');
+    if (existente) existente.remove();
+
     const modal = document.createElement('div');
+    modal.id = 'modal-premium-jugador';
     modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:99999;';
     
     modal.innerHTML = `
@@ -2647,13 +2653,21 @@ function finalizarTour() {
                 La Ruleta VIP está disponible solo para agentes con plan <strong>Premium</strong> (Anual+ o Premium).
             </p>
             
-            <button onclick="this.closest('div[style*=\'position:fixed\']').remove()" 
-                    style="background:#22c55e; color:white; border:none; padding:13px 32px; border-radius:12px; font-weight:700; cursor:pointer; font-size:1rem;">
+            <button onclick="cerrarModalPremiumJugador()" 
+                    style="background:#22c55e; color:white; border:none; padding:14px 40px; border-radius:12px; font-weight:700; cursor:pointer; font-size:1rem;">
                 Entendido
             </button>
         </div>
     `;
+    
     document.body.appendChild(modal);
+}
+
+function cerrarModalPremiumJugador() {
+    const modal = document.getElementById('modal-premium-jugador');
+    if (modal) {
+        modal.remove();
+    }
 }
 
     // ==================== CREAR NUEVO USUARIO ====================
