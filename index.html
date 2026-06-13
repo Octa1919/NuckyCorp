@@ -2836,14 +2836,8 @@ window.addEventListener('pageshow', () => {
 // =============================================
 window.onload = async () => {
     checkIfAppIsInstalled();
-
     inicializarContextoInstalacion();
-    
-    // Validación activa
-    validarContextoSuscriptorActivo();
-
     const restored = await restoreSession();
-
     if (!restored) {
         document.getElementById('login-screen').style.display = 'block';
         hideChatwootWidget();
