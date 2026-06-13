@@ -2823,25 +2823,23 @@ function mostrarMensajeCierreSesion() {
 // =============================================
 // VALIDACIÓN ACTIVA - EVENTOS RÁPIDOS
 // =============================================
+// NOTA: Estos listeners fueron desactivados porque causaban cierre de sesión
+// al interactuar con Chatwoot o al poner la App en segundo plano en iOS.
+// La validación de contexto ya se hace de forma segura en restoreSession() y loginJugador().
 
-// Cuando vuelve a la pestaña (más rápido en muchos casos)
-/*
-window.addEventListener('focus', () => {
-    validarContextoSuscriptorActivo();
-});
+// window.addEventListener('focus', () => {
+//     validarContextoSuscriptorActivo();
+// });
 
-// Cuando cambia la visibilidad
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        validarContextoSuscriptorActivo();
-    }
-});
+// document.addEventListener('visibilitychange', () => {
+//     if (document.visibilityState === 'visible') {
+//         validarContextoSuscriptorActivo();
+//     }
+// });
 
-// Respaldo adicional
-window.addEventListener('pageshow', () => {
-    validarContextoSuscriptorActivo();
-});
-*/
+// window.addEventListener('pageshow', () => {
+//     validarContextoSuscriptorActivo();
+// });
 
 // =============================================
 // INICIO DE LA APLICACIÓN
