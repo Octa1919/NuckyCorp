@@ -5,21 +5,33 @@
     (function() {
         const params = new URLSearchParams(window.location.search);
         const urlId = params.get('s') || params.get('subscriber') || params.get('subscriber_id');
+    
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true;
+
         const yaVinculado = localStorage.getItem('subscriber_id_instalacion');
 
-        // Solo vinculamos si todavía NO hay nada guardado (primera vez)
-        if (urlId && !yaVinculado) {
-            localStorage.setItem('subscriber_id_instalacion', urlId);
-            window.__subscriberIdInstalacion = urlId;
-            console.log("%c[CONTEXTO] Vinculación inicial desde URL:", "color:#22c55e", urlId);
-        } 
-        else if (yaVinculado) {
+        if (urlId) {
+            if (isStandalone) {
+                // App instalada → solo vinculamos si todavía no tiene nada guardado
+                if (!yaVinculado) {
+                    localStorage.setItem('subscriber_id_instalacion', urlId);
+                    window.__subscriberIdInstalacion = urlId;
+                } else {
+                    window.__subscriberIdInstalacion = yaVinculado;
+                }
+            } else {
+                // Navegador normal (pestaña) → siempre respetamos el ?s= actual
+                localStorage.setItem('subscriber_id_instalacion', urlId);
+                window.__subscriberIdInstalacion = urlId;
+            }
+        } else if (yaVinculado) {
             window.__subscriberIdInstalacion = yaVinculado;
-        } 
-        else {
+        } else {
             window.__subscriberIdInstalacion = null;
         }
     })();
+    </script>
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
