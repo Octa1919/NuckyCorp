@@ -2441,28 +2441,27 @@ async function restoreSession() {
         const session = JSON.parse(savedSession);
         const savedSubscriberId = session.subscriber_id;
 
-        // === NUEVA LÓGICA DE AISLAMIENTO ===
+        // === Validación de contexto de instalación ===
         const urlSubscriberId = getSubscriberFromUrl();
 
-        // Si hay un suscriptor en la URL actual y es diferente al de la sesión guardada → NO restauramos
         if (urlSubscriberId && urlSubscriberId !== savedSubscriberId) {
             console.log("%c[RESTORE] URL de otro suscriptor detectada. No se restaura sesión anterior.", "color:#f59e0b");
-            return false; // ← Muestra pantalla de login limpia
+            return false;
         }
 
-        // Si ya tenemos contexto de instalación y no coincide con la sesión guardada → tampoco restauramos
         if (subscriberIdInstalacion && savedSubscriberId !== subscriberIdInstalacion) {
             console.log("%c[RESTORE] Sesión de otro suscriptor. No se restaura.", "color:#f59e0b");
             return false;
         }
 
-        // === Si llegamos acá, es seguro restaurar ===
+        // === Restaurar sesión ===
         currentUsuario = session.username;
         currentSubscriberId = savedSubscriberId;
 
+        // Traemos los datos del suscriptor (incluyendo colores)
         const { data: subData, error } = await _supabase
             .from('suscriptores')
-            .select('id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret')
+            .select('id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color')
             .eq('id', currentSubscriberId)
             .single();
 
@@ -2472,21 +2471,31 @@ async function restoreSession() {
             return false;
         }
 
+        // === APLICAR COLORES DINÁMICOS ===
+        aplicarColoresSuscriptor(subData);
+
+        // Mostrar dashboard
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
 
+        // Cargar datos del suscriptor
         await cargarDatosSuscriptor(subData);
+
+        // Verificar plan y estado de cuenta
         await detectarPlanPremium();
         await verificarEstadoCuenta();
 
+        // Iniciar suscripciones en tiempo real
         if (typeof iniciarSuscripcionPlanJugador === 'function') iniciarSuscripcionPlanJugador();
         if (typeof iniciarSuscripcionEstadoCuenta === 'function') iniciarSuscripcionEstadoCuenta();
 
+        // Configurar OneSignal
         setTimeout(() => {
             configurarOneSignalUsuario();
         }, 1200);
 
+        // Inicializar Chatwoot si corresponde
         if (subData.chatwoot_website_token) {
             inicializarChatwoot(subData.chatwoot_website_token, subData.chatwoot_hmac_secret);
         }
