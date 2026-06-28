@@ -1160,12 +1160,20 @@ async function loginJugador() {
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
     try {
-        const { data, error } = await _supabase
-            .from('usuarios')
-            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
-            .eq('username', username)
-            .eq('password', password)
+        // Traemos datos del suscriptor + colores
+        const { data: subData } = await _supabase
+            .from('suscriptores')
+            .select('id, nombre_casino, primary_color, accent_color')
+            .eq('id', currentSubscriberId)
             .single();
+
+        if (subData) {
+            // Guardamos los datos del suscriptor para usarlos después
+            window.currentSuscriptorData = subData;
+    
+            // Aplicamos los colores dinámicamente
+            aplicarColoresSuscriptor(subData);
+        }
 
         if (error || !data) {
             return alert("Credenciales incorrectas");
