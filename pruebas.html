@@ -1160,36 +1160,24 @@ async function loginJugador() {
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
     try {
-        // Traemos datos del suscriptor + colores
-        const { data: subData } = await _supabase
-            .from('suscriptores')
-            .select('id, nombre_casino, primary_color, accent_color')
-            .eq('id', currentSubscriberId)
+        // 1. Login principal + traer datos del suscriptor (incluyendo colores)
+        const { data, error } = await _supabase
+            .from('usuarios')
+            .select('*, suscriptores(*)')
+            .eq('username', username)
+            .eq('password', password)
             .single();
-
-        if (subData) {
-            // Guardamos los datos del suscriptor para usarlos después
-            window.currentSuscriptorData = subData;
-    
-            // Aplicamos los colores dinámicamente
-            aplicarColoresSuscriptor(subData);
-        }
 
         if (error || !data) {
             return alert("Credenciales incorrectas");
         }
 
-        // =============================================
-        // VALIDACIÓN DE SUSCRIPTOR + VINCULACIÓN EN PRIMER LOGIN (iOS compatible)
-        // =============================================
+        // 2. Validación de contexto de instalación (subscriber)
         if (!subscriberIdInstalacion) {
-            // No hay contexto previo → vinculamos la App al suscriptor de este usuario
             subscriberIdInstalacion = data.subscriber_id;
             localStorage.setItem('subscriber_id_instalacion', data.subscriber_id);
-            console.log("%c[CONTEXTO] App vinculada por primer login al suscriptor:", "color:#22c55e", data.subscriber_id);
         }
 
-        // A partir de acá ya tenemos subscriberIdInstalacion (ya sea por URL, localStorage o por el login actual)
         if (data.subscriber_id !== subscriberIdInstalacion) {
             return alert(
                 "Estas credenciales no corresponden a este agente.\n\n" +
@@ -1201,7 +1189,13 @@ async function loginJugador() {
         currentUsuario = username;
         currentPassword = password;
 
-        // Guardar sesión
+        // 3. === APLICAR COLORES DINÁMICOS DEL SUSCRIPTOR ===
+        if (data.suscriptores) {
+            window.currentSuscriptorData = data.suscriptores;
+            aplicarColoresSuscriptor(data.suscriptores);
+        }
+
+        // 4. Guardar sesión
         const sessionData = {
             username: currentUsuario,
             subscriber_id: currentSubscriberId
@@ -1215,7 +1209,7 @@ async function loginJugador() {
             localStorage.removeItem('nucky_session');
         }
 
-        // Registrar IP si no tiene
+        // 5. Registrar IP si no tiene
         if (!data.ultima_ip) {
             const ip = await obtenerIP();
             if (ip) {
@@ -1227,18 +1221,19 @@ async function loginJugador() {
             }
         }
 
-        // Verificar plan y estado de cuenta
+        // 6. Verificar plan y estado de cuenta
         await detectarPlanPremium();
         await verificarEstadoCuenta();
 
-        // Mostrar dashboard
+        // 7. Mostrar dashboard
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
 
+        // 8. Cargar datos del suscriptor (salas, nombre, etc.)
         await cargarDatosSuscriptor(data.suscriptores);
 
-        // Inicializar Chatwoot
+        // 9. Inicializar Chatwoot si corresponde
         if (data.suscriptores?.chatwoot_website_token) {
             inicializarChatwoot(
                 data.suscriptores.chatwoot_website_token,
@@ -1246,13 +1241,18 @@ async function loginJugador() {
             );
         }
 
-        // === INICIAR SUSCRIPCIONES EN TIEMPO REAL ===
+        // 10. Iniciar suscripciones en tiempo real
         if (typeof iniciarSuscripcionPlanJugador === 'function') {
             iniciarSuscripcionPlanJugador();
         }
         if (typeof iniciarSuscripcionEstadoCuenta === 'function') {
             iniciarSuscripcionEstadoCuenta();
         }
+
+        // 11. Configurar OneSignal
+        setTimeout(() => {
+            configurarOneSignalUsuario();
+        }, 1200);
 
     } catch (err) {
         console.error("Error en loginJugador():", err);
