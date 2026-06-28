@@ -1496,6 +1496,32 @@ async function detectarPlanPremium() {
         }
     }
 
+    // ======================================================
+// APLICAR COLORES DINÁMICOS DEL SUSCRIPTOR
+// ======================================================
+function aplicarColoresSuscriptor(suscriptor) {
+    if (!suscriptor) return;
+
+    const root = document.documentElement;
+
+    // Color Principal
+    if (suscriptor.primary_color) {
+        root.style.setProperty('--primary', suscriptor.primary_color);
+    }
+
+    // Color Acento
+    if (suscriptor.accent_color) {
+        root.style.setProperty('--accent', suscriptor.accent_color);
+    }
+
+    // Opcional: Glass background (si lo usamos más adelante)
+    // if (suscriptor.glass_bg) {
+    //     root.style.setProperty('--glass', suscriptor.glass_bg);
+    // }
+
+    console.log('%c[Colores] Aplicados dinámicamente desde el suscriptor', 'color:#22c55e');
+}
+
     async function guardarMiPassword() {
         const nuevaPass = document.getElementById('perfil-nueva-password').value.trim();
         if (!nuevaPass || nuevaPass.length < 8) return alert("La contraseña debe tener al menos 8 caracteres");
