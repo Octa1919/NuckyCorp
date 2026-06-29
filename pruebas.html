@@ -1161,12 +1161,17 @@ async function loginJugador() {
 
     try {
         // 1. Login principal + traer datos del suscriptor (incluyendo colores)
-        const { data, error } = await _supabase
+       const { data, error } = await _supabase
             .from('usuarios')
-            .select('*, suscriptores(*)')
+            .select('*, suscriptores(*, button_color, button_style, button_text_color)')
             .eq('username', username)
             .eq('password', password)
             .single();
+
+        // Aplicar estilo de botones
+        if (data.suscriptores) {
+            aplicarEstiloBotones(data.suscriptores);
+        }
 
         if (error || !data) {
             return alert("Credenciales incorrectas");
