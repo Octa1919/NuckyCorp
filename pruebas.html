@@ -1522,6 +1522,51 @@ function aplicarColoresSuscriptor(suscriptor) {
     console.log('%c[Colores] Aplicados dinámicamente desde el suscriptor', 'color:#22c55e');
 }
 
+// ======================================================
+// APLICAR ESTILO DE BOTONES (SÓLIDO / DEGRADADO + COLOR DE TEXTO)
+// ======================================================
+function aplicarEstiloBotones(suscriptor) {
+    if (!suscriptor) return;
+
+    const buttonColor = suscriptor.button_color || '#a855f7';
+    const buttonStyle = suscriptor.button_style || 'gradient';
+    const textColor   = suscriptor.button_text_color || '#ffffff';
+
+    // Seleccionamos todos los botones importantes
+    const buttons = document.querySelectorAll(
+        '.btn-accion, .btn-atencion, .btn-ruleta, .sala-btn, #login-screen button, #btn-spin'
+    );
+
+    buttons.forEach(btn => {
+        // Color del texto
+        btn.style.color = textColor;
+
+        if (buttonStyle === 'solid') {
+            // Estilo sólido
+            btn.style.background = buttonColor;
+            btn.style.backgroundImage = 'none';
+        } else {
+            // Estilo degradado
+            const darkerColor = adjustColor(buttonColor, -25);
+            btn.style.backgroundImage = `linear-gradient(90deg, ${buttonColor}, ${darkerColor})`;
+            btn.style.background = '';
+        }
+    });
+}
+
+// Función auxiliar para oscurecer un color (para el degradado)
+function adjustColor(hex, percent) {
+    let r = parseInt(hex.substring(1, 3), 16);
+    let g = parseInt(hex.substring(3, 5), 16);
+    let b = parseInt(hex.substring(5, 7), 16);
+
+    r = Math.max(0, Math.min(255, r + percent));
+    g = Math.max(0, Math.min(255, g + percent));
+    b = Math.max(0, Math.min(255, b + percent));
+
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+    
     async function guardarMiPassword() {
         const nuevaPass = document.getElementById('perfil-nueva-password').value.trim();
         if (!nuevaPass || nuevaPass.length < 8) return alert("La contraseña debe tener al menos 8 caracteres");
