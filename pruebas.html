@@ -2526,6 +2526,9 @@ async function configurarOneSignalUsuario() {
 }
     
 // ==================== RESTAURAR SESIÓN (CON AISLAMIENTO POR SUSCRIPTOR) ====================
+// ======================================================
+// RESTAURAR SESIÓN (CON SOPORTE DE COLORES PERSONALIZADOS)
+// ======================================================
 async function restoreSession() {
     inicializarContextoInstalacion();
 
@@ -2540,7 +2543,7 @@ async function restoreSession() {
         const session = JSON.parse(savedSession);
         const savedSubscriberId = session.subscriber_id;
 
-        // === Validación de contexto de instalación ===
+        // Validación de contexto de instalación
         const urlSubscriberId = getSubscriberFromUrl();
 
         if (urlSubscriberId && urlSubscriberId !== savedSubscriberId) {
@@ -2553,14 +2556,14 @@ async function restoreSession() {
             return false;
         }
 
-        // === Restaurar sesión ===
+        // Restaurar sesión
         currentUsuario = session.username;
         currentSubscriberId = savedSubscriberId;
 
         // Traemos los datos del suscriptor (incluyendo colores)
         const { data: subData, error } = await _supabase
             .from('suscriptores')
-            .select('id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_color, button_style, button_text_color')
+            .select('id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color')
             .eq('id', currentSubscriberId)
             .single();
 
@@ -2570,19 +2573,18 @@ async function restoreSession() {
             return false;
         }
 
-        // === APLICAR COLORES DINÁMICOS ===
-        aplicarColoresSuscriptor(subData);
-        aplicarEstiloBotones(subData);
-
         // Mostrar dashboard
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
 
-        // Cargar datos del suscriptor
+        // Cargar datos del suscriptor (salas, nombre, etc.)
         await cargarDatosSuscriptor(subData);
-            aplicarEstiloBotones(subData);
-        
+
+        // === APLICAR COLORES PERSONALIZADOS (solo si existen) ===
+        aplicarColoresSuscriptor(subData);
+        aplicarEstiloBotones(subData);
+
         // Verificar plan y estado de cuenta
         await detectarPlanPremium();
         await verificarEstadoCuenta();
