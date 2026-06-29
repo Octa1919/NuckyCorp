@@ -2535,7 +2535,8 @@ async function restoreSession() {
 
         // Cargar datos del suscriptor
         await cargarDatosSuscriptor(subData);
-
+            aplicarEstiloBotones(subData);
+        
         // Verificar plan y estado de cuenta
         await detectarPlanPremium();
         await verificarEstadoCuenta();
