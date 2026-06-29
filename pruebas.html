@@ -1536,28 +1536,24 @@ function aplicarColoresSuscriptor(suscriptor) {
 function aplicarEstiloBotones(suscriptor) {
     if (!suscriptor) return;
 
-    const buttonColor = suscriptor.button_color || '#a855f7';
+    const buttonColor = suscriptor.button_color || '#22d3ee';
     const buttonStyle = suscriptor.button_style || 'gradient';
-    const textColor   = suscriptor.button_text_color || '#ffffff';
+    const textColor   = suscriptor.button_text_color || '#0f172a';
 
-    // Seleccionamos todos los botones importantes
     const buttons = document.querySelectorAll(
         '.btn-accion, .btn-atencion, .btn-ruleta, .sala-btn, #login-screen button, #btn-spin'
     );
 
     buttons.forEach(btn => {
-        // Color del texto
-        btn.style.color = textColor;
+        btn.style.setProperty('color', textColor, 'important');
 
         if (buttonStyle === 'solid') {
-            // Estilo sólido
-            btn.style.background = buttonColor;
-            btn.style.backgroundImage = 'none';
+            btn.style.setProperty('background', buttonColor, 'important');
+            btn.style.setProperty('background-image', 'none', 'important');
         } else {
-            // Estilo degradado
-            const darkerColor = adjustColor(buttonColor, -25);
-            btn.style.backgroundImage = `linear-gradient(90deg, ${buttonColor}, ${darkerColor})`;
-            btn.style.background = '';
+            const darker = adjustColor(buttonColor, -25);
+            btn.style.setProperty('background-image', `linear-gradient(90deg, ${buttonColor}, ${darker})`, 'important');
+            btn.style.setProperty('background', '', 'important');
         }
     });
 }
