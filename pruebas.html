@@ -1536,47 +1536,44 @@ async function detectarPlanPremium() {
 function aplicarEstiloBotones(suscriptor) {
     if (!suscriptor) return;
 
+    // Si el suscriptor no configuró colores, no tocamos nada (dejamos el estilo original)
+    if (!suscriptor.primary_color && !suscriptor.button_text_color) {
+        return;
+    }
+
     const primaryColor = suscriptor.primary_color || '#22d3ee';
     const textColor    = suscriptor.button_text_color || '#0f172a';
 
-    // Seleccionamos todos los botones
-    const allButtons = document.querySelectorAll(
+    // Aplicamos a todos los botones principales
+    const buttons = document.querySelectorAll(
         '.btn-accion, .btn-atencion, .btn-ruleta, .sala-btn, #login-screen button, #btn-spin'
     );
 
-    allButtons.forEach(btn => {
-        // Color de texto
+    buttons.forEach(btn => {
         btn.style.color = textColor;
-
-        // Color de fondo (usamos el primary del suscriptor)
         btn.style.background = primaryColor;
         btn.style.backgroundImage = 'none';
-
-        // Quitamos bordes previos por defecto
-        btn.style.border = 'none';
     });
 
-    // ============================================
-    // TRATAMIENTO ESPECIAL - CARGAR SALDO
-    // ============================================
+    // Tratamiento especial para botones importantes (solo si hay configuración personalizada)
     const cargarBtn = document.querySelector('.btn-cargar');
     if (cargarBtn) {
         cargarBtn.style.boxShadow = `0 0 18px ${primaryColor}80, 0 8px 25px rgba(0,0,0,0.3)`;
-        cargarBtn.style.transition = 'all 0.2s ease';
     }
 
-    // ============================================
-    // TRATAMIENTO ESPECIAL - ATENCIÓN PERSONALIZADA (más glow)
-    // ============================================
     const atencionBtn = document.querySelector('.btn-atencion');
     if (atencionBtn) {
         atencionBtn.style.boxShadow = `0 0 25px ${primaryColor}99, 0 8px 30px rgba(0,0,0,0.35)`;
-        atencionBtn.style.transition = 'all 0.2s ease';
-        
-        // Mantenemos el efecto shine original si existe
-        atencionBtn.style.position = 'relative';
-        atencionBtn.style.overflow = 'hidden';
     }
+
+    const ruletaBtn = document.querySelector('.btn-ruleta');
+    if (ruletaBtn) {
+        ruletaBtn.style.background = '#f1f5f9';
+        ruletaBtn.style.color = primaryColor;
+        ruletaBtn.style.border = `2px solid ${primaryColor}`;
+        ruletaBtn.style.boxShadow = `0 0 15px ${primaryColor}66`;
+    }
+}
 
     // ============================================
     // TRATAMIENTO ESPECIAL - RULETA VIP
