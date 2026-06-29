@@ -1519,12 +1519,12 @@ async function detectarPlanPremium() {
 }
 
 // ======================================================
-// APLICAR ESTILO DE BOTONES (SOLO SI HAY CONFIGURACIÓN PERSONALIZADA)
+// APLICAR ESTILO DE BOTONES (SOLO SI HAY CONFIGURACIÓN)
 // ======================================================
 function aplicarEstiloBotones(suscriptor) {
     if (!suscriptor) return;
 
-    // Si el suscriptor no configuró colores → no tocamos nada (dejamos el estilo original)
+    // Si no hay colores personalizados → no tocamos nada
     if (!suscriptor.primary_color && !suscriptor.button_text_color) {
         return;
     }
@@ -1532,7 +1532,7 @@ function aplicarEstiloBotones(suscriptor) {
     const primaryColor = suscriptor.primary_color || '#22d3ee';
     const textColor    = suscriptor.button_text_color || '#0f172a';
 
-    // Aplicamos estilo base a todos los botones principales
+    // Botones principales
     const buttons = document.querySelectorAll(
         '.btn-accion, .btn-atencion, .btn-ruleta, .sala-btn, #login-screen button, #btn-spin'
     );
@@ -1543,19 +1543,19 @@ function aplicarEstiloBotones(suscriptor) {
         btn.style.backgroundImage = 'none';
     });
 
-    // === TRATAMIENTO ESPECIAL - CARGAR SALDO ===
+    // Cargar Saldo
     const cargarBtn = document.querySelector('.btn-cargar');
     if (cargarBtn) {
         cargarBtn.style.boxShadow = `0 0 18px ${primaryColor}80, 0 8px 25px rgba(0,0,0,0.3)`;
     }
 
-    // === TRATAMIENTO ESPECIAL - ATENCIÓN PERSONALIZADA ===
+    // Atención Personalizada
     const atencionBtn = document.querySelector('.btn-atencion');
     if (atencionBtn) {
         atencionBtn.style.boxShadow = `0 0 25px ${primaryColor}99, 0 8px 30px rgba(0,0,0,0.35)`;
     }
 
-    // === TRATAMIENTO ESPECIAL - RULETA VIP ===
+    // Ruleta VIP (tratamiento especial)
     const ruletaBtn = document.querySelector('.btn-ruleta');
     if (ruletaBtn) {
         ruletaBtn.style.background = '#f1f5f9';
@@ -1564,7 +1564,7 @@ function aplicarEstiloBotones(suscriptor) {
         ruletaBtn.style.boxShadow = `0 0 15px ${primaryColor}66`;
     }
 
-    // === SALAS DE JUEGO ===
+    // Salas de Juego
     const salaButtons = document.querySelectorAll('.sala-btn');
     salaButtons.forEach(btn => {
         btn.style.background = primaryColor;
