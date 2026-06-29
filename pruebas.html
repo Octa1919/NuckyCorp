@@ -1531,30 +1531,73 @@ function aplicarColoresSuscriptor(suscriptor) {
 }
 
 // ======================================================
-// APLICAR ESTILO DE BOTONES (SÓLIDO / DEGRADADO + COLOR DE TEXTO)
+// APLICAR ESTILO DE BOTONES CON GLOW Y TRATAMIENTO ESPECIAL
 // ======================================================
 function aplicarEstiloBotones(suscriptor) {
     if (!suscriptor) return;
 
-    const buttonColor = suscriptor.button_color || '#22d3ee';
-    const buttonStyle = suscriptor.button_style || 'gradient';
-    const textColor   = suscriptor.button_text_color || '#0f172a';
+    const primaryColor = suscriptor.primary_color || '#22d3ee';
+    const textColor    = suscriptor.button_text_color || '#0f172a';
 
-    const buttons = document.querySelectorAll(
+    // Seleccionamos todos los botones
+    const allButtons = document.querySelectorAll(
         '.btn-accion, .btn-atencion, .btn-ruleta, .sala-btn, #login-screen button, #btn-spin'
     );
 
-    buttons.forEach(btn => {
-        btn.style.setProperty('color', textColor, 'important');
+    allButtons.forEach(btn => {
+        // Color de texto
+        btn.style.color = textColor;
 
-        if (buttonStyle === 'solid') {
-            btn.style.setProperty('background', buttonColor, 'important');
-            btn.style.setProperty('background-image', 'none', 'important');
-        } else {
-            const darker = adjustColor(buttonColor, -25);
-            btn.style.setProperty('background-image', `linear-gradient(90deg, ${buttonColor}, ${darker})`, 'important');
-            btn.style.setProperty('background', '', 'important');
-        }
+        // Color de fondo (usamos el primary del suscriptor)
+        btn.style.background = primaryColor;
+        btn.style.backgroundImage = 'none';
+
+        // Quitamos bordes previos por defecto
+        btn.style.border = 'none';
+    });
+
+    // ============================================
+    // TRATAMIENTO ESPECIAL - CARGAR SALDO
+    // ============================================
+    const cargarBtn = document.querySelector('.btn-cargar');
+    if (cargarBtn) {
+        cargarBtn.style.boxShadow = `0 0 18px ${primaryColor}80, 0 8px 25px rgba(0,0,0,0.3)`;
+        cargarBtn.style.transition = 'all 0.2s ease';
+    }
+
+    // ============================================
+    // TRATAMIENTO ESPECIAL - ATENCIÓN PERSONALIZADA (más glow)
+    // ============================================
+    const atencionBtn = document.querySelector('.btn-atencion');
+    if (atencionBtn) {
+        atencionBtn.style.boxShadow = `0 0 25px ${primaryColor}99, 0 8px 30px rgba(0,0,0,0.35)`;
+        atencionBtn.style.transition = 'all 0.2s ease';
+        
+        // Mantenemos el efecto shine original si existe
+        atencionBtn.style.position = 'relative';
+        atencionBtn.style.overflow = 'hidden';
+    }
+
+    // ============================================
+    // TRATAMIENTO ESPECIAL - RULETA VIP
+    // ============================================
+    const ruletaBtn = document.querySelector('.btn-ruleta');
+    if (ruletaBtn) {
+        ruletaBtn.style.background = '#f1f5f9';           // Fondo claro
+        ruletaBtn.style.color = primaryColor;             // Texto en color principal
+        ruletaBtn.style.border = `2px solid ${primaryColor}`;
+        ruletaBtn.style.boxShadow = `0 0 15px ${primaryColor}66, 0 6px 20px rgba(0,0,0,0.25)`;
+        ruletaBtn.style.transition = 'all 0.2s ease';
+    }
+
+    // ============================================
+    // SALAS DE JUEGO - también siguen el color principal
+    // ============================================
+    const salaButtons = document.querySelectorAll('.sala-btn');
+    salaButtons.forEach(btn => {
+        btn.style.background = primaryColor;
+        btn.style.color = textColor;
+        btn.style.boxShadow = `0 6px 18px ${primaryColor}55`;
     });
 }
 
