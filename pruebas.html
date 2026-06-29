@@ -2511,7 +2511,7 @@ async function restoreSession() {
         // Traemos los datos del suscriptor (incluyendo colores)
         const { data: subData, error } = await _supabase
             .from('suscriptores')
-            .select('id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color')
+            .select('id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_color, button_style, button_text_color')
             .eq('id', currentSubscriberId)
             .single();
 
@@ -2523,6 +2523,7 @@ async function restoreSession() {
 
         // === APLICAR COLORES DINÁMICOS ===
         aplicarColoresSuscriptor(subData);
+        aplicarEstiloBotones(subData);
 
         // Mostrar dashboard
         document.getElementById('login-screen').style.display = 'none';
