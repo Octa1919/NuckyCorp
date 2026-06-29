@@ -1505,21 +1505,21 @@ async function detectarPlanPremium() {
     }
 
     // ======================================================
-// APLICAR COLORES DINÁMICOS DEL SUSCRIPTOR
-// ======================================================
-function aplicarColoresSuscriptor(suscriptor) {
-    if (!suscriptor) return;
+    // APLICAR COLORES DINÁMICOS DEL SUSCRIPTOR
+    // ======================================================
+    function aplicarColoresSuscriptor(suscriptor) {
+        if (!suscriptor) return;
 
-    const root = document.documentElement;
+        const root = document.documentElement;
 
-    // Color Principal
-    if (suscriptor.primary_color) {
+        // Solo aplicamos colores personalizados si el suscriptor los configuró
+        if (suscriptor.primary_color) {
         root.style.setProperty('--primary', suscriptor.primary_color);
-    }
+        }
 
-    // Color Acento
-    if (suscriptor.accent_color) {
-        root.style.setProperty('--accent', suscriptor.accent_color);
+        if (suscriptor.accent_color) {
+            root.style.setProperty('--accent', suscriptor.accent_color);
+        }
     }
 
     // Opcional: Glass background (si lo usamos más adelante)
