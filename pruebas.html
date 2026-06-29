@@ -1237,6 +1237,9 @@ async function loginJugador() {
 
         // 8. Cargar datos del suscriptor (salas, nombre, etc.)
         await cargarDatosSuscriptor(data.suscriptores);
+        if (data.suscriptores) {
+            aplicarEstiloBotones(data.suscriptores);
+        }
 
         // 9. Inicializar Chatwoot si corresponde
         if (data.suscriptores?.chatwoot_website_token) {
