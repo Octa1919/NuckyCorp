@@ -230,11 +230,11 @@
             transition: all 0.2s ease;
         }
         .btn-cargar {
-            background: linear-gradient(90deg, var(--accent), #22d3ee);
+            background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #0f172a));
             color: var(--button-text);
         }
         .btn-retirar {
-            background: linear-gradient(90deg, var(--primary), #db2777);
+            background: linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 70%, #0f172a));
             color: white;
         }
 
@@ -1944,9 +1944,9 @@ async function abrirRuleta() {
     if (userData?.ultima_ruleta) {
         const ultima = new Date(userData.ultima_ruleta);
         const ahora = new Date();
-        const horasPasadas = (ahora - ultima) / (1000 * 60 * 60);
+        const horasPasados = (ahora - ultima) / (1000 * 60 * 60);
 
-        if (horasPasadas < 24) {
+        if (horasPasados < 24) {
             mostrarCooldownRuleta(userData.ultima_ruleta);
             return;
         }
@@ -2030,11 +2030,11 @@ function generarPremiosEnRuletaDorada() {
         div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
         div.style.transformOrigin = 'center center';
         div.style.fontSize = '0.80rem';
-        div.style.fontWeight = '800';
+        div.style.font-weight = '800';
         div.style.color = '#fefce8';
         div.style.textShadow = '2px 2px 10px #000000, 0 0 16px #facc15';
         div.style.letterSpacing = '0.5px';
-        div.style.lineHeight = '1.25';
+        div.style.line-height = '1.25';
         div.style.textAlign = 'center';
         div.style.whiteSpace = 'pre-wrap';
         div.style.maxWidth = '102px';
@@ -2062,7 +2062,7 @@ async function spinRuleta() {
         await _supabase.from('premios_ruleta').insert({
             subscriber_id: currentSubscriberId,
             usuario: currentUsuario,
-            premio: premioLimpio,
+            premio: premioLimpio;
             codigo: codigo,
             estado: "pendiente",
             created_at: new Date().toISOString()
