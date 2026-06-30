@@ -390,6 +390,77 @@
     background: linear-gradient(90deg, #67e8f9, #22d3ee);
     color: #0f172a;
     }
+
+        /* ==================== WELCOME MARQUEE (estilo carrusel) ==================== */
+        .welcome-marquee {
+            background: linear-gradient(90deg, #0f172a 0%, #1e1133 50%, #0f172a 100%);
+            padding: 14px 0;
+            margin: 12px 20px 8px;
+            border-radius: 16px;
+            border: 1px solid rgba(103, 232, 249, 0.25);
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .welcome-marquee::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            background: linear-gradient(to right, #0f172a, transparent);
+            z-index: 2;
+            pointer-events: none;
+        }
+        .welcome-marquee::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            background: linear-gradient(to left, #0f172a, transparent);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .marquee-track {
+            display: inline-flex;
+            white-space: nowrap;
+            will-change: transform;
+            animation: marquee-slide 18s linear infinite;
+        }
+
+        .marquee-track span {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 32px;
+            flex-shrink: 0;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #e0e7ff;
+        }
+
+        .marquee-track .welcome-text {
+            color: #e0e7ff;
+        }
+
+        .marquee-track .casino-name {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        @keyframes marquee-slide {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
     </style>
 </head>
 <body>
@@ -429,13 +500,11 @@
     <!-- Línea separadora -->
     <div class="header-separator"></div>
 
-    <!-- WELCOME BANNER (estilo carrusel) -->
-    <div id="welcome-banner" style="margin: 16px 20px 8px; background: var(--glass); border-radius: 20px; padding: 18px 24px; border: 1px solid rgba(103, 232, 249, 0.35); box-shadow: 0 10px 30px rgba(0,0,0,0.35);">
-        <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="font-size: 2.5rem; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">👋</div>
-            <div style="flex: 1; min-width: 0;">
-                <p style="margin: 0 0 2px 0; color: #94a3b8; font-size: 0.95rem; font-weight: 500;">¡Bienvenido de nuevo!</p>
-                <h2 id="welcome-username" style="margin: 0; font-size: 1.65rem; font-weight: 700; color: #e0e7ff; line-height: 1.2;"></h2>
+    <!-- WELCOME MARQUEE (carrusel estilo Nucky-App) -->
+    <div id="welcome-marquee" class="welcome-marquee">
+        <div class="marquee-container">
+            <div class="marquee-track" id="welcome-marquee-track">
+                <!-- Se llena dinámicamente con JS -->
             </div>
         </div>
     </div>
@@ -1371,10 +1440,17 @@ function iniciarSuscripcionEstadoCuenta() {
     async function cargarDatosSuscriptor(sub) {
         document.getElementById('casino-name').textContent = sub.nombre_casino || "Nucky";
 
-        // === NUEVO: Welcome Banner ===
-        const welcomeEl = document.getElementById('welcome-username');
-        if (welcomeEl) {
-            welcomeEl.innerHTML = `${currentUsuario}`;
+        // === WELCOME MARQUEE ===
+        const track = document.getElementById('welcome-marquee-track');
+        if (track) {
+            const casinoName = sub.nombre_casino || 'Nucky';
+            const welcomeText = `Bienvenido, <strong>${currentUsuario}</strong> estás jugando con <span class="casino-name">${casinoName}</span>`;
+            
+            // Creamos dos bloques idénticos para scroll infinito fluido
+            track.innerHTML = `
+                <span class="welcome-text">${welcomeText}</span>
+                <span class="welcome-text">${welcomeText}</span>
+            `;
         }
 
         const salasHTML = `
@@ -1988,11 +2064,11 @@ function generarPremiosEnRuleta() {
         div.style.fontSize = '0.78rem';
         div.style.fontWeight = '700';
         div.style.color = '#ffffff';
-        div.style.textShadow = '2px 2px 6px #000000';
-        div.style.letterSpacing = '0.3px';
-        div.style.lineHeight = '1.15';
-        div.style.textAlign = 'center';
-        div.style.whiteSpace = 'pre-wrap';
+        div.style.text-shadow = '2px 2px 6px #000000';
+        div.style.letter-spacing = '0.3px';
+        div.style.line-height = '1.15';
+        div.style.text-align = 'center';
+        div.style.white-space = 'pre-wrap';
         div.style.maxWidth = '95px';
         div.textContent = textoConSaltos;
         container.appendChild(div);
@@ -2019,15 +2095,15 @@ function generarPremiosEnRuletaDorada() {
         div.style.top = '42%';
         div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
         div.style.transformOrigin = 'center center';
-        div.style.fontSize = '0.80rem';
-        div.style.fontWeight = '800';
+        div.style.font-size = '0.80rem';
+        div.style.font-weight = '800';
         div.style.color = '#fefce8';
-        div.style.textShadow = '2px 2px 10px #000000, 0 0 16px #facc15';
-        div.style.letterSpacing = '0.5px';
-        div.style.lineHeight = '1.25';
-        div.style.textAlign = 'center';
-        div.style.whiteSpace = 'pre-wrap';
-        div.style.maxWidth = '102px';
+        div.style.text-shadow = '2px 2px 10px #000000, 0 0 16px #facc15';
+        div.style.letter-spacing = '0.5px';
+        div.style.line-height = '1.25';
+        div.style.text-align = 'center';
+        div.style.white-space = 'pre-wrap';
+        div.style.max-width = '102px';
         div.textContent = textoConSaltos;
         container.appendChild(div);
     });
