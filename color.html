@@ -13,7 +13,6 @@
 
         if (urlId) {
             if (isStandalone) {
-                // App instalada → solo vinculamos si todavía no tiene nada guardado
                 if (!yaVinculado) {
                     localStorage.setItem('subscriber_id_instalacion', urlId);
                     window.__subscriberIdInstalacion = urlId;
@@ -21,7 +20,6 @@
                     window.__subscriberIdInstalacion = yaVinculado;
                 }
             } else {
-                // Navegador normal (pestaña) → siempre respetamos el ?s= actual
                 localStorage.setItem('subscriber_id_instalacion', urlId);
                 window.__subscriberIdInstalacion = urlId;
             }
@@ -32,21 +30,24 @@
         }
     })();
     </script>
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nucky - App Jugadores</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
-    <!-- Confeti para Ruleta Dorada -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <style>
         :root {
+            /* === Colores configurables por suscriptor (con fallback) === */
             --primary: #a855f7;
-            --accent: #c026d3;
+            --accent: #67e8f9;
+            --button-text: #0f172a;
+            --modal-border: #67e8f9;
+
+            /* Colores base */
             --dark: #0f172a;
             --glass: rgba(15, 23, 42, 0.92);
         }
@@ -71,7 +72,7 @@
         .casino-name {
             font-size: 1.5rem;
             font-weight: 700;
-            background: linear-gradient(90deg, #a855f7, #c026d3);
+            background: linear-gradient(90deg, var(--primary), var(--accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -105,7 +106,7 @@
             box-shadow: 0 0 0 4px rgba(192, 38, 211, 0.3);
         }
         #login-screen button {
-            background: linear-gradient(90deg, #a855f7, #c026d3);
+            background: linear-gradient(90deg, var(--primary), var(--accent));
             color: white;
             border: none;
             padding: 18px;
@@ -138,7 +139,7 @@
         /* Línea separadora debajo del header */
         .header-separator {
             height: 1px;
-            background: linear-gradient(90deg, transparent, #a855f7, transparent);
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
             margin: 0 20px;
         }
 
@@ -245,7 +246,7 @@
             padding: 18px;
             font-size: 1.2rem;
             font-weight: 700;
-            background: linear-gradient(90deg, #22d3ee, #67e8f9);
+            background: linear-gradient(90deg, var(--accent), #67e8f9);
             color: #0f172a;
             border: none;
             border-radius: 18px;
@@ -322,7 +323,7 @@
             padding: 14px 12px;
             font-size: 1.05rem;
             font-weight: 700;
-            background: linear-gradient(90deg, #a855f7, #c026d3);
+            background: linear-gradient(90deg, var(--primary), var(--accent));
             color: white;
             border: none;
             border-radius: 18px;
@@ -547,7 +548,7 @@
     
             <!-- MODAL PERFIL - VERSIÓN FINAL PARA JUGADOR -->
         <div id="modal-perfil" class="modal" style="display:none;">
-            <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
+            <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid var(--modal-border);">
                 <h2 style="text-align:center; color:#e0e7ff; margin-bottom:20px;">👤 Mi Perfil</h2>
                 
                 <div style="background:#111827; padding:20px; border-radius:16px; margin-bottom:20px;">
@@ -593,7 +594,7 @@
 
             <!-- MODAL REFERIR -->
         <div id="modal-referir" class="modal" style="display:none;">
-            <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
+            <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid var(--modal-border);">
                 <h2 style="text-align:center; color:#e0e7ff; margin-bottom:8px;">🔗 Recomendanos y ganá un premio</h2>
                 <p style="text-align:center; color:#94a3b8; margin-bottom:20px;">Comparte tu link y obtené un bono extra cuando tu amigo cargue saldo.</p>
                 
@@ -616,7 +617,7 @@
 
             <!-- MODAL CONTACTO - MENÚ DESPLEGABLE -->
         <div id="modal-contacto" class="modal" style="display:none;">
-            <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
+            <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid var(--modal-border);">
                 <h2 style="text-align:center; color:#e0e7ff; margin-bottom:20px;">📞 Contacto</h2>
                 
                 <button onclick="abrirLinkContacto('whatsapp')" style="width:100%; padding:16px; background:#25D366; color:white; border:none; border-radius:12px; margin-bottom:12px; font-size:1.1rem;">
@@ -650,7 +651,7 @@
                 border-radius: 24px; 
                 padding: 24px 20px 28px; 
                 box-shadow: 0 25px 70px rgba(0,0,0,0.9); 
-                border: 3px solid #67e8f9;
+                border: 3px solid var(--modal-border);
                 display: flex;
                 flex-direction: column;
                 overflow: hidden;">
@@ -718,7 +719,7 @@
 
                                           <!-- MODAL RULETA VIP - CENTRO COMO BOTÓN PRINCIPAL -->
         <div id="modal-ruleta" class="modal" style="display:none;">
-            <div style="background:#0f172a; max-width:440px; width:96%; border-radius:28px; padding:20px; box-shadow:0 0 60px rgba(103, 232, 249, 0.6); border:3px solid #67e8f9;">
+            <div style="background:#0f172a; max-width:440px; width:96%; border-radius:28px; padding:20px; box-shadow:0 0 60px rgba(103, 232, 249, 0.6); border:3px solid var(--modal-border);">
                 
                 <h2 style="text-align:center; color:#e0e7ff; font-size:1.8rem; margin-bottom:8px; text-shadow:0 0 15px #67e8f9;">
                     🎰 Ruleta VIP
@@ -736,7 +737,7 @@
 
                 <!-- Ruleta -->
                 <div style="position:relative; width:280px; height:280px; margin:0 auto 20px;">
-                    <div id="ruleta-wheel" style="width:280px; height:280px; border-radius:50%; background:conic-gradient(#a855f7 0% 16.6%, #c026d3 16.6% 33.3%, #e11d48 33.3% 50%, #f97316 50% 66.6%, #eab308 66.6% 83.3%, #67e8f9 83.3% 100%); border:14px solid #e0e7ff; box-shadow:0 0 40px #67e8f9, inset 0 0 35px rgba(255,255,255,0.5); transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1); position:relative;">
+                    <div id="ruleta-wheel" style="width:280px; height:280px; border-radius:50%; background:conic-gradient(var(--primary) 0% 16.6%, var(--accent) 16.6% 33.3%, #e11d48 33.3% 50%, #f97316 50% 66.6%, #eab308 66.6% 83.3%, #67e8f9 83.3% 100%); border:14px solid #e0e7ff; box-shadow:0 0 40px #67e8f9, inset 0 0 35px rgba(255,255,255,0.5); transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1); position:relative;">
                         <div id="ruleta-premios" style="position:absolute; inset:0;"></div>
                     </div>
 
@@ -745,7 +746,7 @@
 
                     <!-- CENTRO COMO BOTÓN PRINCIPAL -->
                     <button onclick="spinRuleta()" 
-                            style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:92px; height:92px; background:#0f172a; border:8px solid #67e8f9; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2.8rem; color:#67e8f9; box-shadow:0 0 30px #67e8f9; z-index:25; cursor:pointer;">
+                            style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:92px; height:92px; background:#0f172a; border:8px solid var(--modal-border); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2.8rem; color:#67e8f9; box-shadow:0 0 30px #67e8f9; z-index:25; cursor:pointer;">
                         🎰
                         <span style="position:absolute; font-size:0.65rem; top:68%; color:#67e8f9; font-weight:700;">TAP</span>
                     </button>
@@ -764,7 +765,7 @@
 
     <!-- MODAL PREMIO GANADO -->
 <div id="modal-premio-ganado" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:99999; align-items:center; justify-content:center;">
-    <div style="background:#1e2937; max-width:380px; width:92%; border-radius:24px; padding:28px; text-align:center; border:3px solid #67e8f9; box-shadow:0 25px 70px rgba(0,0,0,0.9);">
+    <div style="background:#1e2937; max-width:380px; width:92%; border-radius:24px; padding:28px; text-align:center; border:3px solid var(--modal-border); box-shadow:0 25px 70px rgba(0,0,0,0.9);">
         
         <h2 style="color:#67e8f9; margin-bottom:8px; font-size:1.6rem;">🎉 ¡Felicidades!</h2>
         <p style="color:#cbd5e1; margin-bottom:20px;">Ganaste el siguiente premio:</p>
@@ -777,7 +778,7 @@
         <!-- Código -->
         <div style="margin-bottom:24px;">
             <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:6px;">Código de premio</p>
-            <div style="background:#0f172a; border:2px solid #67e8f9; border-radius:14px; padding:14px; font-size:1.5rem; font-weight:800; letter-spacing:2px; color:#67e8f9;" id="codigo-premio"></div>
+            <div style="background:#0f172a; border:2px solid var(--modal-border); border-radius:14px; padding:14px; font-size:1.5rem; font-weight:800; letter-spacing:2px; color:#67e8f9;" id="codigo-premio"></div>
         </div>
 
         <!-- Botones -->
@@ -1015,7 +1016,7 @@
     
             <!-- MODAL CARGAR SALDO - VERSIÓN CORRECTA (Botones solo cuando hay CBU) -->
         <div id="modal-cargar-saldo" class="modal" style="display:none;">
-            <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid #67e8f9;">
+            <div style="background:#1e2937; max-width:420px; width:94%; border-radius:28px; padding:24px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:3px solid var(--modal-border);">
                 
                 <h2 style="text-align:center; color:#e0e7ff; margin-bottom:18px; font-size:1.75rem;">
                     Cargar Saldo 💰
@@ -1033,7 +1034,7 @@
 
 <!-- MODAL REGISTRO DE USUARIO -->
 <div id="modal-registro" class="modal" style="display:none; z-index:10000;">
-    <div style="background:#1e2937; max-width:420px; width:94%; border-radius:24px; padding:32px 28px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:2px solid #67e8f9;">
+    <div style="background:#1e2937; max-width:420px; width:94%; border-radius:24px; padding:32px 28px; box-shadow:0 25px 70px rgba(0,0,0,0.9); border:2px solid var(--modal-border);">
         
         <h2 style="text-align:center; color:#e0e7ff; margin-bottom:24px;">Crear cuenta nueva</h2>
 
@@ -1229,6 +1230,9 @@ async function loginJugador() {
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(data.suscriptores);
+
+        // === NUEVO: Aplicar colores personalizados del suscriptor ===
+        aplicarColoresDelSuscriptor(data.suscriptores);
 
         // Inicializar Chatwoot
         if (data.suscriptores?.chatwoot_website_token) {
@@ -1908,7 +1912,7 @@ function hideCronogramaJugadorModal() {
 let ruletaPremios = [];
 let ruletaPremiosDorados = [];
 
-// === ABRIR RULETA ===
+// === ABROR RULETA ===
 async function abrirRuleta() {
     if (!currentSubscriberId || !currentUsuario) {
         return alert("Error: No se detectó usuario o suscriptor");
@@ -1992,14 +1996,14 @@ function generarPremiosEnRuleta() {
         div.style.top = '42%';
         div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
         div.style.fontSize = '0.78rem';
-        div.style.fontWeight = '700';
+        div.style.font-weight = '700';
         div.style.color = '#ffffff';
         div.style.textShadow = '2px 2px 6px #000000';
-        div.style.letterSpacing = '0.3px';
-        div.style.lineHeight = '1.15';
-        div.style.textAlign = 'center';
-        div.style.whiteSpace = 'pre-wrap';
-        div.style.maxWidth = '95px';
+        div.style.letter-spacing = '0.3px';
+        div.style.line-height = '1.15';
+        div.style.text-align = 'center';
+        div.style.white-space = 'pre-wrap';
+        div.style.max-width = '95px';
         div.textContent = textoConSaltos;
         container.appendChild(div);
     });
@@ -2026,12 +2030,12 @@ function generarPremiosEnRuletaDorada() {
         div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
         div.style.transformOrigin = 'center center';
         div.style.fontSize = '0.80rem';
-        div.style.fontWeight = '800';
+        div.style.font-weight = '800';
         div.style.color = '#fefce8';
         div.style.textShadow = '2px 2px 10px #000000, 0 0 16px #facc15';
-        div.style.letterSpacing = '0.5px';
-        div.style.lineHeight = '1.25';
-        div.style.textAlign = 'center';
+        div.style.letter-spacing = '0.5px';
+        div.style.line-height = '1.25';
+        div.style.text-align = 'center';
         div.style.whiteSpace = 'pre-wrap';
         div.style.maxWidth = '102px';
         div.textContent = textoConSaltos;
@@ -2081,7 +2085,7 @@ async function spinRuleta() {
         mostrarPremioGanado(premioLimpio, codigo);
         btn.disabled = false;
         btn.innerText = "GIRAR RULETA";
-    }, 5400);
+    }, 5404);
 }
 
 // === GIRAR RULETA DORADA ===
@@ -2124,7 +2128,7 @@ async function spinRuletaDorada() {
     setTimeout(() => {
         mostrarPremioDorado(premioLimpio, codigo);
         if (centerBtn) centerBtn.style.pointerEvents = 'auto';
-    }, 5400);
+    }, 5404);
 }
 
 // === MOSTRAR MODAL PREMIO NORMAL ===
@@ -2445,6 +2449,9 @@ async function restoreSession() {
         await cargarDatosSuscriptor(subData);
         await detectarPlanPremium();
         await verificarEstadoCuenta();
+
+        // === NUEVO: Aplicar colores personalizados del suscriptor ===
+        aplicarColoresDelSuscriptor(subData);
 
         if (typeof iniciarSuscripcionPlanJugador === 'function') iniciarSuscripcionPlanJugador();
         if (typeof iniciarSuscripcionEstadoCuenta === 'function') iniciarSuscripcionEstadoCuenta();
@@ -2878,4 +2885,29 @@ window.onload = async () => {
         hideChatwootWidget();
     }
 };
+
+// ======================================================
+// NUEVA FUNCIÓN: APLICAR COLORES PERSONALIZADOS DEL SUSCRIPTOR
+// ======================================================
+function aplicarColoresDelSuscriptor(suscriptor) {
+    const root = document.documentElement;
+
+    if (!suscriptor) return;
+
+    if (suscriptor.primary_color) {
+        root.style.setProperty('--primary', suscriptor.primary_color);
+    }
+    if (suscriptor.accent_color) {
+        root.style.setProperty('--accent', suscriptor.accent_color);
+    }
+    if (suscriptor.button_text_color) {
+        root.style.setProperty('--button-text', suscriptor.button_text_color);
+    }
+    if (suscriptor.modal_border_color) {
+        root.style.setProperty('--modal-border', suscriptor.modal_border_color);
+    }
+}
+
 </script>
+</body>
+</html>
