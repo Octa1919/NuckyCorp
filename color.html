@@ -2001,7 +2001,7 @@ function generarPremiosEnRuleta() {
         div.style.textShadow = '2px 2px 6px #000000';
         div.style.letterSpacing = '0.3px';
         div.style.lineHeight = '1.15';
-        div.style.textAlign = 'center';
+        div.style.text-align = 'center';
         div.style.whiteSpace = 'pre-wrap';
         div.style.maxWidth = '95px';
         div.textContent = textoConSaltos;
@@ -2035,7 +2035,7 @@ function generarPremiosEnRuletaDorada() {
         div.style.textShadow = '2px 2px 10px #000000, 0 0 16px #facc15';
         div.style.letterSpacing = '0.5px';
         div.style.lineHeight = '1.25';
-        div.style.textAlign = 'center';
+        div.style.text-align = 'center';
         div.style.whiteSpace = 'pre-wrap';
         div.style.maxWidth = '102px';
         div.textContent = textoConSaltos;
@@ -2903,8 +2903,12 @@ function aplicarColoresDelSuscriptor(suscriptor) {
     if (suscriptor.button_text_color) {
         root.style.setProperty('--button-text', suscriptor.button_text_color);
     }
+
+    // === NUEVO: Fallback inteligente para bordes de modales ===
     if (suscriptor.modal_border_color) {
         root.style.setProperty('--modal-border', suscriptor.modal_border_color);
+    } else if (suscriptor.accent_color) {
+        root.style.setProperty('--modal-border', suscriptor.accent_color);
     }
 }
 
