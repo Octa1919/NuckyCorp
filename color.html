@@ -434,10 +434,14 @@
             display: inline-flex;
             white-space: nowrap;
             will-change: transform;
-            -webkit-transform: translateZ(0); /* Fuerza aceleración GPU en móvil */
+            -webkit-transform: translateZ(0);
             transform: translateZ(0);
-            animation: marquee-slide 18s linear infinite;
-            -webkit-animation: marquee-slide 18s linear infinite;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            -webkit-transform-style: preserve-3d;
+            transform-style: preserve-3d;
+            animation: marquee-slide 18s linear infinite running;
+            -webkit-animation: marquee-slide 18s linear infinite running;
             animation-play-state: running;
             -webkit-animation-play-state: running;
         }
@@ -1051,9 +1055,7 @@
 <div id="modal-ruleta-restringida" class="modal" style="display:none; z-index:100000;">
     <div style="background:#1e2937; max-width:400px; width:92%; border-radius:24px; padding:32px 24px; text-align:center; border:3px solid #f97316; box-shadow:0 25px 70px rgba(0,0,0,0.9);">
         
-        <h2 style="color:#f97316; margin-bottom:16px; font-size:1.6rem;">
-            🔒 Ruleta VIP Exclusiva
-        </h2>
+        <h2 style="color:#f97316; margin-bottom:16px;">🔒 Ruleta VIP Exclusiva</h2>
         
         <p style="color:#e0e7ff; font-size:1.1rem; margin-bottom:24px; line-height:1.5;">
             La <strong>Ruleta VIP</strong> solo está disponible para usuarios que tienen la <strong>App instalada</strong>.
@@ -1461,6 +1463,18 @@ function iniciarSuscripcionEstadoCuenta() {
                 <span class="welcome-text">${welcomeText}</span>
                 <span class="welcome-text">${welcomeText}</span>
             `;
+
+            // === FIX MÓVIL: Forzar inicio inmediato de la animación ===
+            // Esto soluciona que no arranque hasta cambiar de pestaña o apagar la pantalla
+            requestAnimationFrame(() => {
+                track.style.animation = 'none';
+                track.style.webkitAnimation = 'none';
+                void track.offsetWidth; // Forzar reflow
+                track.style.animation = 'marquee-slide 18s linear infinite running';
+                track.style.webkitAnimation = 'marquee-slide 18s linear infinite running';
+                track.style.animationPlayState = 'running';
+                track.style.webkitAnimationPlayState = 'running';
+            });
         }
 
         const salasHTML = `
@@ -2586,7 +2600,7 @@ function iniciarTour(forzar = false) {
         {
             element: '#salas-container',
             title: 'Salas de Juego',
-            description: 'Elegí el casino donde querés jugar, en todos ingresas con tu mismo usuario y contraseña. Si alguno no está disponible, te avisaremos.'
+            description: 'Elegí el casino donde querés jugar, en todos ingresás con tu mismo usuario y contraseña. Si alguno no está disponible, te avisaremos.'
         },
         {
             element: '.btn-ruleta',
