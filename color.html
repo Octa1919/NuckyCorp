@@ -1153,24 +1153,24 @@ async function obtenerIP() {
         return params.get('s') || params.get('subscriber') || params.get('subscriber_id');
     }
 
-    async function loginJugador() {
-        const username = document.getElementById('login-user').value.trim();
-        const password = document.getElementById('login-pass').value.trim();
-        const recordar = document.getElementById('recordarme').checked;
+async function loginJugador() {
+    const username = document.getElementById('login-user').value.trim();
+    const password = document.getElementById('login-pass').value.trim();
+    const recordar = document.getElementById('recordarme').checked;
 
-        if (!username || !password) return alert("Usuario y contraseña son obligatorios");
+    if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
-        try {
-            const { data, error } = await _supabase
-                .from('usuarios')
-                .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
-                .eq('username', username)
-                .eq('password', password)
-                .single();
+    try {
+        const { data, error } = await _supabase
+            .from('usuarios')
+            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color)')
+            .eq('username', username)
+            .eq('password', password)
+            .single();
 
-            if (error || !data) {
-                return alert("Credenciales incorrectas");
-    }
+        if (error || !data) {
+            return alert("Credenciales incorrectas");
+        }
 
         // =============================================
         // VALIDACIÓN DE SUSCRIPTOR + VINCULACIÓN EN PRIMER LOGIN (iOS compatible)
@@ -2030,11 +2030,11 @@ function generarPremiosEnRuletaDorada() {
         div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
         div.style.transformOrigin = 'center center';
         div.style.fontSize = '0.80rem';
-        div.style.fontWeight = '800';
+        div.style.font-weight = '800';
         div.style.color = '#fefce8';
         div.style.textShadow = '2px 2px 10px #000000, 0 0 16px #facc15';
         div.style.letterSpacing = '0.5px';
-        div.style.lineHeight = '1.25';
+        div.style.line-height = '1.25';
         div.style.textAlign = 'center';
         div.style.whiteSpace = 'pre-wrap';
         div.style.maxWidth = '102px';
@@ -2107,7 +2107,7 @@ async function spinRuletaDorada() {
             subscriber_id: currentSubscriberId,
             usuario: currentUsuario,
             premio: premioLimpio,
-            codigo: codigo,
+            codigo: codigo;
             estado: "pendiente",
             created_at: new Date().toISOString()
         });
@@ -2260,7 +2260,7 @@ function mostrarCooldownRuleta(ultimaRuleta) {
         tiempoEl.innerHTML = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
     }
 
-    actualizarTiempo(); // Primera actualización inmediata
+    actualizarTiempo(); // Primera actualización immediate
     cooldownInterval = setInterval(actualizarTiempo, 30000); // Actualiza cada 30 segundos
 
     modal.style.display = 'flex';
@@ -2432,7 +2432,7 @@ async function restoreSession() {
 
         const { data: subData, error } = await _supabase
             .from('suscriptores')
-            .select('id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret')
+            .select('id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color')
             .eq('id', currentSubscriberId)
             .single();
 
