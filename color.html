@@ -391,7 +391,7 @@
     color: #0f172a;
     }
 
-        /* ==================== WELCOME MARQUEE (estilo carrusel) ==================== */
+        /* ==================== WELCOME MARQUEE (estilo carrusel) - MEJORADO PARA MÓVIL ==================== */
         .welcome-marquee {
             background: linear-gradient(90deg, #0f172a 0%, #1e1133 50%, #0f172a 100%);
             padding: 14px 0;
@@ -434,7 +434,12 @@
             display: inline-flex;
             white-space: nowrap;
             will-change: transform;
+            -webkit-transform: translateZ(0); /* Fuerza aceleración GPU en móvil */
+            transform: translateZ(0);
             animation: marquee-slide 18s linear infinite;
+            -webkit-animation: marquee-slide 18s linear infinite;
+            animation-play-state: running;
+            -webkit-animation-play-state: running;
         }
 
         .marquee-track span {
@@ -460,6 +465,11 @@
         @keyframes marquee-slide {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
+        }
+
+        @-webkit-keyframes marquee-slide {
+            0% { -webkit-transform: translateX(0); }
+            100% { -webkit-transform: translateX(-50%); }
         }
     </style>
 </head>
@@ -2064,11 +2074,11 @@ function generarPremiosEnRuleta() {
         div.style.fontSize = '0.78rem';
         div.style.fontWeight = '700';
         div.style.color = '#ffffff';
-        div.style.textShadow = '2px 2px 6px #000000';
-        div.style.letterSpacing = '0.3px';
+        div.style.text-shadow = '2px 2px 6px #000000';
+        div.style.letter-spacing = '0.3px';
         div.style.lineHeight = '1.15';
-        div.style.textAlign = 'center';
-        div.style.whiteSpace = 'pre-wrap';
+        div.style.text-align = 'center';
+        div.style.white-space = 'pre-wrap';
         div.style.maxWidth = '95px';
         div.textContent = textoConSaltos;
         container.appendChild(div);
@@ -2098,12 +2108,12 @@ function generarPremiosEnRuletaDorada() {
         div.style.fontSize = '0.80rem';
         div.style.fontWeight = '800';
         div.style.color = '#fefce8';
-        div.style.textShadow = '2px 2px 10px #000000, 0 0 16px #facc15';
-        div.style.letterSpacing = '0.5px';
-        div.style.lineHeight = '1.25';
-        div.style.textAlign = 'center';
-        div.style.whiteSpace = 'pre-wrap';
-        div.style.maxWidth = '102px';
+        div.style.text-shadow = '2px 2px 10px #000000, 0 0 16px #facc15';
+        div.style.letter-spacing = '0.5px';
+        div.style.line-height = '1.25';
+        div.style.text-align = 'center';
+        div.style.white-space = 'pre-wrap';
+        div.style.max-width = '102px';
         div.textContent = textoConSaltos;
         container.appendChild(div);
     });
@@ -2400,7 +2410,7 @@ function lanzarConfetiDorada() {
         confetti({
             particleCount: 8,
             angle: 120,
-            spread: 75,
+            spread: 75;
             origin: { x: 0.92, y: 0.65 },
             colors: colors,
             zIndex: 100000
