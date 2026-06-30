@@ -2062,7 +2062,7 @@ async function spinRuleta() {
         await _supabase.from('premios_ruleta').insert({
             subscriber_id: currentSubscriberId,
             usuario: currentUsuario,
-            premio: premioLimpio;
+            premio: premioLimpio,
             codigo: codigo,
             estado: "pendiente",
             created_at: new Date().toISOString()
@@ -2085,7 +2085,7 @@ async function spinRuleta() {
         mostrarPremioGanado(premioLimpio, codigo);
         btn.disabled = false;
         btn.innerText = "GIRAR RULETA";
-    }, 5404);
+    }, 5400);
 }
 
 // === GIRAR RULETA DORADA ===
