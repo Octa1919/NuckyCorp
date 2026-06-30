@@ -13,7 +13,6 @@
 
         if (urlId) {
             if (isStandalone) {
-                // App instalada → solo vinculamos si todavía no tiene nada guardado
                 if (!yaVinculado) {
                     localStorage.setItem('subscriber_id_instalacion', urlId);
                     window.__subscriberIdInstalacion = urlId;
@@ -21,7 +20,6 @@
                     window.__subscriberIdInstalacion = yaVinculado;
                 }
             } else {
-                // Navegador normal (pestaña) → siempre respetamos el ?s= actual
                 localStorage.setItem('subscriber_id_instalacion', urlId);
                 window.__subscriberIdInstalacion = urlId;
             }
@@ -32,13 +30,11 @@
         }
     })();
     </script>
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nucky - App Jugadores</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
-    <!-- Confeti para Ruleta Dorada -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
@@ -82,7 +78,7 @@
         }
         .hamburger {
             font-size: 1.8rem;
-            color: #a855f7;
+            color: var(--accent);
             background: none;
             border: none;
             cursor: pointer;
@@ -234,11 +230,11 @@
             transition: all 0.2s ease;
         }
         .btn-cargar {
-            background: linear-gradient(90deg, #0ea5e9, #22d3ee);
-            color: #0f172a;
+            background: linear-gradient(90deg, var(--accent), #22d3ee);
+            color: var(--button-text);
         }
         .btn-retirar {
-            background: linear-gradient(90deg, #c026d3, #db2777);
+            background: linear-gradient(90deg, var(--primary), #db2777);
             color: white;
         }
 
@@ -286,7 +282,7 @@
             font-weight: 700;
             background: linear-gradient(90deg, #e2e8f0, #cbd5e1);
             color: #0f172a;
-            border: 2px solid #94a3b8;
+            border: 2px solid var(--modal-border);
             border-radius: 18px;
             display: flex;
             align-items: center;
@@ -958,7 +954,7 @@
 
             <!-- Botón del centro -->
             <div onclick="spinRuletaDorada()"
-                 style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:78px; height:78px; background:#1c1408; border:6px solid #facc15; border-radius:9999px; display:flex; align-items:center; justify-content:center; z-index:20; box-shadow:0 0 30px rgba(250,204,21,0.7); cursor:pointer;">
+                 style="position:absolute; top:50%; left:50%; transform.translate(-50%,-50%); width:78px; height:78px; background:#1c1408; border:6px solid #facc15; border-radius:9999px; display:flex; align-items:center; justify-content:center; z-index:20; box-shadow:0 0 30px rgba(250,204,21,0.7); cursor:pointer;">
                 <span style="color:#facc15; font-size:1.1rem; font-weight:800; text-align:center; line-height:1;">GIRAR</span>
             </div>
         </div>
@@ -1157,24 +1153,24 @@ async function obtenerIP() {
         return params.get('s') || params.get('subscriber') || params.get('subscriber_id');
     }
 
-    async function loginJugador() {
-        const username = document.getElementById('login-user').value.trim();
-        const password = document.getElementById('login-pass').value.trim();
-        const recordar = document.getElementById('recordarme').checked;
+async function loginJugador() {
+    const username = document.getElementById('login-user').value.trim();
+    const password = document.getElementById('login-pass').value.trim();
+    const recordar = document.getElementById('recordarme').checked;
 
-        if (!username || !password) return alert("Usuario y contraseña son obligatorios");
+    if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
-        try {
-            const { data, error } = await _supabase
-                .from('usuarios')
-                .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color)')
-                .eq('username', username)
-                .eq('password', password)
-                .single();
+    try {
+        const { data, error } = await _supabase
+            .from('usuarios')
+            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color)')
+            .eq('username', username)
+            .eq('password', password)
+            .single();
 
-            if (error || !data) {
-                return alert("Credenciales incorrectas");
-    }
+        if (error || !data) {
+            return alert("Credenciales incorrectas");
+        }
 
         // =============================================
         // VALIDACIÓN DE SUSCRIPTOR + VINCULACIÓN EN PRIMER LOGIN (iOS compatible)
@@ -2034,11 +2030,11 @@ function generarPremiosEnRuletaDorada() {
         div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
         div.style.transformOrigin = 'center center';
         div.style.fontSize = '0.80rem';
-        div.style.fontWeight = '800';
+        div.style.font-weight = '800';
         div.style.color = '#fefce8';
         div.style.textShadow = '2px 2px 10px #000000, 0 0 16px #facc15';
         div.style.letterSpacing = '0.5px';
-        div.style.lineHeight = '1.25';
+        div.style.line-height = '1.25';
         div.style.textAlign = 'center';
         div.style.whiteSpace = 'pre-wrap';
         div.style.maxWidth = '102px';
@@ -2238,7 +2234,7 @@ function mostrarCooldownRuleta(ultimaRuleta) {
 
     if (!modal || !tiempoEl) return;
 
-    // Limpiar intervalo anterior si existe
+    // Limpiar intervalo anterior if existe
     if (cooldownInterval) clearInterval(cooldownInterval);
 
     function actualizarTiempo() {
@@ -2264,7 +2260,7 @@ function mostrarCooldownRuleta(ultimaRuleta) {
         tiempoEl.innerHTML = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
     }
 
-    actualizarTiempo(); // Primera actualización inmediata
+    actualizarTiempo(); // Primera actualización immediate
     cooldownInterval = setInterval(actualizarTiempo, 30000); // Actualiza cada 30 segundos
 
     modal.style.display = 'flex';
