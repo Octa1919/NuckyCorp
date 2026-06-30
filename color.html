@@ -152,27 +152,6 @@
             border: 1px solid rgba(168, 85, 247, 0.25);
         }
 
-        /* Saludo con líneas separadoras */
-        .greeting-separator {
-            display: flex;
-            align-items: center;
-            margin: 18px 20px;
-            color: #64748b;
-        }
-        .greeting-separator::before,
-        .greeting-separator::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(to right, transparent, #64748b, transparent);
-        }
-        .greeting-text {
-            font-size: 1.4rem;
-            font-weight: 600;
-            padding: 0 20px;
-            white-space: nowrap;
-        }
-
         /* Menú hamburguesa */
         #hamburger-menu {
             position: fixed;
@@ -450,6 +429,17 @@
     <!-- Línea separadora -->
     <div class="header-separator"></div>
 
+    <!-- WELCOME BANNER (estilo carrusel) -->
+    <div id="welcome-banner" style="margin: 16px 20px 8px; background: var(--glass); border-radius: 20px; padding: 18px 24px; border: 1px solid rgba(103, 232, 249, 0.35); box-shadow: 0 10px 30px rgba(0,0,0,0.35);">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="font-size: 2.5rem; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">👋</div>
+            <div style="flex: 1; min-width: 0;">
+                <p style="margin: 0 0 2px 0; color: #94a3b8; font-size: 0.95rem; font-weight: 500;">¡Bienvenido de nuevo!</p>
+                <h2 id="welcome-username" style="margin: 0; font-size: 1.65rem; font-weight: 700; color: #e0e7ff; line-height: 1.2;"></h2>
+            </div>
+        </div>
+    </div>
+
     <!-- LOGIN -->
     <div id="login-screen">
         <div class="card" style="margin-top:90px; max-width:420px; margin-left:auto; margin-right:auto; padding:42px 32px;">
@@ -496,11 +486,6 @@
                     Retirar Fondos
                 </button>
             </div>
-        </div>
-
-        <!-- SALUDO CON LÍNEAS -->
-        <div class="greeting-separator">
-            <h2 id="bienvenida" class="greeting-text"></h2>
         </div>
 
         <!-- ATENCIÓN PERSONALIZADA -->
@@ -1385,7 +1370,12 @@ function iniciarSuscripcionEstadoCuenta() {
     
     async function cargarDatosSuscriptor(sub) {
         document.getElementById('casino-name').textContent = sub.nombre_casino || "Nucky";
-        document.getElementById('bienvenida').innerHTML = `¡Hola <strong>${currentUsuario}</strong>!`;
+
+        // === NUEVO: Welcome Banner ===
+        const welcomeEl = document.getElementById('welcome-username');
+        if (welcomeEl) {
+            welcomeEl.innerHTML = `${currentUsuario}`;
+        }
 
         const salasHTML = `
             <button onclick="${sub.sala1_link ? `window.open('${sub.sala1_link}', '_blank')` : `showSalaNoDisponibleModal()`}" class="sala-btn">Celuapuestas</button>
@@ -1996,14 +1986,14 @@ function generarPremiosEnRuleta() {
         div.style.top = '42%';
         div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
         div.style.fontSize = '0.78rem';
-        div.style.fontWeight = '700';
+        div.style.font-weight = '700';
         div.style.color = '#ffffff';
-        div.style.textShadow = '2px 2px 6px #000000';
-        div.style.letterSpacing = '0.3px';
-        div.style.lineHeight = '1.15';
-        div.style.textAlign = 'center';
-        div.style.whiteSpace = 'pre-wrap';
-        div.style.maxWidth = '95px';
+        div.style.text-shadow = '2px 2px 6px #000000';
+        div.style.letter-spacing = '0.3px';
+        div.style.line-height = '1.15';
+        div.style.text-align = 'center';
+        div.style.white-space = 'pre-wrap';
+        div.style.max-width = '95px';
         div.textContent = textoConSaltos;
         container.appendChild(div);
     });
@@ -2029,15 +2019,15 @@ function generarPremiosEnRuletaDorada() {
         div.style.top = '42%';
         div.style.transform = `rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
         div.style.transformOrigin = 'center center';
-        div.style.fontSize = '0.80rem';
-        div.style.fontWeight = '800';
+        div.style.font-size = '0.80rem';
+        div.style.font-weight = '800';
         div.style.color = '#fefce8';
-        div.style.textShadow = '2px 2px 10px #000000, 0 0 16px #facc15';
-        div.style.letterSpacing = '0.5px';
-        div.style.lineHeight = '1.25';
-        div.style.textAlign = 'center';
-        div.style.whiteSpace = 'pre-wrap';
-        div.style.maxWidth = '102px';
+        div.style.text-shadow = '2px 2px 10px #000000, 0 0 16px #facc15';
+        div.style.letter-spacing = '0.5px';
+        div.style.line-height = '1.25';
+        div.style.text-align = 'center';
+        div.style.white-space = 'pre-wrap';
+        div.style.max-width = '102px';
         div.textContent = textoConSaltos;
         container.appendChild(div);
     });
