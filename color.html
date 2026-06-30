@@ -1153,23 +1153,23 @@ async function obtenerIP() {
         return params.get('s') || params.get('subscriber') || params.get('subscriber_id');
     }
 
-async function loginJugador() {
-    const username = document.getElementById('login-user').value.trim();
-    const password = document.getElementById('login-pass').value.trim();
-    const recordar = document.getElementById('recordarme').checked;
+    async function loginJugador() {
+        const username = document.getElementById('login-user').value.trim();
+        const password = document.getElementById('login-pass').value.trim();
+        const recordar = document.getElementById('recordarme').checked;
 
-    if (!username || !password) return alert("Usuario y contraseña son obligatorios");
+        if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
-    try {
-        const { data, error } = await _supabase
-            .from('usuarios')
-            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
-            .eq('username', username)
-            .eq('password', password)
-            .single();
+        try {
+            const { data, error } = await _supabase
+                .from('usuarios')
+                .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret)')
+                .eq('username', username)
+                .eq('password', password)
+                .single();
 
-        if (error || !data) {
-            return alert("Credenciales incorrectas");
+            if (error || !data) {
+                return alert("Credenciales incorrectas");
         }
 
         // =============================================
