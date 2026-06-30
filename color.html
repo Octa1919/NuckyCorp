@@ -13,6 +13,7 @@
 
         if (urlId) {
             if (isStandalone) {
+                // App instalada → solo vinculamos si todavía no tiene nada guardado
                 if (!yaVinculado) {
                     localStorage.setItem('subscriber_id_instalacion', urlId);
                     window.__subscriberIdInstalacion = urlId;
@@ -20,6 +21,7 @@
                     window.__subscriberIdInstalacion = yaVinculado;
                 }
             } else {
+                // Navegador normal (pestaña) → siempre respetamos el ?s= actual
                 localStorage.setItem('subscriber_id_instalacion', urlId);
                 window.__subscriberIdInstalacion = urlId;
             }
@@ -30,11 +32,13 @@
         }
     })();
     </script>
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nucky - App Jugadores</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <!-- Confeti para Ruleta Dorada -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
