@@ -2102,12 +2102,12 @@ async function spinRuletaDorada() {
     const premioLimpio = premioOriginal.replace(/\//g, ' ');
     const codigo = generarCodigoPremio();
 
-    try {
+   try {
         await _supabase.from('premios_ruleta').insert({
             subscriber_id: currentSubscriberId,
             usuario: currentUsuario,
             premio: premioLimpio,
-            codigo: codigo;
+            codigo: codigo,
             estado: "pendiente",
             created_at: new Date().toISOString()
         });
