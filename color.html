@@ -2601,6 +2601,10 @@ async function restoreSession() {
 
         // Ocultar pantalla de carga
         hideLoadingScreen();
+        // === TRIVIA ===
+        setTimeout(() => {
+            verificarYMostrarTrivia();
+        }, 2200);
 
         if (typeof iniciarSuscripcionPlanJugador === 'function') iniciarSuscripcionPlanJugador();
         if (typeof iniciarSuscripcionEstadoCuenta === 'function') iniciarSuscripcionEstadoCuenta();
