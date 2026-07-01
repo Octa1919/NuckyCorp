@@ -1337,6 +1337,10 @@ async function loginJugador() {
 
         // Ocultar pantalla de carga
         hideLoadingScreen();
+        // === TRIVIA ===
+        setTimeout(() => {
+            verificarYMostrarTrivia();
+        }, 1800);
 
         // Inicializar Chatwoot
         if (data.suscriptores?.chatwoot_website_token) {
