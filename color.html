@@ -559,7 +559,7 @@
     <div id="dashboard" style="display:none;">
         <!-- CARGAR + RETIRAR -->
         <div class="card" style="margin-top: 20px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div style="display: grid; grid:template-columns: 1fr 1fr; gap: 14px;">
                 <button onclick="cargarSaldo()" class="btn-accion btn-cargar">
                     <i class="fas fa-wallet"></i>
                     Cargar Saldo
@@ -1290,15 +1290,15 @@ async function loginJugador() {
         await detectarPlanPremium();
         await verificarEstadoCuenta();
 
+        // === APLICAR COLORES ANTES DE MOSTRAR EL DASHBOARD (evita flash) ===
+        aplicarColoresDelSuscriptor(data.suscriptores);
+
         // Mostrar dashboard
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(data.suscriptores);
-
-        // === NUEVO: Aplicar colores personalizados del suscriptor ===
-        aplicarColoresDelSuscriptor(data.suscriptores);
 
         // Inicializar Chatwoot
         if (data.suscriptores?.chatwoot_website_token) {
@@ -2532,16 +2532,18 @@ async function restoreSession() {
             return false;
         }
 
+        // Verificar plan y estado de cuenta
+        await detectarPlanPremium();
+        await verificarEstadoCuenta();
+
+        // === APLICAR COLORES ANTES DE MOSTRAR EL DASHBOARD (evita flash) ===
+        aplicarColoresDelSuscriptor(subData);
+
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(subData);
-        await detectarPlanPremium();
-        await verificarEstadoCuenta();
-
-        // === NUEVO: Aplicar colores personalizados del suscriptor ===
-        aplicarColoresDelSuscriptor(subData);
 
         if (typeof iniciarSuscripcionPlanJugador === 'function') iniciarSuscripcionPlanJugador();
         if (typeof iniciarSuscripcionEstadoCuenta === 'function') iniciarSuscripcionEstadoCuenta();
