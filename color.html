@@ -476,6 +476,12 @@
             0% { -webkit-transform: translateX(0); }
             100% { -webkit-transform: translateX(-50%); }
         }
+
+        /* === SPINNER PANTALLA DE CARGA === */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -1158,7 +1164,7 @@
     OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
             appId: ONESIGNAL_APP_ID,
-            allowLocalhostAsSecureOrigin: true,
+            allowLocalhostAsSecureOrigin: true;
             notifyButton: { enable: false } // Desactivamos el botón flotante por ahora
         });
         console.log("✅ OneSignal SDK inicializado");
@@ -1441,7 +1447,7 @@ function iniciarSuscripcionEstadoCuenta() {
                         console.log('%c[REALTIME] Cuenta reactivada. Recargando página...', 'color:#22c55e');
                         location.reload();
                     } else {
-                        // ❌ Se suspendió la cuenta → Mostramos pantalla de bloqueo
+                        // ❌ Se suspendió la cuenta → Mostrar pantalla de bloqueo
                         cuentaActiva = false;
                         mostrarPantallaBloqueo();
                     }
@@ -2163,7 +2169,7 @@ async function spinRuleta() {
             subscriber_id: currentSubscriberId,
             usuario: currentUsuario,
             premio: premioLimpio,
-            codigo: codigo,
+            codigo: codigo;
             estado: "pendiente",
             created_at: new Date().toISOString()
         });
@@ -2607,7 +2613,7 @@ function iniciarTour(forzar = false) {
         {
             element: '.btn-atencion',
             title: 'Atención Personalizada',
-            description: 'Tocá acá para chatear con nosotros. Desde acá te atendemos como en WhatsApp, te cargamos, retiramos y pagamos desde este chat'
+            description: 'Tocá acá para chatear con nosotros. Desde acá te atendemos como en WhatsApp, te cargamos, retirar y pagamos desde este chat'
         },
         {
             element: '#salas-container',
