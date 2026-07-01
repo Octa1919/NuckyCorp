@@ -557,9 +557,17 @@
     
     <!-- DASHBOARD -->
     <div id="dashboard" style="display:none;">
-        <!-- CARGAR + RETIRAR -->
-        <div class="card" style="margin-top: 20px;">
-            <div style="display: grid; grid:template-columns: 1fr 1fr; gap: 14px;">
+
+        <!-- RULETA VIP (ahora primero) -->
+        <div class="card" style="margin-top: 10px;">
+           <button onclick="abrirRuleta()" class="btn-ruleta">
+            <i class="fas fa-dice"></i> Ruleta VIP
+            </button>
+        </div>
+
+        <!-- CARGAR + RETIRAR (en la misma línea) -->
+        <div class="card" style="margin-top: 16px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                 <button onclick="cargarSaldo()" class="btn-accion btn-cargar">
                     <i class="fas fa-wallet"></i>
                     Cargar Saldo
@@ -572,7 +580,7 @@
         </div>
 
         <!-- ATENCIÓN PERSONALIZADA -->
-        <div class="card" style="margin-top: 10px;">
+        <div class="card" style="margin-top: 16px;">
             <button onclick="abrirChatwoot()" class="btn-atencion">
                 <i class="fas fa-headset"></i>
                 Atención Personalizada
@@ -589,13 +597,6 @@
             </div>
         </div>
 
-        <!-- RULETA VIP -->
-        <div class="card" style="margin-top: 10px;">
-           <button onclick="abrirRuleta()" class="btn-ruleta">
-            <i class="fas fa-dice"></i> Ruleta VIP
-            </button>
-            </button>
-        </div>
     </div>
 
      <!-- MENÚ HAMBURGUESA -->
