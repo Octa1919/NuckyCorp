@@ -3160,6 +3160,19 @@ async function iniciarTrivia(triviaId, boton) {
     const introModal = boton.closest('.trivia-intro-modal');
     if (introModal) introModal.remove();
 
+    // === NUEVA VERIFICACIÓN DE TELÉFONO ===
+    const { data: userData } = await _supabase
+        .from('usuarios')
+        .select('telefono')
+        .eq('username', currentUsuario)
+        .eq('subscriber_id', currentSubscriberId)
+        .single();
+
+    if (!userData?.telefono || !validarTelefonoArgentina(userData.telefono)) {
+        mostrarModalAgregarTelefono();
+        return;
+    }
+
     const estaInstalada = isAppInstalled();
 
     // === Si NO tiene la App instalada → mostramos el teaser ===
