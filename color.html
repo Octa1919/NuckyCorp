@@ -3087,10 +3087,18 @@ async function mostrarIntroTrivia(triviaConfig) {
 }
 
 async function iniciarTrivia(triviaId, boton) {
-    const modal = boton.closest('.trivia-intro-modal');
-    if (modal) modal.remove();
+    const introModal = boton.closest('.trivia-intro-modal');
+    if (introModal) introModal.remove();
 
-    // === FEEDBACK INMEDIATO ===
+    const estaInstalada = isAppInstalled();
+
+    // === Si NO tiene la App instalada → mostramos el teaser ===
+    if (!estaInstalada) {
+        mostrarTeaserInstalacionTrivia();
+        return;
+    }
+
+    // === Si SÍ tiene la App instalada → mostramos loader y cargamos la pregunta ===
     const loadingModal = document.createElement('div');
     loadingModal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; z-index:99999;`;
     loadingModal.innerHTML = `
@@ -3101,7 +3109,6 @@ async function iniciarTrivia(triviaId, boton) {
     `;
     document.body.appendChild(loadingModal);
 
-    // Precargamos la trivia + preguntas en paralelo
     try {
         await mostrarPreguntaTrivia(triviaId);
     } finally {
