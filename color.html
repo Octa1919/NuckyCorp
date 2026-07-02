@@ -3089,13 +3089,26 @@ async function mostrarIntroTrivia(triviaConfig) {
 async function iniciarTrivia(triviaId, boton) {
     const modal = boton.closest('.trivia-intro-modal');
     if (modal) modal.remove();
-    if (!isAppInstalled()) {
-        mostrarTeaserInstalacionTrivia();
-        return;
-    }
-    await mostrarPreguntaTrivia(triviaId);
-}
 
+    // === FEEDBACK INMEDIATO ===
+    const loadingModal = document.createElement('div');
+    loadingModal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; z-index:99999;`;
+    loadingModal.innerHTML = `
+        <div style="text-align:center; color:white;">
+            <div style="width:48px; height:48px; border:5px solid #334155; border-top:5px solid var(--accent); border-radius:50%; animation:spin 0.9s linear infinite; margin:0 auto 16px;"></div>
+            <p style="font-size:1.1rem; color:#e0e7ff;">Cargando pregunta...</p>
+        </div>
+    `;
+    document.body.appendChild(loadingModal);
+
+    // Precargamos la trivia + preguntas en paralelo
+    try {
+        await mostrarPreguntaTrivia(triviaId);
+    } finally {
+        loadingModal.remove();
+    }
+}
+    
 async function mostrarPreguntaTrivia(triviaConfigId) {
     const { data: triviaConfig } = await _supabase.from('trivias').select('*').eq('id', triviaConfigId).single();
     const { data: preguntas } = await _supabase.from('trivia_preguntas').select('*').eq('subscriber_id', currentSubscriberId).eq('activa', true);
