@@ -3515,7 +3515,7 @@ async function iniciarTrivia(triviaId, boton) {
     modal.dataset.timerInterval = intervalo;
 }
 
-   async function responderTriviaConTimer(indice, preguntaId, premio, boton) {
+  async function responderTriviaConTimer(indice, preguntaId, premio, boton) {
     const modal = boton.closest('div[style*="position:fixed"]');
     if (!modal) return;
 
@@ -3536,7 +3536,7 @@ async function iniciarTrivia(triviaId, boton) {
     const esCorrecta = respuesta.es_correcta;
     const contenedor = modal.querySelector('#respuestas-container');
 
-    // === REGISTRAR LA RESPUESTA EN trivia_mostradas ===
+    // === REGISTRAR RESPUESTA ===
     await _supabase.from('trivia_mostradas').insert({
         subscriber_id: currentSubscriberId,
         usuario: currentUsuario,
@@ -3548,7 +3548,7 @@ async function iniciarTrivia(triviaId, boton) {
     });
 
     if (esCorrecta) {
-        // Respuesta correcta → crear premio
+        // Crear premio
         const codigo = generarCodigoPremio();
 
         await _supabase.from('premios_ruleta').insert({
@@ -3563,24 +3563,23 @@ async function iniciarTrivia(triviaId, boton) {
         window.codigoPremioActual = codigo;
 
         contenedor.innerHTML = `
-            <div style="text-align:center; padding:10px 0;">
-                <div style="font-size:3rem; margin-bottom:10px;">🎉</div>
-                <h3 style="color:#22c55e; margin-bottom:8px;">¡Correcto!</h3>
-                <p style="margin-bottom:20px;">Ganaste: <strong>${premio}</strong></p>
+            <div style="text-align:center; padding:20px 10px;">
+                <div style="font-size:3.2rem; margin-bottom:12px;">🎉</div>
+                <h3 style="color:#22c55e; margin-bottom:10px;">¡Correcto!</h3>
+                <p style="margin-bottom:24px; font-size:1.1rem;">Ganaste: <strong>${premio}</strong></p>
 
                 <button onclick="reclamarPremioTrivia('${premio}', this)" 
-                        style="background:#22c55e; color:white; border:none; padding:16px 40px; border-radius:14px; font-weight:700;">
+                        style="background:#22c55e; color:white; border:none; padding:16px 40px; border-radius:14px; font-weight:700; font-size:1.1rem; margin-bottom:12px;">
                     Reclamar Premio
                 </button>
             </div>
         `;
     } else {
-        // Respuesta incorrecta
         contenedor.innerHTML = `
-            <div style="text-align:center; padding:10px 0;">
-                <div style="font-size:2.8rem; margin-bottom:10px;">😕</div>
-                <h3 style="color:#f87171; margin-bottom:8px;">Respuesta incorrecta</h3>
-                <p style="color:#94a3b8; margin-bottom:20px;">
+            <div style="text-align:center; padding:20px 10px;">
+                <div style="font-size:2.8rem; margin-bottom:12px;">😕</div>
+                <h3 style="color:#f87171; margin-bottom:10px;">Respuesta incorrecta</h3>
+                <p style="color:#94a3b8; margin-bottom:24px;">
                     La respuesta correcta era:<br>
                     <strong>${pregunta.respuestas.find(r => r.es_correcta).texto}</strong>
                 </p>
@@ -3593,6 +3592,7 @@ async function iniciarTrivia(triviaId, boton) {
         `;
     }
 }
+    
     function mostrarTeaserInstalacionTrivia() {
     // Eliminar modal anterior si existe
     const anterior = document.querySelector('.trivia-install-modal');
