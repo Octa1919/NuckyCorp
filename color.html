@@ -3430,7 +3430,6 @@ async function iniciarTrivia(triviaId, boton) {
 }
 
     async function mostrarPreguntaTrivia(triviaConfigId) {
-    // Traemos la config completa + una pregunta
     const { data: triviaConfig } = await _supabase
         .from('trivias')
         .select('*')
@@ -3453,6 +3452,7 @@ async function iniciarTrivia(triviaId, boton) {
 
     modal.innerHTML = `
         <div style="background:var(--glass); width:92%; max-width:480px; border-radius:24px; padding:26px; border:3px solid var(--modal-border); color:white;">
+            
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <h3 style="margin:0; color:var(--accent);">🎯 Trivia</h3>
                 <div id="trivia-timer" style="background:#0f172a; padding:6px 14px; border-radius:20px; font-weight:700; color:#f87171;">
@@ -3467,7 +3467,7 @@ async function iniciarTrivia(triviaId, boton) {
             <div id="respuestas-container" style="display:flex; flex-direction:column; gap:12px;">
                 ${pregunta.respuestas.map((r, i) => `
                     <button onclick="responderTriviaConTimer(${i}, '${pregunta.id}', '${premio}', this)" 
-                            style="width:100%; padding:16px; background:#334155; color:white; border:none; border-radius:14px; font-size:1.05rem; text-align:left;">
+                            style="width:100%; padding:16px; background:#334155; color:white; border:none; border-radius:14px; font-size:1.05rem; text-align:left; cursor:pointer;">
                         ${r.texto}
                     </button>
                 `).join('')}
@@ -3477,7 +3477,7 @@ async function iniciarTrivia(triviaId, boton) {
 
     document.body.appendChild(modal);
 
-    // Iniciar temporizador de 30 segundos
+    // Iniciar temporizador
     iniciarTemporizadorTrivia(modal);
 }
 
