@@ -3412,8 +3412,8 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
             </div>
         `;
     }
-    // === RESPUESTA INCORRECTA ===
-    else {
+ // === RESPUESTA INCORRECTA ===
+else {
     contenedor.innerHTML = `
         <div style="text-align:center; padding:20px 10px;">
             <div style="font-size:2.8rem; margin-bottom:12px;">😕</div>
@@ -3424,13 +3424,13 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
             </p>
 
             <button onclick="window.currentTriviaModal.remove()" 
-                    style="background:#334155; color:white; border:none; padding:14px 32px; border-radius:12px;">
+                    style="background:#334155; color:white; border:none; padding:14px 32px; border-radius:12px; font-weight:600;">
                 Cerrar
             </button>
         </div>
     `;
 }
-
+    
 function copiarCodigoTrivia(codigo, boton) {
     const textoParaCopiar = `Gané en la trivia, este es mi código: ${codigo}`;
     
