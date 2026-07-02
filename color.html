@@ -2051,7 +2051,7 @@ async function abrirRuleta() {
         return alert("Error: No se detectó usuario o suscriptor");
     }
 
-    // === 1. Chequeos rápidos (sin demora) ===
+    // === 1. Chequeos rápidos ===
     if (!esPlanPremium) {
         mostrarModalPremiumJugador();
         return;
@@ -2062,20 +2062,32 @@ async function abrirRuleta() {
         return;
     }
 
-    // === 2. Mostramos el modal de la Ruleta INMEDIATAMENTE ===
+    // === 2. Verificar que tenga teléfono registrado ===
+    const { data: userTelefono, error: telError } = await _supabase
+        .from('usuarios')
+        .select('telefono')
+        .eq('username', currentUsuario)
+        .eq('subscriber_id', currentSubscriberId)
+        .single();
+
+    if (telError || !userTelefono?.telefono || !validarTelefonoArgentina(userTelefono.telefono)) {
+        mostrarModalAgregarTelefono();
+        return;
+    }
+
+    // === 3. Abrir modal de Ruleta inmediatamente ===
     const ruletaModal = document.getElementById('modal-ruleta');
     const ruletaDoradaModal = document.getElementById('modal-ruleta-dorada');
 
-    // Mostramos un estado de carga temporal
     ruletaModal.style.display = 'flex';
 
-    // Limpiamos contenido anterior
+    // Mostrar estado de carga
     document.getElementById('ruleta-premios').innerHTML = '';
     document.getElementById('btn-spin').disabled = true;
     document.getElementById('btn-spin').innerText = "Cargando...";
 
     try {
-        // === 3. Cargamos todo en paralelo ===
+        // === 4. Cargar datos en paralelo ===
         const [userData, subData, premioPendiente] = await Promise.all([
             _supabase.from('usuarios')
                 .select('racha_ruleta, ultima_ruleta')
@@ -2087,10 +2099,10 @@ async function abrirRuleta() {
                 .eq('id', currentSubscriberId)
                 .single(),
 
-            verificarPremioPendiente()   // ya existente
+            verificarPremioPendiente()
         ]);
 
-        // === 4. Verificamos premio pendiente ===
+        // === 5. Verificar premio pendiente ===
         if (premioPendiente) {
             ruletaModal.style.display = 'none';
             premioPendienteActual = premioPendiente;
@@ -2098,7 +2110,7 @@ async function abrirRuleta() {
             return;
         }
 
-        // === 5. Verificamos cooldown de 24hs ===
+        // === 6. Verificar cooldown de 24hs ===
         if (userData.data?.ultima_ruleta) {
             const ultima = new Date(userData.data.ultima_ruleta);
             const ahora = new Date();
@@ -2111,26 +2123,12 @@ async function abrirRuleta() {
             }
         }
 
-        // === Verificar que tenga teléfono registrado ===
-        const { data: userTelefono, error: telError } = await _supabase
-            .from('usuarios')
-            .select('telefono')
-            .eq('username', currentUsuario)
-            .eq('subscriber_id', currentSubscriberId)
-            .single();
-
-        if (telError || !userTelefono?.telefono || !validarTelefonoArgentina(userTelefono.telefono)) {
-            document.getElementById('modal-ruleta').style.display = 'none';
-            mostrarModalAgregarTelefono();
-            return;
-        }
-
-        // === 6. Determinamos si es ruleta normal o dorada ===
+        // === 7. Determinar si es Ruleta Normal o Dorada ===
         const rachaActual = userData.data?.racha_ruleta || 0;
         const diasNecesarios = subData.data?.dias_dorada || 7;
 
         if (rachaActual >= diasNecesarios) {
-            // RULETA DORADA
+            // === RULETA DORADA ===
             ruletaModal.style.display = 'none';
 
             ruletaPremiosDorados = subData.data?.premios_dorada
@@ -2139,19 +2137,21 @@ async function abrirRuleta() {
 
             generarPremiosEnRuletaDorada();
             ruletaDoradaModal.style.display = 'flex';
+
         } else {
-            // RULETA NORMAL
+            // === RULETA NORMAL ===
             ruletaPremios = subData.data?.premios_normal
                 ? subData.data.premios_normal.split(',').map(p => p.trim())
                 : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
 
             generarPremiosEnRuleta();
+
             document.getElementById('btn-spin').disabled = false;
             document.getElementById('btn-spin').innerText = "🎲 GIRAR RULETA";
         }
 
     } catch (err) {
-        console.error("Error al abrir Ruleta:", err);
+        console.error("Error al abrir la Ruleta:", err);
         ruletaModal.style.display = 'none';
         alert("Ocurrió un error al cargar la Ruleta. Intentá nuevamente.");
     }
