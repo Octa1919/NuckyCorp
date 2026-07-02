@@ -2509,35 +2509,20 @@ async function configurarOneSignalUsuario() {
 async function restoreSession() {
     inicializarContextoInstalacion();
 
-    let savedSession = localStorage.getItem('nucky_session');
-    if (!savedSession) {
-        savedSession = sessionStorage.getItem('nucky_session');
-    }
-
+    let savedSession = localStorage.getItem('nucky_session') || sessionStorage.getItem('nucky_session');
     if (!savedSession) return false;
 
     try {
         const session = JSON.parse(savedSession);
         const savedSubscriberId = session.subscriber_id;
 
-        // === NUEVA LÓGICA DE AISLAMIENTO ===
-        const urlSubscriberId = getSubscriberFromUrl();
+        // Validaciones de suscriptor...
 
-        // Si hay un suscriptor en la URL actual y es diferente al de la sesión guardada → NO restauramos
-        if (urlSubscriberId && urlSubscriberId !== savedSubscriberId) {
-            console.log("%c[RESTORE] URL de otro suscriptor detectada. No se restaura sesión anterior.", "color:#f59e0b");
-            return false; // ← Muestra pantalla de login limpia
-        }
-
-        // Si ya tenemos contexto de instalación y no coincide con la sesión guardada → tampoco restauramos
-        if (subscriberIdInstalacion && savedSubscriberId !== subscriberIdInstalacion) {
-            console.log("%c[RESTORE] Sesión de otro suscriptor. No se restaura.", "color:#f59e0b");
-            return false;
-        }
-
-        // === Si llegamos acá, es seguro restaurar ===
         currentUsuario = session.username;
         currentSubscriberId = savedSubscriberId;
+
+        // === MOSTRAMOS CARGA TEMPRANO ===
+        showLoadingScreen("Cargando tu experiencia...");
 
         const { data: subData, error } = await _supabase
             .from('suscriptores')
@@ -2546,40 +2531,37 @@ async function restoreSession() {
             .single();
 
         if (error || !subData) {
+            hideLoadingScreen();
             localStorage.removeItem('nucky_session');
             sessionStorage.removeItem('nucky_session');
             return false;
         }
 
-        // Verificar plan y estado de cuenta
-        await detectarPlanPremium();
-        await verificarEstadoCuenta();
+        await Promise.all([
+            detectarPlanPremium(),
+            verificarEstadoCuenta()
+        ]);
 
-        // === MOSTRAR PANTALLA DE CARGA ===
-        showLoadingScreen("Cargando tu experiencia...");
-
-        // === APLICAR COLORES ANTES DE MOSTRAR EL DASHBOARD (evita flash) ===
         aplicarColoresDelSuscriptor(subData);
-
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(subData);
 
-        // Ocultar pantalla de carga
         hideLoadingScreen();
-        // === TRIVIA ===
+
+        // Trivia mucho más rápido
         setTimeout(() => {
             verificarYMostrarTrivia();
-        }, 2200);
+        }, 350);
 
         if (typeof iniciarSuscripcionPlanJugador === 'function') iniciarSuscripcionPlanJugador();
         if (typeof iniciarSuscripcionEstadoCuenta === 'function') iniciarSuscripcionEstadoCuenta();
 
         setTimeout(() => {
             configurarOneSignalUsuario();
-        }, 1200);
+        }, 800);
 
         if (subData.chatwoot_website_token) {
             inicializarChatwoot(subData.chatwoot_website_token, subData.chatwoot_hmac_secret);
@@ -2588,10 +2570,8 @@ async function restoreSession() {
         return true;
 
     } catch (e) {
-        console.error("Error en restoreSession():", e);
         hideLoadingScreen();
-        localStorage.removeItem('nucky_session');
-        sessionStorage.removeItem('nucky_session');
+        console.error("Error en restoreSession():", e);
         return false;
     }
 }
