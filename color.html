@@ -3272,11 +3272,17 @@ function copiarCodigoTrivia(codigo, boton) {
 }
 
 function reclamarPremioTriviaChatwoot(codigo, elemento) {
-    // Cerrar el modal de triunfo
-    const modal = elemento.closest('div[style*="position:fixed"]');
+    // Buscamos el modal de forma más confiable
+    let modal = elemento.closest('div[style*="position:fixed"]');
+    
+    // Si no lo encuentra, buscamos cualquier modal fijo que esté abierto
+    if (!modal) {
+        modal = document.querySelector('div[style*="position:fixed"][style*="z-index:99999"]');
+    }
+
     if (modal) modal.remove();
 
-    // Abrir Chatwoot
+    // Abrimos Chatwoot
     if (window.$chatwoot) {
         window.$chatwoot.toggle("open");
 
