@@ -3265,19 +3265,31 @@ function iniciarTemporizadorTrivia(modal) {
     modal.dataset.timerInterval = intervalo;
 }
 
-async function responderTriviaConTimer(indice, preguntaId, premio, boton) {
-    const modal = boton.closest('div[style*="position:fixed"]');
-    if (!modal) return;
+async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalPadre) {
+    // Si no nos pasan el modal, intentamos buscarlo
+    if (!modalPadre) {
+        modalPadre = boton.closest('div[style*="position:fixed"]');
+    }
+    if (!modalPadre) return;
 
-    if (modal.dataset.timerInterval) clearInterval(parseInt(modal.dataset.timerInterval));
+    // Limpiar temporizador si existe
+    if (modalPadre.dataset.timerInterval) {
+        clearInterval(parseInt(modalPadre.dataset.timerInterval));
+    }
 
-    const { data: pregunta } = await _supabase.from('trivia_preguntas').select('*').eq('id', preguntaId).single();
+    const { data: pregunta } = await _supabase
+        .from('trivia_preguntas')
+        .select('*')
+        .eq('id', preguntaId)
+        .single();
+
     if (!pregunta) return;
 
     const respuesta = pregunta.respuestas[indice];
     const esCorrecta = respuesta.es_correcta;
-    const contenedor = modal.querySelector('#respuestas-container');
+    const contenedor = modalPadre.querySelector('#respuestas-container');
 
+    // Registrar la respuesta
     await _supabase.from('trivia_mostradas').insert({
         subscriber_id: currentSubscriberId,
         usuario: currentUsuario,
@@ -3289,7 +3301,9 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton) {
     });
 
     if (esCorrecta) {
+        // Crear premio
         const codigo = generarCodigoPremio();
+
         await _supabase.from('premios_ruleta').insert({
             subscriber_id: currentSubscriberId,
             usuario: currentUsuario,
@@ -3298,6 +3312,7 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton) {
             estado: 'pendiente',
             created_at: new Date().toISOString()
         });
+
         window.codigoPremioActual = codigo;
 
         contenedor.innerHTML = `
@@ -3305,7 +3320,11 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton) {
                 <div style="font-size:3.2rem; margin-bottom:12px;">🎉</div>
                 <h3 style="color:#22c55e; margin-bottom:10px;">¡Correcto!</h3>
                 <p style="margin-bottom:24px; font-size:1.1rem;">Ganaste: <strong>${premio}</strong></p>
-                <button onclick="reclamarPremioTrivia('${premio}', this)" style="background:#22c55e; color:white; border:none; padding:16px 40px; border-radius:14px; font-weight:700;">Reclamar Premio</button>
+
+                <button onclick="reclamarPremioTrivia('${premio}', this)" 
+                        style="background:#22c55e; color:white; border:none; padding:16px 40px; border-radius:14px; font-weight:700;">
+                    Reclamar Premio
+                </button>
             </div>
         `;
     } else {
@@ -3313,8 +3332,15 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton) {
             <div style="text-align:center; padding:20px 10px;">
                 <div style="font-size:2.8rem; margin-bottom:12px;">😕</div>
                 <h3 style="color:#f87171; margin-bottom:10px;">Respuesta incorrecta</h3>
-                <p style="color:#94a3b8; margin-bottom:24px;">La respuesta correcta era:<br><strong>${pregunta.respuestas.find(r => r.es_correcta).texto}</strong></p>
-                <button onclick="this.closest('div[style*=\'position:fixed\']').remove()" style="background:#334155; color:white; border:none; padding:14px 32px; border-radius:12px;">Cerrar</button>
+                <p style="color:#94a3b8; margin-bottom:24px;">
+                    La respuesta correcta era:<br>
+                    <strong>${pregunta.respuestas.find(r => r.es_correcta).texto}</strong>
+                </p>
+
+                <button onclick="this.closest('div[style*=\'position:fixed\']').remove()" 
+                        style="background:#334155; color:white; border:none; padding:14px 32px; border-radius:12px;">
+                    Cerrar
+                </button>
             </div>
         `;
     }
