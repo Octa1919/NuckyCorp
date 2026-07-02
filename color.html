@@ -3534,23 +3534,42 @@ async function iniciarTrivia(triviaId, boton) {
 }
 
     function mostrarTeaserInstalacionTrivia() {
+    // Eliminar modal anterior si existe
+    const anterior = document.querySelector('.trivia-install-modal');
+    if (anterior) anterior.remove();
+
     const modal = document.createElement('div');
-    modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:99999;`;
+    modal.className = 'trivia-install-modal';
+    modal.style.cssText = `
+        position:fixed; top:0; left:0; width:100%; height:100%; 
+        background:rgba(0,0,0,0.92); display:flex; align-items:center; 
+        justify-content:center; z-index:99999;
+    `;
 
     modal.innerHTML = `
-        <div style="background:#1e2937; width:92%; max-width:420px; border-radius:24px; padding:28px; text-align:center; border:3px solid #f59e0b;">
-            <h3 style="color:#fbbf24; margin-bottom:16px;">📲 Para participar en la Trivia</h3>
-            <p style="color:#e0e7ff; margin-bottom:24px; line-height:1.5;">
-                Necesitás tener la <strong>App instalada</strong> para responder y ganar premios.
+        <div style="
+            background:#1e2937; 
+            width:92%; max-width:420px; 
+            border-radius:24px; padding:28px 24px; 
+            text-align:center; border:3px solid #f59e0b;
+        ">
+            <h3 style="color:#fbbf24; margin-bottom:16px; font-size:1.4rem;">
+                📲 Para participar en la Trivia
+            </h3>
+            
+            <p style="color:#e0e7ff; margin-bottom:24px; line-height:1.5; font-size:1.05rem;">
+                Necesitás tener la <strong>App instalada</strong> para responder la Trivia y acceder a más beneficios y promociones.
             </p>
 
-            <button onclick="instalarAppDesdeTriviaModal(this)" 
-                    style="width:100%; padding:16px; background:linear-gradient(90deg,#22d3ee,#67e8f9); color:#0f172a; border:none; border-radius:14px; font-weight:700; margin-bottom:12px;">
-                Instalar App Ahora
+            <button onclick="instalarAppDesdeTriviaModal()" 
+                    style="width:100%; padding:17px; background:linear-gradient(90deg, #22d3ee, #67e8f9); 
+                           color:#0f172a; border:none; border-radius:14px; font-weight:700; font-size:1.1rem; margin-bottom:12px;">
+                📲 Instalar App Ahora
             </button>
 
-            <button onclick="this.closest('div[style*=\"position:fixed\"]').remove()" 
-                    style="width:100%; padding:14px; background:#334155; color:white; border:none; border-radius:12px;">
+            <button onclick="cerrarModalTriviaInstalacion()" 
+                    style="width:100%; padding:15px; background:#334155; color:white; 
+                           border:none; border-radius:12px; font-weight:600;">
                 Cerrar
             </button>
         </div>
@@ -3559,9 +3578,14 @@ async function iniciarTrivia(triviaId, boton) {
     document.body.appendChild(modal);
 }
 
-function instalarAppDesdeTriviaModal(elemento) {
-    elemento.closest('div[style*="position:fixed"]').remove();
+function instalarAppDesdeTriviaModal() {
+    cerrarModalTriviaInstalacion();
     instalarApp();
+}
+
+function cerrarModalTriviaInstalacion() {
+    const modal = document.querySelector('.trivia-install-modal');
+    if (modal) modal.remove();
 }
 </script>
 </body>
