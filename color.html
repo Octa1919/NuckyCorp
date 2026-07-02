@@ -3481,6 +3481,59 @@ async function iniciarTrivia(triviaId, boton) {
     // Guardamos el intervalo para poder limpiarlo si responde antes
     modal.dataset.timerInterval = intervalo;
 }
+
+    async function responderTriviaConTimer(indice, preguntaId, premio, boton) {
+    const modal = boton.closest('div[style*="position:fixed"]');
+    if (!modal) return;
+
+    // Limpiar temporizador si existe
+    if (modal.dataset.timerInterval) {
+        clearInterval(parseInt(modal.dataset.timerInterval));
+    }
+
+    const { data: pregunta } = await _supabase
+        .from('trivia_preguntas')
+        .select('*')
+        .eq('id', preguntaId)
+        .single();
+
+    if (!pregunta) return;
+
+    const respuesta = pregunta.respuestas[indice];
+    const esCorrecta = respuesta.es_correcta;
+    const contenedor = modal.querySelector('#respuestas-container');
+
+    if (esCorrecta) {
+        contenedor.innerHTML = `
+            <div style="text-align:center; padding:10px 0;">
+                <div style="font-size:3rem; margin-bottom:10px;">🎉</div>
+                <h3 style="color:#22c55e; margin-bottom:8px;">¡Correcto!</h3>
+                <p style="margin-bottom:20px;">Ganaste: <strong>${premio}</strong></p>
+
+                <button onclick="reclamarPremioTrivia('${premio}', this)" 
+                        style="background:#22c55e; color:white; border:none; padding:16px 40px; border-radius:14px; font-weight:700;">
+                    Reclamar Premio
+                </button>
+            </div>
+        `;
+    } else {
+        contenedor.innerHTML = `
+            <div style="text-align:center; padding:10px 0;">
+                <div style="font-size:2.8rem; margin-bottom:10px;">😕</div>
+                <h3 style="color:#f87171; margin-bottom:8px;">Respuesta incorrecta</h3>
+                <p style="color:#94a3b8; margin-bottom:20px;">
+                    La respuesta correcta era:<br>
+                    <strong>${pregunta.respuestas.find(r => r.es_correcta).texto}</strong>
+                </p>
+
+                <button onclick="this.closest('div[style*=\"position:fixed\"]').remove()" 
+                        style="background:#334155; color:white; border:none; padding:14px 32px; border-radius:12px;">
+                    Cerrar
+                </button>
+            </div>
+        `;
+    }
+}
 </script>
 </body>
 </html>
