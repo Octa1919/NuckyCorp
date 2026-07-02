@@ -1258,34 +1258,31 @@ async function loginJugador() {
 
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
+    // === MOSTRAMOS CARGA INMEDIATAMENTE ===
+    showLoadingScreen("Iniciando sesión...");
+
     try {
         const { data, error } = await _supabase
             .from('usuarios')
-            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color)')
+            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color)')
             .eq('username', username)
             .eq('password', password)
             .single();
 
         if (error || !data) {
+            hideLoadingScreen();
             return alert("Credenciales incorrectas");
         }
 
-        // =============================================
-        // VALIDACIÓN DE SUSCRIPTOR + VINCULACIÓN EN PRIMER LOGIN (iOS compatible)
-        // =============================================
+        // Validaciones de suscriptor...
         if (!subscriberIdInstalacion) {
-            // No hay contexto previo → vinculamos la App al suscriptor de este usuario
             subscriberIdInstalacion = data.subscriber_id;
             localStorage.setItem('subscriber_id_instalacion', data.subscriber_id);
-            console.log("%c[CONTEXTO] App vinculada por primer login al suscriptor:", "color:#22c55e", data.subscriber_id);
         }
 
-        // A partir de acá ya tenemos subscriberIdInstalacion (ya sea por URL, localStorage o por el login actual)
         if (data.subscriber_id !== subscriberIdInstalacion) {
-            return alert(
-                "Estas credenciales no corresponden a este agente.\n\n" +
-                "Esta App instalada solo permite el acceso con usuarios del agente desde el cual la instalaste."
-            );
+            hideLoadingScreen();
+            return alert("Estas credenciales no corresponden a este agente.");
         }
 
         currentSubscriberId = data.subscriber_id;
@@ -1293,70 +1290,41 @@ async function loginJugador() {
         currentPassword = password;
 
         // Guardar sesión
-        const sessionData = {
-            username: currentUsuario,
-            subscriber_id: currentSubscriberId
-        };
-
+        const sessionData = { username: currentUsuario, subscriber_id: currentSubscriberId };
         if (recordar) {
             localStorage.setItem('nucky_session', JSON.stringify(sessionData));
-            sessionStorage.removeItem('nucky_session');
         } else {
             sessionStorage.setItem('nucky_session', JSON.stringify(sessionData));
-            localStorage.removeItem('nucky_session');
         }
 
-        // Registrar IP si no tiene
-        if (!data.ultima_ip) {
-            const ip = await obtenerIP();
-            if (ip) {
-                await _supabase
-                    .from('usuarios')
-                    .update({ ultima_ip: ip })
-                    .eq('username', username)
-                    .eq('subscriber_id', currentSubscriberId);
-            }
-        }
+        // Verificar plan y estado de cuenta en paralelo
+        await Promise.all([
+            detectarPlanPremium(),
+            verificarEstadoCuenta()
+        ]);
 
-        // Verificar plan y estado de cuenta
-        await detectarPlanPremium();
-        await verificarEstadoCuenta();
-
-        // === MOSTRAR PANTALLA DE CARGA ===
-        showLoadingScreen("Cargando configuración...");
-
-        // === APLICAR COLORES ANTES DE MOSTRAR EL DASHBOARD (evita flash) ===
+        // Aplicar colores y mostrar dashboard
         aplicarColoresDelSuscriptor(data.suscriptores);
-
-        // Mostrar dashboard
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(data.suscriptores);
 
-        // Ocultar pantalla de carga
         hideLoadingScreen();
-        // === TRIVIA ===
+
+        // === TRIVIA: La mostramos casi inmediatamente ===
         setTimeout(() => {
             verificarYMostrarTrivia();
-        }, 1800);
+        }, 400);   // Bajamos de 1800ms a 400ms
 
-        // Inicializar Chatwoot
+        // Inicializar Chatwoot y suscripciones
         if (data.suscriptores?.chatwoot_website_token) {
-            inicializarChatwoot(
-                data.suscriptores.chatwoot_website_token,
-                data.suscriptores.chatwoot_hmac_secret
-            );
+            inicializarChatwoot(data.suscriptores.chatwoot_website_token, data.suscriptores.chatwoot_hmac_secret);
         }
 
-        // === INICIAR SUSCRIPCIONES EN TIEMPO REAL ===
-        if (typeof iniciarSuscripcionPlanJugador === 'function') {
-            iniciarSuscripcionPlanJugador();
-        }
-        if (typeof iniciarSuscripcionEstadoCuenta === 'function') {
-            iniciarSuscripcionEstadoCuenta();
-        }
+        if (typeof iniciarSuscripcionPlanJugador === 'function') iniciarSuscripcionPlanJugador();
+        if (typeof iniciarSuscripcionEstadoCuenta === 'function') iniciarSuscripcionEstadoCuenta();
 
     } catch (err) {
         console.error("Error en loginJugador():", err);
