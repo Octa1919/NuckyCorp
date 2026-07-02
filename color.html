@@ -3158,27 +3158,56 @@ async function mostrarPreguntaTrivia(triviaConfigId) {
 
     const modal = document.createElement('div');
     modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); display:flex; align-items:center; justify-content:center; z-index:99999;`;
+
     modal.innerHTML = `
         <div style="background:var(--glass); width:92%; max-width:460px; border-radius:24px; padding:28px 24px; border:3px solid var(--modal-border); color:white; box-shadow:0 25px 70px rgba(0,0,0,0.6);">
-            <div style="text-align:center; margin-bottom:16px;">
-                <h3 style="margin:0; color:var(--accent); font-size:1.6rem;">🎯 Trivia</h3>
-                <p style="color:#94a3b8; font-size:0.95rem; margin-top:4px;">Respondé correctamente y ganá</p>
+            
+            <!-- Header -->
+            <div style="text-align:center; margin-bottom:20px;">
+                <h3 style="margin:0; color:var(--accent); font-size:1.7rem;">🎯 Trivia</h3>
+                <p style="color:#94a3b8; font-size:0.95rem; margin-top:6px;">Respondé correctamente y ganá</p>
             </div>
-            <div style="background:#0f172a; padding:20px; border-radius:16px; margin-bottom:24px; border:1px solid #334155;">
-                <p style="font-size:1.15rem; line-height:1.5; margin:0;">${pregunta.pregunta}</p>
+
+            <!-- Pregunta -->
+            <div style="background:#0f172a; padding:22px; border-radius:18px; margin-bottom:24px; border:1px solid #334155;">
+                <p style="font-size:1.2rem; line-height:1.5; margin:0; color:#e0e7ff;">${pregunta.pregunta}</p>
             </div>
+
+            <!-- Contenedor de respuestas -->
             <div id="respuestas-container" style="display:flex; flex-direction:column; gap:12px;"></div>
-        </div>`;
+        </div>
+    `;
+
     document.body.appendChild(modal);
 
     const container = modal.querySelector('#respuestas-container');
+
     pregunta.respuestas.forEach((respuesta, index) => {
         const btn = document.createElement('button');
-        btn.style.cssText = `width:100%; padding:18px; background:#1e2937; color:white; border:2px solid #475569; border-radius:16px; font-size:1.05rem; text-align:left; cursor:pointer;`;
+        btn.style.cssText = `
+            width:100%; 
+            padding:18px 20px; 
+            background:#1e2937; 
+            color:white; 
+            border:2px solid #475569; 
+            border-radius:16px; 
+            font-size:1.08rem; 
+            text-align:left; 
+            cursor:pointer; 
+            transition:all 0.2s ease;
+        `;
         btn.textContent = respuesta.texto;
-        btn.addEventListener('click', () => responderTriviaConTimer(index, pregunta.id, premio, btn, modal));
+
+        btn.onmouseover = () => btn.style.borderColor = 'var(--accent)';
+        btn.onmouseout = () => btn.style.borderColor = '#475569';
+
+        btn.addEventListener('click', () => {
+            responderTriviaConTimer(index, pregunta.id, premio, btn, modal);
+        });
+
         container.appendChild(btn);
     });
+
     iniciarTemporizadorTrivia(modal);
 }
 
