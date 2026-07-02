@@ -3080,68 +3080,41 @@ function hideLoadingScreen() {
     if (loader) loader.style.display = 'none';
 }
 
-// ==================== TRIVIA - APP JUGADORES (VERSIÓN FINAL LIMPIA) ====================
+// ==================== TRIVIA - APP JUGADORES (VERSIÓN FINAL LIMPIA Y VERIFICADA) ====================
 
 async function verificarYMostrarTrivia() {
     if (!currentSubscriberId || !currentUsuario) return;
 
     try {
-        const { data: triviaConfig } = await _supabase
-            .from('trivias')
-            .select('*')
-            .eq('subscriber_id', currentSubscriberId)
-            .eq('activa', true)
-            .single();
+        const [triviaRes, interaccionRes] = await Promise.all([
+            _supabase.from('trivias').select('*').eq('subscriber_id', currentSubscriberId).eq('activa', true).single(),
+            _supabase.from('trivia_mostradas').select('*').eq('usuario', currentUsuario).eq('subscriber_id', currentSubscriberId).order('respondida_en', { ascending: false }).limit(1).single()
+        ]);
 
+        const triviaConfig = triviaRes.data;
         if (!triviaConfig) return;
 
+        const ultimaInteraccion = interaccionRes.data;
         const horasCooldown = triviaConfig.periodicidad_horas || 24;
-
-        const { data: ultimaInteraccion } = await _supabase
-            .from('trivia_mostradas')
-            .select('*')
-            .eq('usuario', currentUsuario)
-            .eq('subscriber_id', currentSubscriberId)
-            .order('respondida_en', { ascending: false })
-            .limit(1)
-            .single();
-
-        if (!ultimaInteraccion) {
-            mostrarIntroTrivia(triviaConfig);
-            return;
-        }
-
         const ahora = new Date();
         let debeMostrar = false;
 
-        if (!ultimaInteraccion.respondida) {
+        if (!ultimaInteraccion) {
             debeMostrar = true;
-        } 
-        else if (ultimaInteraccion.respondida && !ultimaInteraccion.es_correcta) {
-            const ultimaRespuesta = new Date(ultimaInteraccion.respondida_en);
-            const horasPasadas = (ahora - ultimaRespuesta) / (1000 * 60 * 60);
+        } else if (!ultimaInteraccion.respondida) {
+            debeMostrar = true;
+        } else if (ultimaInteraccion.respondida && !ultimaInteraccion.es_correcta) {
+            const horasPasadas = (ahora - new Date(ultimaInteraccion.respondida_en)) / (1000 * 60 * 60);
             if (horasPasadas >= horasCooldown) debeMostrar = true;
-        } 
-        else if (ultimaInteraccion.respondida && ultimaInteraccion.es_correcta) {
-            const { data: ultimoPremio } = await _supabase
-                .from('premios_ruleta')
-                .select('estado, entregado_at')
-                .eq('usuario', currentUsuario)
-                .eq('subscriber_id', currentSubscriberId)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .single();
-
-            if (ultimoPremio && ultimoPremio.estado === 'entregado' && ultimoPremio.entregado_at) {
-                const fechaEntrega = new Date(ultimoPremio.entregado_at);
-                const horasPasadas = (ahora - fechaEntrega) / (1000 * 60 * 60);
+        } else if (ultimaInteraccion.respondida && ultimaInteraccion.es_correcta) {
+            const { data: ultimoPremio } = await _supabase.from('premios_ruleta').select('estado, entregado_at').eq('usuario', currentUsuario).eq('subscriber_id', currentSubscriberId).order('created_at', { ascending: false }).limit(1).single();
+            if (ultimoPremio?.estado === 'entregado' && ultimoPremio.entregado_at) {
+                const horasPasadas = (ahora - new Date(ultimoPremio.entregado_at)) / (1000 * 60 * 60);
                 if (horasPasadas >= horasCooldown) debeMostrar = true;
             }
         }
 
-        if (debeMostrar) {
-            mostrarIntroTrivia(triviaConfig);
-        }
+        if (debeMostrar) mostrarIntroTrivia(triviaConfig);
 
     } catch (err) {
         console.log("Error verificando Trivia:", err);
@@ -3150,40 +3123,25 @@ async function verificarYMostrarTrivia() {
 
 async function mostrarIntroTrivia(triviaConfig) {
     const premio = triviaConfig.premio_correcto || "fichas gratis";
-
     const modal = document.createElement('div');
     modal.className = 'trivia-intro-modal';
     modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.88); display:flex; align-items:center; justify-content:center; z-index:99999;`;
-
     modal.innerHTML = `
-        <div style="background: var(--glass); width:92%; max-width:440px; border-radius:24px; padding:32px 26px; color:white; border:3px solid var(--modal-border); text-align:center;">
+        <div style="background:var(--glass); width:92%; max-width:440px; border-radius:24px; padding:32px 26px; color:white; border:3px solid var(--modal-border); text-align:center;">
             <h2 style="margin-bottom:12px; color:var(--accent); font-size:1.65rem;">🎯 Trivia</h2>
-            <p style="font-size:1.15rem; line-height:1.5; margin-bottom:24px;">
-                Respondé una pregunta y ganá<br>
-                <strong style="color:var(--accent); font-size:1.35rem;">${premio}</strong>
-            </p>
+            <p style="font-size:1.15rem; line-height:1.5; margin-bottom:24px;">Respondé una pregunta y ganá<br><strong style="color:var(--accent); font-size:1.35rem;">${premio}</strong></p>
             <div style="display:flex; flex-direction:column; gap:12px;">
-                <button onclick="iniciarTrivia('${triviaConfig.id}', this)" 
-                        style="width:100%; padding:18px; background:linear-gradient(90deg, var(--primary), var(--accent)); color:#0f172a; border:none; border-radius:16px; font-weight:700; font-size:1.15rem;">
-                    Vamos
-                </button>
-                <button onclick="this.closest('.trivia-intro-modal').remove()" 
-                        style="width:100%; padding:16px; background:#334155; color:white; border:none; border-radius:14px; font-weight:600;">
-                    Ahora no
-                </button>
+                <button onclick="iniciarTrivia('${triviaConfig.id}', this)" style="width:100%; padding:18px; background:linear-gradient(90deg, var(--primary), var(--accent)); color:#0f172a; border:none; border-radius:16px; font-weight:700; font-size:1.15rem;">Vamos</button>
+                <button onclick="this.closest('.trivia-intro-modal').remove()" style="width:100%; padding:16px; background:#334155; color:white; border:none; border-radius:14px; font-weight:600;">Ahora no</button>
             </div>
-        </div>
-    `;
+        </div>`;
     document.body.appendChild(modal);
 }
 
 async function iniciarTrivia(triviaId, boton) {
     const modal = boton.closest('.trivia-intro-modal');
     if (modal) modal.remove();
-
-    const estaInstalada = isAppInstalled();
-
-    if (!estaInstalada) {
+    if (!isAppInstalled()) {
         mostrarTeaserInstalacionTrivia();
         return;
     }
@@ -3191,65 +3149,42 @@ async function iniciarTrivia(triviaId, boton) {
 }
 
 async function mostrarPreguntaTrivia(triviaConfigId) {
-    const { data: triviaConfig } = await _supabase
-        .from('trivias')
-        .select('*')
-        .eq('id', triviaConfigId)
-        .single();
-
-    const { data: preguntas } = await _supabase
-        .from('trivia_preguntas')
-        .select('*')
-        .eq('subscriber_id', currentSubscriberId)
-        .eq('activa', true);
-
+    const { data: triviaConfig } = await _supabase.from('trivias').select('*').eq('id', triviaConfigId).single();
+    const { data: preguntas } = await _supabase.from('trivia_preguntas').select('*').eq('subscriber_id', currentSubscriberId).eq('activa', true);
     if (!preguntas || preguntas.length === 0) return;
 
     const pregunta = preguntas[Math.floor(Math.random() * preguntas.length)];
     const premio = triviaConfig.premio_correcto || "fichas gratis";
 
     const modal = document.createElement('div');
-    modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:99999;`;
-
+    modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); display:flex; align-items:center; justify-content:center; z-index:99999;`;
     modal.innerHTML = `
-        <div style="background:var(--glass); width:92%; max-width:480px; border-radius:24px; padding:26px; border:3px solid var(--modal-border); color:white;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h3 style="margin:0; color:var(--accent);">🎯 Trivia</h3>
-                <div id="trivia-timer" style="background:#0f172a; padding:6px 14px; border-radius:20px; font-weight:700; color:#f87171;">30s</div>
+        <div style="background:var(--glass); width:92%; max-width:460px; border-radius:24px; padding:28px 24px; border:3px solid var(--modal-border); color:white; box-shadow:0 25px 70px rgba(0,0,0,0.6);">
+            <div style="text-align:center; margin-bottom:16px;">
+                <h3 style="margin:0; color:var(--accent); font-size:1.6rem;">🎯 Trivia</h3>
+                <p style="color:#94a3b8; font-size:0.95rem; margin-top:4px;">Respondé correctamente y ganá</p>
             </div>
-
-            <div style="background:#0f172a; padding:18px; border-radius:16px; margin-bottom:20px;">
-                <p style="font-size:1.15rem; margin:0;">${pregunta.pregunta}</p>
+            <div style="background:#0f172a; padding:20px; border-radius:16px; margin-bottom:24px; border:1px solid #334155;">
+                <p style="font-size:1.15rem; line-height:1.5; margin:0;">${pregunta.pregunta}</p>
             </div>
-
             <div id="respuestas-container" style="display:flex; flex-direction:column; gap:12px;"></div>
-        </div>
-    `;
-
+        </div>`;
     document.body.appendChild(modal);
 
-    // Crear botones dinámicamente con addEventListener (más seguro)
     const container = modal.querySelector('#respuestas-container');
-
     pregunta.respuestas.forEach((respuesta, index) => {
         const btn = document.createElement('button');
-        btn.style.cssText = `width:100%; padding:16px; background:#334155; color:white; border:none; border-radius:14px; font-size:1.05rem; text-align:left; cursor:pointer;`;
+        btn.style.cssText = `width:100%; padding:18px; background:#1e2937; color:white; border:2px solid #475569; border-radius:16px; font-size:1.05rem; text-align:left; cursor:pointer;`;
         btn.textContent = respuesta.texto;
-
-        btn.addEventListener('click', () => {
-            responderTriviaConTimer(index, pregunta.id, premio, btn, modal);
-        });
-
+        btn.addEventListener('click', () => responderTriviaConTimer(index, pregunta.id, premio, btn, modal));
         container.appendChild(btn);
     });
-
-    // Iniciar temporizador
     iniciarTemporizadorTrivia(modal);
 }
+
 function iniciarTemporizadorTrivia(modal) {
     const timerEl = modal.querySelector('#trivia-timer');
     if (!timerEl) return;
-
     let tiempoRestante = 30;
     const intervalo = setInterval(() => {
         tiempoRestante--;
@@ -3257,136 +3192,100 @@ function iniciarTemporizadorTrivia(modal) {
         if (tiempoRestante <= 0) {
             clearInterval(intervalo);
             const contenedor = modal.querySelector('#respuestas-container');
-            if (contenedor) {
-                contenedor.innerHTML = `<div style="text-align:center; padding:20px;"><p style="color:#f87171;">⏰ Se acabó el tiempo</p><button onclick="this.closest('div[style*=\'position:fixed\']').remove()" style="padding:14px 32px; background:#334155; color:white; border:none; border-radius:12px;">Cerrar</button></div>`;
-            }
+            if (contenedor) contenedor.innerHTML = `<div style="text-align:center; padding:20px;"><p style="color:#f87171;">⏰ Se acabó el tiempo</p><button onclick="this.closest('div[style*=\'position:fixed\']').remove()" style="padding:14px 32px; background:#334155; color:white; border:none; border-radius:12px;">Cerrar</button></div>`;
         }
     }, 1000);
     modal.dataset.timerInterval = intervalo;
 }
 
 async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalPadre) {
-    // Si no nos pasan el modal, intentamos buscarlo
-    if (!modalPadre) {
-        modalPadre = boton.closest('div[style*="position:fixed"]');
-    }
+    if (!modalPadre) modalPadre = boton.closest('div[style*="position:fixed"]');
     if (!modalPadre) return;
+    if (modalPadre.dataset.timerInterval) clearInterval(parseInt(modalPadre.dataset.timerInterval));
 
-    // Limpiar temporizador si existe
-    if (modalPadre.dataset.timerInterval) {
-        clearInterval(parseInt(modalPadre.dataset.timerInterval));
-    }
-
-    const { data: pregunta } = await _supabase
-        .from('trivia_preguntas')
-        .select('*')
-        .eq('id', preguntaId)
-        .single();
-
+    const { data: pregunta } = await _supabase.from('trivia_preguntas').select('*').eq('id', preguntaId).single();
     if (!pregunta) return;
 
     const respuesta = pregunta.respuestas[indice];
     const esCorrecta = respuesta.es_correcta;
     const contenedor = modalPadre.querySelector('#respuestas-container');
 
-    // Registrar la respuesta
     await _supabase.from('trivia_mostradas').insert({
-        subscriber_id: currentSubscriberId,
-        usuario: currentUsuario,
-        pregunta_id: preguntaId,
-        respondida: true,
-        es_correcta: esCorrecta,
-        respondida_en: new Date().toISOString(),
-        mostrada_en: new Date().toISOString()
+        subscriber_id: currentSubscriberId, usuario: currentUsuario, pregunta_id: preguntaId,
+        respondida: true, es_correcta: esCorrecta, respondida_en: new Date().toISOString(), mostrada_en: new Date().toISOString()
     });
 
     if (esCorrecta) {
-        // Crear premio
         const codigo = generarCodigoPremio();
-
         await _supabase.from('premios_ruleta').insert({
-            subscriber_id: currentSubscriberId,
-            usuario: currentUsuario,
-            premio: premio,
-            codigo: codigo,
-            estado: 'pendiente',
-            created_at: new Date().toISOString()
+            subscriber_id: currentSubscriberId, usuario: currentUsuario, premio: premio, codigo: codigo, estado: 'pendiente', created_at: new Date().toISOString()
         });
-
         window.codigoPremioActual = codigo;
 
-        contenedor.innerHTML = `
-            <div style="text-align:center; padding:20px 10px;">
-                <div style="font-size:3.2rem; margin-bottom:12px;">🎉</div>
-                <h3 style="color:#22c55e; margin-bottom:10px;">¡Correcto!</h3>
-                <p style="margin-bottom:24px; font-size:1.1rem;">Ganaste: <strong>${premio}</strong></p>
-
-                <button onclick="reclamarPremioTrivia('${premio}', this)" 
-                        style="background:#22c55e; color:white; border:none; padding:16px 40px; border-radius:14px; font-weight:700;">
-                    Reclamar Premio
-                </button>
-            </div>
-        `;
+        contenedor.innerHTML = 
+            '<div style="text-align:center; padding:10px 0;">' +
+                '<div style="font-size:3rem; margin-bottom:10px;">🎉</div>' +
+                '<h3 style="color:#22c55e; margin-bottom:8px;">¡Correcto!</h3>' +
+                '<p style="margin-bottom:16px; color:#e0e7ff;">Ganaste: <strong>' + premio + '</strong></p>' +
+                '<div style="background:#0f172a; border:2px solid #22c55e; border-radius:14px; padding:14px; margin-bottom:20px;">' +
+                    '<p style="color:#94a3b8; font-size:0.85rem; margin-bottom:4px;">Tu código</p>' +
+                    '<p style="font-size:1.55rem; font-weight:800; color:#67e8f9; letter-spacing:2px; margin:0;">' + codigo + '</p>' +
+                '</div>' +
+                '<div style="display:flex; flex-direction:column; gap:12px;">' +
+                    '<button onclick="copiarCodigoTrivia(\'' + codigo + '\', this)" style="background:#67e8f9; color:#0f172a; border:none; padding:16px; border-radius:14px; font-weight:700; font-size:1.05rem;">📋 Copiar Código</button>' +
+                    '<button onclick="reclamarPremioTriviaChatwoot(\'' + codigo + '\', this)" style="background:#c026d3; color:white; border:none; padding:16px; border-radius:14px; font-weight:700; font-size:1.05rem;">🎁 Reclamar Premio</button>' +
+                '</div>' +
+            '</div>';
     } else {
-        contenedor.innerHTML = `
-            <div style="text-align:center; padding:20px 10px;">
-                <div style="font-size:2.8rem; margin-bottom:12px;">😕</div>
-                <h3 style="color:#f87171; margin-bottom:10px;">Respuesta incorrecta</h3>
-                <p style="color:#94a3b8; margin-bottom:24px;">
-                    La respuesta correcta era:<br>
-                    <strong>${pregunta.respuestas.find(r => r.es_correcta).texto}</strong>
-                </p>
-
-                <button onclick="this.closest('div[style*=\'position:fixed\']').remove()" 
-                        style="background:#334155; color:white; border:none; padding:14px 32px; border-radius:12px;">
-                    Cerrar
-                </button>
-            </div>
-        `;
+        contenedor.innerHTML = 
+            '<div style="text-align:center; padding:20px 10px;">' +
+                '<div style="font-size:2.8rem; margin-bottom:12px;">😕</div>' +
+                '<h3 style="color:#f87171; margin-bottom:10px;">Respuesta incorrecta</h3>' +
+                '<p style="color:#94a3b8; margin-bottom:24px;">La respuesta correcta era:<br><strong>' + pregunta.respuestas.find(r => r.es_correcta).texto + '</strong></p>' +
+                '<button onclick="this.closest(\'div[style*=\\\'position:fixed\\\']\').remove()" style="background:#334155; color:white; border:none; padding:14px 32px; border-radius:12px;">Cerrar</button>' +
+            '</div>';
     }
 }
 
-function reclamarPremioTrivia(premio, elemento) {
+function copiarCodigoTrivia(codigo, boton) {
+    navigator.clipboard.writeText(codigo).then(() => {
+        const original = boton.innerHTML;
+        boton.innerHTML = '✅ Copiado';
+        setTimeout(() => boton.innerHTML = original, 2000);
+    }).catch(() => alert("No se pudo copiar"));
+}
+
+function reclamarPremioTriviaChatwoot(codigo, elemento) {
     const modal = elemento.closest('div[style*="position:fixed"]');
     if (modal) modal.remove();
-
-    document.getElementById('premio-ganado-texto').innerText = premio;
-    document.getElementById('codigo-premio').innerText = window.codigoPremioActual || '—';
-    document.getElementById('modal-premio-ganado').style.display = 'flex';
+    if (window.$chatwoot) {
+        window.$chatwoot.toggle("open");
+        setTimeout(() => {
+            window.$chatwoot.sendMessage("Hola, quiero reclamar mi premio de Trivia. Mi código es: " + codigo);
+        }, 1300);
+    } else {
+        alert("No se pudo abrir el chat. Contactanos por Atención Personalizada.");
+    }
 }
 
 function mostrarTeaserInstalacionTrivia() {
     const anterior = document.querySelector('.trivia-install-modal');
     if (anterior) anterior.remove();
-
     const modal = document.createElement('div');
     modal.className = 'trivia-install-modal';
     modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); display:flex; align-items:center; justify-content:center; z-index:99999;`;
-
     modal.innerHTML = `
         <div style="background:#1e2937; width:92%; max-width:420px; border-radius:24px; padding:28px 24px; text-align:center; border:3px solid #f59e0b;">
             <h3 style="color:#fbbf24; margin-bottom:16px; font-size:1.4rem;">📲 Para participar en la Trivia</h3>
-            <p style="color:#e0e7ff; margin-bottom:24px; line-height:1.5; font-size:1.05rem;">
-                Necesitás tener la <strong>App instalada</strong> para responder la Trivia y acceder a más beneficios.
-            </p>
-            <button onclick="instalarAppDesdeTriviaModal()" style="width:100%; padding:17px; background:linear-gradient(90deg, #22d3ee, #67e8f9); color:#0f172a; border:none; border-radius:14px; font-weight:700; font-size:1.1rem; margin-bottom:12px;">
-                📲 Instalar App Ahora
-            </button>
+            <p style="color:#e0e7ff; margin-bottom:24px; line-height:1.5;">Necesitás tener la <strong>App instalada</strong> para responder y ganar premios.</p>
+            <button onclick="instalarAppDesdeTriviaModal()" style="width:100%; padding:17px; background:linear-gradient(90deg,#22d3ee,#67e8f9); color:#0f172a; border:none; border-radius:14px; font-weight:700;">📲 Instalar App Ahora</button>
             <button onclick="cerrarModalTriviaInstalacion()" style="width:100%; padding:15px; background:#334155; color:white; border:none; border-radius:12px; font-weight:600;">Cerrar</button>
-        </div>
-    `;
+        </div>`;
     document.body.appendChild(modal);
 }
 
-function instalarAppDesdeTriviaModal() {
-    cerrarModalTriviaInstalacion();
-    instalarApp();
-}
-
-function cerrarModalTriviaInstalacion() {
-    const modal = document.querySelector('.trivia-install-modal');
-    if (modal) modal.remove();
-}
+function instalarAppDesdeTriviaModal() { cerrarModalTriviaInstalacion(); instalarApp(); }
+function cerrarModalTriviaInstalacion() { const m = document.querySelector('.trivia-install-modal'); if (m) m.remove(); }
 </script>
 </body>
 </html>
