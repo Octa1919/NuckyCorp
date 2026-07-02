@@ -3430,7 +3430,6 @@ async function iniciarTrivia(triviaId, boton) {
 }
 
     async function mostrarPreguntaTrivia(triviaConfigId) {
-    // Traemos la config completa + una pregunta
     const { data: triviaConfig } = await _supabase
         .from('trivias')
         .select('*')
@@ -3453,6 +3452,7 @@ async function iniciarTrivia(triviaId, boton) {
 
     modal.innerHTML = `
         <div style="background:var(--glass); width:92%; max-width:480px; border-radius:24px; padding:26px; border:3px solid var(--modal-border); color:white;">
+            
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <h3 style="margin:0; color:var(--accent);">🎯 Trivia</h3>
                 <div id="trivia-timer" style="background:#0f172a; padding:6px 14px; border-radius:20px; font-weight:700; color:#f87171;">
@@ -3467,7 +3467,7 @@ async function iniciarTrivia(triviaId, boton) {
             <div id="respuestas-container" style="display:flex; flex-direction:column; gap:12px;">
                 ${pregunta.respuestas.map((r, i) => `
                     <button onclick="responderTriviaConTimer(${i}, '${pregunta.id}', '${premio}', this)" 
-                            style="width:100%; padding:16px; background:#334155; color:white; border:none; border-radius:14px; font-size:1.05rem; text-align:left;">
+                            style="width:100%; padding:16px; background:#334155; color:white; border:none; border-radius:14px; font-size:1.05rem; text-align:left; cursor:pointer;">
                         ${r.texto}
                     </button>
                 `).join('')}
@@ -3477,7 +3477,7 @@ async function iniciarTrivia(triviaId, boton) {
 
     document.body.appendChild(modal);
 
-    // Iniciar temporizador de 30 segundos
+    // Iniciar temporizador
     iniciarTemporizadorTrivia(modal);
 }
 
@@ -3515,7 +3515,7 @@ async function iniciarTrivia(triviaId, boton) {
     modal.dataset.timerInterval = intervalo;
 }
 
-   async function responderTriviaConTimer(indice, preguntaId, premio, boton) {
+  async function responderTriviaConTimer(indice, preguntaId, premio, boton) {
     const modal = boton.closest('div[style*="position:fixed"]');
     if (!modal) return;
 
@@ -3536,7 +3536,7 @@ async function iniciarTrivia(triviaId, boton) {
     const esCorrecta = respuesta.es_correcta;
     const contenedor = modal.querySelector('#respuestas-container');
 
-    // === REGISTRAR LA RESPUESTA EN trivia_mostradas ===
+    // === REGISTRAR RESPUESTA ===
     await _supabase.from('trivia_mostradas').insert({
         subscriber_id: currentSubscriberId,
         usuario: currentUsuario,
@@ -3548,7 +3548,7 @@ async function iniciarTrivia(triviaId, boton) {
     });
 
     if (esCorrecta) {
-        // Respuesta correcta → crear premio
+        // Crear premio
         const codigo = generarCodigoPremio();
 
         await _supabase.from('premios_ruleta').insert({
@@ -3563,24 +3563,23 @@ async function iniciarTrivia(triviaId, boton) {
         window.codigoPremioActual = codigo;
 
         contenedor.innerHTML = `
-            <div style="text-align:center; padding:10px 0;">
-                <div style="font-size:3rem; margin-bottom:10px;">🎉</div>
-                <h3 style="color:#22c55e; margin-bottom:8px;">¡Correcto!</h3>
-                <p style="margin-bottom:20px;">Ganaste: <strong>${premio}</strong></p>
+            <div style="text-align:center; padding:20px 10px;">
+                <div style="font-size:3.2rem; margin-bottom:12px;">🎉</div>
+                <h3 style="color:#22c55e; margin-bottom:10px;">¡Correcto!</h3>
+                <p style="margin-bottom:24px; font-size:1.1rem;">Ganaste: <strong>${premio}</strong></p>
 
                 <button onclick="reclamarPremioTrivia('${premio}', this)" 
-                        style="background:#22c55e; color:white; border:none; padding:16px 40px; border-radius:14px; font-weight:700;">
+                        style="background:#22c55e; color:white; border:none; padding:16px 40px; border-radius:14px; font-weight:700; font-size:1.1rem; margin-bottom:12px;">
                     Reclamar Premio
                 </button>
             </div>
         `;
     } else {
-        // Respuesta incorrecta
         contenedor.innerHTML = `
-            <div style="text-align:center; padding:10px 0;">
-                <div style="font-size:2.8rem; margin-bottom:10px;">😕</div>
-                <h3 style="color:#f87171; margin-bottom:8px;">Respuesta incorrecta</h3>
-                <p style="color:#94a3b8; margin-bottom:20px;">
+            <div style="text-align:center; padding:20px 10px;">
+                <div style="font-size:2.8rem; margin-bottom:12px;">😕</div>
+                <h3 style="color:#f87171; margin-bottom:10px;">Respuesta incorrecta</h3>
+                <p style="color:#94a3b8; margin-bottom:24px;">
                     La respuesta correcta era:<br>
                     <strong>${pregunta.respuestas.find(r => r.es_correcta).texto}</strong>
                 </p>
@@ -3593,6 +3592,7 @@ async function iniciarTrivia(triviaId, boton) {
         `;
     }
 }
+    
     function mostrarTeaserInstalacionTrivia() {
     // Eliminar modal anterior si existe
     const anterior = document.querySelector('.trivia-install-modal');
