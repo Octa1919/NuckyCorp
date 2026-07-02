@@ -3515,11 +3515,11 @@ async function iniciarTrivia(triviaId, boton) {
     modal.dataset.timerInterval = intervalo;
 }
 
-    async function responderTriviaConTimer(indice, preguntaId, premio, boton) {
+   async function responderTriviaConTimer(indice, preguntaId, premio, boton) {
     const modal = boton.closest('div[style*="position:fixed"]');
     if (!modal) return;
 
-    // Limpiar temporizador si existe
+    // Limpiar temporizador
     if (modal.dataset.timerInterval) {
         clearInterval(parseInt(modal.dataset.timerInterval));
     }
@@ -3536,7 +3536,32 @@ async function iniciarTrivia(triviaId, boton) {
     const esCorrecta = respuesta.es_correcta;
     const contenedor = modal.querySelector('#respuestas-container');
 
+    // === REGISTRAR LA RESPUESTA EN trivia_mostradas ===
+    await _supabase.from('trivia_mostradas').insert({
+        subscriber_id: currentSubscriberId,
+        usuario: currentUsuario,
+        pregunta_id: preguntaId,
+        respondida: true,
+        es_correcta: esCorrecta,
+        respondida_en: new Date().toISOString(),
+        mostrada_en: new Date().toISOString()
+    });
+
     if (esCorrecta) {
+        // Respuesta correcta → crear premio
+        const codigo = generarCodigoPremio();
+
+        await _supabase.from('premios_ruleta').insert({
+            subscriber_id: currentSubscriberId,
+            usuario: currentUsuario,
+            premio: premio,
+            codigo: codigo,
+            estado: 'pendiente',
+            created_at: new Date().toISOString()
+        });
+
+        window.codigoPremioActual = codigo;
+
         contenedor.innerHTML = `
             <div style="text-align:center; padding:10px 0;">
                 <div style="font-size:3rem; margin-bottom:10px;">🎉</div>
@@ -3550,6 +3575,7 @@ async function iniciarTrivia(triviaId, boton) {
             </div>
         `;
     } else {
+        // Respuesta incorrecta
         contenedor.innerHTML = `
             <div style="text-align:center; padding:10px 0;">
                 <div style="font-size:2.8rem; margin-bottom:10px;">😕</div>
@@ -3567,7 +3593,6 @@ async function iniciarTrivia(triviaId, boton) {
         `;
     }
 }
-
     function mostrarTeaserInstalacionTrivia() {
     // Eliminar modal anterior si existe
     const anterior = document.querySelector('.trivia-install-modal');
