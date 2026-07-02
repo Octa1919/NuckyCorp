@@ -2051,7 +2051,7 @@ async function abrirRuleta() {
         return alert("Error: No se detectó usuario o suscriptor");
     }
 
-    // === 1. Chequeos rápidos (sin demora) ===
+    // === 1. Chequeos rápidos ===
     if (!esPlanPremium) {
         mostrarModalPremiumJugador();
         return;
@@ -2062,20 +2062,32 @@ async function abrirRuleta() {
         return;
     }
 
-    // === 2. Mostramos el modal de la Ruleta INMEDIATAMENTE ===
+    // === 2. Verificar que tenga teléfono registrado ===
+    const { data: userTelefono, error: telError } = await _supabase
+        .from('usuarios')
+        .select('telefono')
+        .eq('username', currentUsuario)
+        .eq('subscriber_id', currentSubscriberId)
+        .single();
+
+    if (telError || !userTelefono?.telefono || !validarTelefonoArgentina(userTelefono.telefono)) {
+        mostrarModalAgregarTelefono();
+        return;
+    }
+
+    // === 3. Abrir modal de Ruleta inmediatamente ===
     const ruletaModal = document.getElementById('modal-ruleta');
     const ruletaDoradaModal = document.getElementById('modal-ruleta-dorada');
 
-    // Mostramos un estado de carga temporal
     ruletaModal.style.display = 'flex';
 
-    // Limpiamos contenido anterior
+    // Mostrar estado de carga
     document.getElementById('ruleta-premios').innerHTML = '';
     document.getElementById('btn-spin').disabled = true;
     document.getElementById('btn-spin').innerText = "Cargando...";
 
     try {
-        // === 3. Cargamos todo en paralelo ===
+        // === 4. Cargar datos en paralelo ===
         const [userData, subData, premioPendiente] = await Promise.all([
             _supabase.from('usuarios')
                 .select('racha_ruleta, ultima_ruleta')
@@ -2087,10 +2099,10 @@ async function abrirRuleta() {
                 .eq('id', currentSubscriberId)
                 .single(),
 
-            verificarPremioPendiente()   // ya existente
+            verificarPremioPendiente()
         ]);
 
-        // === 4. Verificamos premio pendiente ===
+        // === 5. Verificar premio pendiente ===
         if (premioPendiente) {
             ruletaModal.style.display = 'none';
             premioPendienteActual = premioPendiente;
@@ -2098,7 +2110,7 @@ async function abrirRuleta() {
             return;
         }
 
-        // === 5. Verificamos cooldown de 24hs ===
+        // === 6. Verificar cooldown de 24hs ===
         if (userData.data?.ultima_ruleta) {
             const ultima = new Date(userData.data.ultima_ruleta);
             const ahora = new Date();
@@ -2111,12 +2123,12 @@ async function abrirRuleta() {
             }
         }
 
-        // === 6. Determinamos si es ruleta normal o dorada ===
+        // === 7. Determinar si es Ruleta Normal o Dorada ===
         const rachaActual = userData.data?.racha_ruleta || 0;
         const diasNecesarios = subData.data?.dias_dorada || 7;
 
         if (rachaActual >= diasNecesarios) {
-            // RULETA DORADA
+            // === RULETA DORADA ===
             ruletaModal.style.display = 'none';
 
             ruletaPremiosDorados = subData.data?.premios_dorada
@@ -2125,19 +2137,21 @@ async function abrirRuleta() {
 
             generarPremiosEnRuletaDorada();
             ruletaDoradaModal.style.display = 'flex';
+
         } else {
-            // RULETA NORMAL
+            // === RULETA NORMAL ===
             ruletaPremios = subData.data?.premios_normal
                 ? subData.data.premios_normal.split(',').map(p => p.trim())
                 : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
 
             generarPremiosEnRuleta();
+
             document.getElementById('btn-spin').disabled = false;
             document.getElementById('btn-spin').innerText = "🎲 GIRAR RULETA";
         }
 
     } catch (err) {
-        console.error("Error al abrir Ruleta:", err);
+        console.error("Error al abrir la Ruleta:", err);
         ruletaModal.style.display = 'none';
         alert("Ocurrió un error al cargar la Ruleta. Intentá nuevamente.");
     }
@@ -3145,6 +3159,19 @@ async function iniciarTrivia(triviaId, boton) {
     const introModal = boton.closest('.trivia-intro-modal');
     if (introModal) introModal.remove();
 
+    // === NUEVA VERIFICACIÓN DE TELÉFONO ===
+    const { data: userData } = await _supabase
+        .from('usuarios')
+        .select('telefono')
+        .eq('username', currentUsuario)
+        .eq('subscriber_id', currentSubscriberId)
+        .single();
+
+    if (!userData?.telefono || !validarTelefonoArgentina(userData.telefono)) {
+        mostrarModalAgregarTelefono();
+        return;
+    }
+
     const estaInstalada = isAppInstalled();
 
     // === Si NO tiene la App instalada → mostramos el teaser ===
@@ -3419,6 +3446,118 @@ function mostrarTeaserInstalacionTrivia() {
 
 function instalarAppDesdeTriviaModal() { cerrarModalTriviaInstalacion(); instalarApp(); }
 function cerrarModalTriviaInstalacion() { const m = document.querySelector('.trivia-install-modal'); if (m) m.remove(); }
+
+    function validarTelefonoArgentina(telefono) {
+    if (!telefono) return false;
+
+    // Limpiamos espacios, guiones y paréntesis
+    const limpio = telefono.replace(/[\s\-\(\)]/g, '');
+
+    // Debe empezar con +54 y tener entre 10 y 12 dígitos después del +54
+    // Ejemplos válidos: +549112345678, +5493512345678
+    const regex = /^\+54\d{10,12}$/;
+
+    return regex.test(limpio);
+}
+
+function mostrarModalAgregarTelefono() {
+    const existente = document.getElementById('modal-telefono');
+    if (existente) existente.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'modal-telefono';
+    modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:99999;`;
+
+    modal.innerHTML = `
+        <div style="background:#1e2937; width:92%; max-width:420px; border-radius:24px; padding:28px 24px; border:3px solid var(--modal-border);">
+            
+            <h3 style="text-align:center; color:#e0e7ff; margin-bottom:8px; font-size:1.45rem;">📱 Agregar WhatsApp</h3>
+            <p style="text-align:center; color:#94a3b8; margin-bottom:24px; font-size:1rem;">
+                Necesitamos tu número de WhatsApp para poder usar Ruleta VIP y Trivia.
+            </p>
+
+            <!-- Input con bloque fijo -->
+            <div style="margin-bottom:20px;">
+                <label style="color:#cbd5e1; font-size:0.95rem; display:block; margin-bottom:8px;">Número de WhatsApp</label>
+                
+                <div style="display:flex; align-items:center; background:#0f172a; border:2px solid #475569; border-radius:16px; overflow:hidden;">
+                    
+                    <!-- Bloque fijo (solo lectura) -->
+                    <div style="display:flex; align-items:center; padding:14px 18px; background:#1e2937; border-right:2px solid #475569; white-space:nowrap;">
+                        <span style="font-size:1.55rem; margin-right:8px;">🇦🇷</span>
+                        <span style="color:#e0e7ff; font-size:1.2rem; font-weight:700;">+54 9</span>
+                    </div>
+
+                    <!-- Input editable (solo el número local) -->
+                    <input type="tel" id="input-telefono" 
+                           placeholder="11 2345-6789"
+                           style="flex:1; background:transparent; border:none; color:white; font-size:1.2rem; outline:none; padding:14px 18px;">
+                </div>
+                
+                <small style="color:#64748b; display:block; margin-top:6px;">
+                    Ejemplo: 11 2345-6789
+                </small>
+            </div>
+
+            <div style="display:flex; gap:12px;">
+                <button onclick="document.getElementById('modal-telefono').remove()" 
+                        style="flex:1; padding:15px; background:#334155; color:white; border:none; border-radius:14px; font-weight:600;">
+                    Cancelar
+                </button>
+                <button onclick="guardarTelefonoUsuario()" 
+                        style="flex:1; padding:15px; background:#22c55e; color:white; border:none; border-radius:14px; font-weight:700;">
+                    Guardar
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Enfocar el input
+    setTimeout(() => {
+        const input = document.getElementById('input-telefono');
+        if (input) input.focus();
+    }, 300);
+}
+    
+async function guardarTelefonoUsuario() {
+    const input = document.getElementById('input-telefono');
+    if (!input) return;
+
+    const numeroLocal = input.value.trim();
+
+    // Validación básica
+    if (!numeroLocal || numeroLocal.length < 8) {
+        alert("Por favor ingresá un número de WhatsApp válido.");
+        return;
+    }
+
+    // Armamos el número completo
+    const telefonoCompleto = `+54 9 ${numeroLocal}`.replace(/\s+/g, '');
+
+    if (!validarTelefonoArgentina(telefonoCompleto)) {
+        alert("El formato del número no es válido. Ejemplo: 11 2345-6789");
+        return;
+    }
+
+    // Guardamos en la base de datos
+    const { error } = await _supabase
+        .from('usuarios')
+        .update({ telefono: telefonoCompleto })
+        .eq('username', currentUsuario)
+        .eq('subscriber_id', currentSubscriberId);
+
+    if (error) {
+        alert("Error al guardar el número. Intentá nuevamente.");
+        return;
+    }
+
+    const modal = document.getElementById('modal-telefono');
+    if (modal) modal.remove();
+
+    alert("✅ Número de WhatsApp guardado correctamente.");
+}
 </script>
 </body>
 </html>
