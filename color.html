@@ -2026,65 +2026,96 @@ async function abrirRuleta() {
     if (!currentSubscriberId || !currentUsuario) {
         return alert("Error: No se detectó usuario o suscriptor");
     }
-    // === NUEVO: BLOQUEO POR PLAN PREMIUM ===
+
+    // === 1. Chequeos rápidos (sin demora) ===
     if (!esPlanPremium) {
         mostrarModalPremiumJugador();
         return;
     }
-    // ==================== RESTRICCIÓN ESTRICTA ====================
+
     if (!isAppInstalled()) {
         mostrarModalRuletaRestringida();
-        return; // No permite abrir la ruleta
-    }
-
-    // 1. Verificar si tiene premio pendiente
-    const tienePendiente = await mostrarModalPremioPendiente();
-    if (tienePendiente) {
         return;
     }
 
-    // 2. Verificar cooldown de 24hs
-    const { data: userData } = await _supabase
-        .from('usuarios')
-        .select('racha_ruleta, ultima_ruleta')
-        .eq('username', currentUsuario)
-        .single();
+    // === 2. Mostramos el modal de la Ruleta INMEDIATAMENTE ===
+    const ruletaModal = document.getElementById('modal-ruleta');
+    const ruletaDoradaModal = document.getElementById('modal-ruleta-dorada');
 
-    if (userData?.ultima_ruleta) {
-        const ultima = new Date(userData.ultima_ruleta);
-        const ahora = new Date();
-        const horasPasados = (ahora - ultima) / (1000 * 60 * 60);
+    // Mostramos un estado de carga temporal
+    ruletaModal.style.display = 'flex';
 
-        if (horasPasados < 24) {
-            mostrarCooldownRuleta(userData.ultima_ruleta);
+    // Limpiamos contenido anterior
+    document.getElementById('ruleta-premios').innerHTML = '';
+    document.getElementById('btn-spin').disabled = true;
+    document.getElementById('btn-spin').innerText = "Cargando...";
+
+    try {
+        // === 3. Cargamos todo en paralelo ===
+        const [userData, subData, premioPendiente] = await Promise.all([
+            _supabase.from('usuarios')
+                .select('racha_ruleta, ultima_ruleta')
+                .eq('username', currentUsuario)
+                .single(),
+
+            _supabase.from('suscriptores')
+                .select('dias_dorada, premios_normal, premios_dorada')
+                .eq('id', currentSubscriberId)
+                .single(),
+
+            verificarPremioPendiente()   // ya existente
+        ]);
+
+        // === 4. Verificamos premio pendiente ===
+        if (premioPendiente) {
+            ruletaModal.style.display = 'none';
+            premioPendienteActual = premioPendiente;
+            mostrarModalPremioPendiente();
             return;
         }
-    }
 
-    // 3. Flujo normal de la ruleta
-    const { data: subData } = await _supabase
-        .from('suscriptores')
-        .select('dias_dorada, premios_normal, premios_dorada')
-        .eq('id', currentSubscriberId)
-        .single();
+        // === 5. Verificamos cooldown de 24hs ===
+        if (userData.data?.ultima_ruleta) {
+            const ultima = new Date(userData.data.ultima_ruleta);
+            const ahora = new Date();
+            const horasPasados = (ahora - ultima) / (1000 * 60 * 60);
 
-    const rachaActual = userData?.racha_ruleta || 0;
-    const diasNecesarios = subData?.dias_dorada || 7;
+            if (horasPasados < 24) {
+                ruletaModal.style.display = 'none';
+                mostrarCooldownRuleta(userData.data.ultima_ruleta);
+                return;
+            }
+        }
 
-    if (rachaActual >= diasNecesarios) {
-        ruletaPremiosDorados = (subData && subData.premios_dorada)
-            ? subData.premios_dorada.split(',').map(p => p.trim())
-            : ["50k Fichas", "Bono 100%", "Jackpot", "200k Fichas", "Bono 200%", "Ruleta Extra"];
+        // === 6. Determinamos si es ruleta normal o dorada ===
+        const rachaActual = userData.data?.racha_ruleta || 0;
+        const diasNecesarios = subData.data?.dias_dorada || 7;
 
-        generarPremiosEnRuletaDorada();
-        document.getElementById('modal-ruleta-dorada').style.display = 'flex';
-    } else {
-        ruletaPremios = (subData && subData.premios_normal)
-            ? subData.premios_normal.split(',').map(p => p.trim())
-            : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
+        if (rachaActual >= diasNecesarios) {
+            // RULETA DORADA
+            ruletaModal.style.display = 'none';
 
-        generarPremiosEnRuleta();
-        document.getElementById('modal-ruleta').style.display = 'flex';
+            ruletaPremiosDorados = subData.data?.premios_dorada
+                ? subData.data.premios_dorada.split(',').map(p => p.trim())
+                : ["50k Fichas", "Bono 100%", "Jackpot", "200k Fichas", "Bono 200%", "Ruleta Extra"];
+
+            generarPremiosEnRuletaDorada();
+            ruletaDoradaModal.style.display = 'flex';
+        } else {
+            // RULETA NORMAL
+            ruletaPremios = subData.data?.premios_normal
+                ? subData.data.premios_normal.split(',').map(p => p.trim())
+                : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
+
+            generarPremiosEnRuleta();
+            document.getElementById('btn-spin').disabled = false;
+            document.getElementById('btn-spin').innerText = "🎲 GIRAR RULETA";
+        }
+
+    } catch (err) {
+        console.error("Error al abrir Ruleta:", err);
+        ruletaModal.style.display = 'none';
+        alert("Ocurrió un error al cargar la Ruleta. Intentá nuevamente.");
     }
 }
 
