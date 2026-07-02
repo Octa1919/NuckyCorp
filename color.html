@@ -3447,6 +3447,40 @@ async function iniciarTrivia(triviaId, boton) {
     // Iniciar temporizador de 30 segundos
     iniciarTemporizadorTrivia(modal);
 }
+
+    function iniciarTemporizadorTrivia(modal) {
+    const timerEl = modal.querySelector('#trivia-timer');
+    if (!timerEl) return;
+
+    let tiempoRestante = 30;
+
+    const intervalo = setInterval(() => {
+        tiempoRestante--;
+        timerEl.textContent = `${tiempoRestante}s`;
+
+        if (tiempoRestante <= 0) {
+            clearInterval(intervalo);
+            // Tiempo agotado
+            const contenedor = modal.querySelector('#respuestas-container');
+            if (contenedor) {
+                contenedor.innerHTML = `
+                    <div style="text-align:center; padding:20px;">
+                        <p style="color:#f87171; font-size:1.1rem; margin-bottom:16px;">
+                            ⏰ Se acabó el tiempo
+                        </p>
+                        <button onclick="this.closest('.trivia-modal').remove()" 
+                                style="padding:14px 32px; background:#334155; color:white; border:none; border-radius:12px;">
+                            Cerrar
+                        </button>
+                    </div>
+                `;
+            }
+        }
+    }, 1000);
+
+    // Guardamos el intervalo para poder limpiarlo si responde antes
+    modal.dataset.timerInterval = intervalo;
+}
 </script>
 </body>
 </html>
