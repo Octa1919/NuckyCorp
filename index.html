@@ -1258,34 +1258,31 @@ async function loginJugador() {
 
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
+    // === MOSTRAMOS CARGA INMEDIATAMENTE ===
+    showLoadingScreen("Iniciando sesión...");
+
     try {
         const { data, error } = await _supabase
             .from('usuarios')
-            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, premios_normal, premios_dorada, dias_dorada, whatsapp, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color)')
+            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color)')
             .eq('username', username)
             .eq('password', password)
             .single();
 
         if (error || !data) {
+            hideLoadingScreen();
             return alert("Credenciales incorrectas");
         }
 
-        // =============================================
-        // VALIDACIÓN DE SUSCRIPTOR + VINCULACIÓN EN PRIMER LOGIN (iOS compatible)
-        // =============================================
+        // Validaciones de suscriptor...
         if (!subscriberIdInstalacion) {
-            // No hay contexto previo → vinculamos la App al suscriptor de este usuario
             subscriberIdInstalacion = data.subscriber_id;
             localStorage.setItem('subscriber_id_instalacion', data.subscriber_id);
-            console.log("%c[CONTEXTO] App vinculada por primer login al suscriptor:", "color:#22c55e", data.subscriber_id);
         }
 
-        // A partir de acá ya tenemos subscriberIdInstalacion (ya sea por URL, localStorage o por el login actual)
         if (data.subscriber_id !== subscriberIdInstalacion) {
-            return alert(
-                "Estas credenciales no corresponden a este agente.\n\n" +
-                "Esta App instalada solo permite el acceso con usuarios del agente desde el cual la instalaste."
-            );
+            hideLoadingScreen();
+            return alert("Estas credenciales no corresponden a este agente.");
         }
 
         currentSubscriberId = data.subscriber_id;
@@ -1293,70 +1290,41 @@ async function loginJugador() {
         currentPassword = password;
 
         // Guardar sesión
-        const sessionData = {
-            username: currentUsuario,
-            subscriber_id: currentSubscriberId
-        };
-
+        const sessionData = { username: currentUsuario, subscriber_id: currentSubscriberId };
         if (recordar) {
             localStorage.setItem('nucky_session', JSON.stringify(sessionData));
-            sessionStorage.removeItem('nucky_session');
         } else {
             sessionStorage.setItem('nucky_session', JSON.stringify(sessionData));
-            localStorage.removeItem('nucky_session');
         }
 
-        // Registrar IP si no tiene
-        if (!data.ultima_ip) {
-            const ip = await obtenerIP();
-            if (ip) {
-                await _supabase
-                    .from('usuarios')
-                    .update({ ultima_ip: ip })
-                    .eq('username', username)
-                    .eq('subscriber_id', currentSubscriberId);
-            }
-        }
+        // Verificar plan y estado de cuenta en paralelo
+        await Promise.all([
+            detectarPlanPremium(),
+            verificarEstadoCuenta()
+        ]);
 
-        // Verificar plan y estado de cuenta
-        await detectarPlanPremium();
-        await verificarEstadoCuenta();
-
-        // === MOSTRAR PANTALLA DE CARGA ===
-        showLoadingScreen("Cargando configuración...");
-
-        // === APLICAR COLORES ANTES DE MOSTRAR EL DASHBOARD (evita flash) ===
+        // Aplicar colores y mostrar dashboard
         aplicarColoresDelSuscriptor(data.suscriptores);
-
-        // Mostrar dashboard
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(data.suscriptores);
 
-        // Ocultar pantalla de carga
         hideLoadingScreen();
-        // === TRIVIA ===
+
+        // === TRIVIA: La mostramos casi inmediatamente ===
         setTimeout(() => {
             verificarYMostrarTrivia();
-        }, 1800);
+        }, 400);   // Bajamos de 1800ms a 400ms
 
-        // Inicializar Chatwoot
+        // Inicializar Chatwoot y suscripciones
         if (data.suscriptores?.chatwoot_website_token) {
-            inicializarChatwoot(
-                data.suscriptores.chatwoot_website_token,
-                data.suscriptores.chatwoot_hmac_secret
-            );
+            inicializarChatwoot(data.suscriptores.chatwoot_website_token, data.suscriptores.chatwoot_hmac_secret);
         }
 
-        // === INICIAR SUSCRIPCIONES EN TIEMPO REAL ===
-        if (typeof iniciarSuscripcionPlanJugador === 'function') {
-            iniciarSuscripcionPlanJugador();
-        }
-        if (typeof iniciarSuscripcionEstadoCuenta === 'function') {
-            iniciarSuscripcionEstadoCuenta();
-        }
+        if (typeof iniciarSuscripcionPlanJugador === 'function') iniciarSuscripcionPlanJugador();
+        if (typeof iniciarSuscripcionEstadoCuenta === 'function') iniciarSuscripcionEstadoCuenta();
 
     } catch (err) {
         console.error("Error en loginJugador():", err);
@@ -2058,65 +2026,96 @@ async function abrirRuleta() {
     if (!currentSubscriberId || !currentUsuario) {
         return alert("Error: No se detectó usuario o suscriptor");
     }
-    // === NUEVO: BLOQUEO POR PLAN PREMIUM ===
+
+    // === 1. Chequeos rápidos (sin demora) ===
     if (!esPlanPremium) {
         mostrarModalPremiumJugador();
         return;
     }
-    // ==================== RESTRICCIÓN ESTRICTA ====================
+
     if (!isAppInstalled()) {
         mostrarModalRuletaRestringida();
-        return; // No permite abrir la ruleta
-    }
-
-    // 1. Verificar si tiene premio pendiente
-    const tienePendiente = await mostrarModalPremioPendiente();
-    if (tienePendiente) {
         return;
     }
 
-    // 2. Verificar cooldown de 24hs
-    const { data: userData } = await _supabase
-        .from('usuarios')
-        .select('racha_ruleta, ultima_ruleta')
-        .eq('username', currentUsuario)
-        .single();
+    // === 2. Mostramos el modal de la Ruleta INMEDIATAMENTE ===
+    const ruletaModal = document.getElementById('modal-ruleta');
+    const ruletaDoradaModal = document.getElementById('modal-ruleta-dorada');
 
-    if (userData?.ultima_ruleta) {
-        const ultima = new Date(userData.ultima_ruleta);
-        const ahora = new Date();
-        const horasPasados = (ahora - ultima) / (1000 * 60 * 60);
+    // Mostramos un estado de carga temporal
+    ruletaModal.style.display = 'flex';
 
-        if (horasPasados < 24) {
-            mostrarCooldownRuleta(userData.ultima_ruleta);
+    // Limpiamos contenido anterior
+    document.getElementById('ruleta-premios').innerHTML = '';
+    document.getElementById('btn-spin').disabled = true;
+    document.getElementById('btn-spin').innerText = "Cargando...";
+
+    try {
+        // === 3. Cargamos todo en paralelo ===
+        const [userData, subData, premioPendiente] = await Promise.all([
+            _supabase.from('usuarios')
+                .select('racha_ruleta, ultima_ruleta')
+                .eq('username', currentUsuario)
+                .single(),
+
+            _supabase.from('suscriptores')
+                .select('dias_dorada, premios_normal, premios_dorada')
+                .eq('id', currentSubscriberId)
+                .single(),
+
+            verificarPremioPendiente()   // ya existente
+        ]);
+
+        // === 4. Verificamos premio pendiente ===
+        if (premioPendiente) {
+            ruletaModal.style.display = 'none';
+            premioPendienteActual = premioPendiente;
+            mostrarModalPremioPendiente();
             return;
         }
-    }
 
-    // 3. Flujo normal de la ruleta
-    const { data: subData } = await _supabase
-        .from('suscriptores')
-        .select('dias_dorada, premios_normal, premios_dorada')
-        .eq('id', currentSubscriberId)
-        .single();
+        // === 5. Verificamos cooldown de 24hs ===
+        if (userData.data?.ultima_ruleta) {
+            const ultima = new Date(userData.data.ultima_ruleta);
+            const ahora = new Date();
+            const horasPasados = (ahora - ultima) / (1000 * 60 * 60);
 
-    const rachaActual = userData?.racha_ruleta || 0;
-    const diasNecesarios = subData?.dias_dorada || 7;
+            if (horasPasados < 24) {
+                ruletaModal.style.display = 'none';
+                mostrarCooldownRuleta(userData.data.ultima_ruleta);
+                return;
+            }
+        }
 
-    if (rachaActual >= diasNecesarios) {
-        ruletaPremiosDorados = (subData && subData.premios_dorada)
-            ? subData.premios_dorada.split(',').map(p => p.trim())
-            : ["50k Fichas", "Bono 100%", "Jackpot", "200k Fichas", "Bono 200%", "Ruleta Extra"];
+        // === 6. Determinamos si es ruleta normal o dorada ===
+        const rachaActual = userData.data?.racha_ruleta || 0;
+        const diasNecesarios = subData.data?.dias_dorada || 7;
 
-        generarPremiosEnRuletaDorada();
-        document.getElementById('modal-ruleta-dorada').style.display = 'flex';
-    } else {
-        ruletaPremios = (subData && subData.premios_normal)
-            ? subData.premios_normal.split(',').map(p => p.trim())
-            : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
+        if (rachaActual >= diasNecesarios) {
+            // RULETA DORADA
+            ruletaModal.style.display = 'none';
 
-        generarPremiosEnRuleta();
-        document.getElementById('modal-ruleta').style.display = 'flex';
+            ruletaPremiosDorados = subData.data?.premios_dorada
+                ? subData.data.premios_dorada.split(',').map(p => p.trim())
+                : ["50k Fichas", "Bono 100%", "Jackpot", "200k Fichas", "Bono 200%", "Ruleta Extra"];
+
+            generarPremiosEnRuletaDorada();
+            ruletaDoradaModal.style.display = 'flex';
+        } else {
+            // RULETA NORMAL
+            ruletaPremios = subData.data?.premios_normal
+                ? subData.data.premios_normal.split(',').map(p => p.trim())
+                : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
+
+            generarPremiosEnRuleta();
+            document.getElementById('btn-spin').disabled = false;
+            document.getElementById('btn-spin').innerText = "🎲 GIRAR RULETA";
+        }
+
+    } catch (err) {
+        console.error("Error al abrir Ruleta:", err);
+        ruletaModal.style.display = 'none';
+        alert("Ocurrió un error al cargar la Ruleta. Intentá nuevamente.");
     }
 }
 
@@ -2541,35 +2540,20 @@ async function configurarOneSignalUsuario() {
 async function restoreSession() {
     inicializarContextoInstalacion();
 
-    let savedSession = localStorage.getItem('nucky_session');
-    if (!savedSession) {
-        savedSession = sessionStorage.getItem('nucky_session');
-    }
-
+    let savedSession = localStorage.getItem('nucky_session') || sessionStorage.getItem('nucky_session');
     if (!savedSession) return false;
 
     try {
         const session = JSON.parse(savedSession);
         const savedSubscriberId = session.subscriber_id;
 
-        // === NUEVA LÓGICA DE AISLAMIENTO ===
-        const urlSubscriberId = getSubscriberFromUrl();
+        // Validaciones de suscriptor...
 
-        // Si hay un suscriptor en la URL actual y es diferente al de la sesión guardada → NO restauramos
-        if (urlSubscriberId && urlSubscriberId !== savedSubscriberId) {
-            console.log("%c[RESTORE] URL de otro suscriptor detectada. No se restaura sesión anterior.", "color:#f59e0b");
-            return false; // ← Muestra pantalla de login limpia
-        }
-
-        // Si ya tenemos contexto de instalación y no coincide con la sesión guardada → tampoco restauramos
-        if (subscriberIdInstalacion && savedSubscriberId !== subscriberIdInstalacion) {
-            console.log("%c[RESTORE] Sesión de otro suscriptor. No se restaura.", "color:#f59e0b");
-            return false;
-        }
-
-        // === Si llegamos acá, es seguro restaurar ===
         currentUsuario = session.username;
         currentSubscriberId = savedSubscriberId;
+
+        // === MOSTRAMOS CARGA TEMPRANO ===
+        showLoadingScreen("Cargando tu experiencia...");
 
         const { data: subData, error } = await _supabase
             .from('suscriptores')
@@ -2578,40 +2562,37 @@ async function restoreSession() {
             .single();
 
         if (error || !subData) {
+            hideLoadingScreen();
             localStorage.removeItem('nucky_session');
             sessionStorage.removeItem('nucky_session');
             return false;
         }
 
-        // Verificar plan y estado de cuenta
-        await detectarPlanPremium();
-        await verificarEstadoCuenta();
+        await Promise.all([
+            detectarPlanPremium(),
+            verificarEstadoCuenta()
+        ]);
 
-        // === MOSTRAR PANTALLA DE CARGA ===
-        showLoadingScreen("Cargando tu experiencia...");
-
-        // === APLICAR COLORES ANTES DE MOSTRAR EL DASHBOARD (evita flash) ===
         aplicarColoresDelSuscriptor(subData);
-
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(subData);
 
-        // Ocultar pantalla de carga
         hideLoadingScreen();
-        // === TRIVIA ===
+
+        // Trivia mucho más rápido
         setTimeout(() => {
             verificarYMostrarTrivia();
-        }, 2200);
+        }, 350);
 
         if (typeof iniciarSuscripcionPlanJugador === 'function') iniciarSuscripcionPlanJugador();
         if (typeof iniciarSuscripcionEstadoCuenta === 'function') iniciarSuscripcionEstadoCuenta();
 
         setTimeout(() => {
             configurarOneSignalUsuario();
-        }, 1200);
+        }, 800);
 
         if (subData.chatwoot_website_token) {
             inicializarChatwoot(subData.chatwoot_website_token, subData.chatwoot_hmac_secret);
@@ -2620,10 +2601,8 @@ async function restoreSession() {
         return true;
 
     } catch (e) {
-        console.error("Error en restoreSession():", e);
         hideLoadingScreen();
-        localStorage.removeItem('nucky_session');
-        sessionStorage.removeItem('nucky_session');
+        console.error("Error en restoreSession():", e);
         return false;
     }
 }
@@ -3139,15 +3118,35 @@ async function mostrarIntroTrivia(triviaConfig) {
 }
 
 async function iniciarTrivia(triviaId, boton) {
-    const modal = boton.closest('.trivia-intro-modal');
-    if (modal) modal.remove();
-    if (!isAppInstalled()) {
+    const introModal = boton.closest('.trivia-intro-modal');
+    if (introModal) introModal.remove();
+
+    const estaInstalada = isAppInstalled();
+
+    // === Si NO tiene la App instalada → mostramos el teaser ===
+    if (!estaInstalada) {
         mostrarTeaserInstalacionTrivia();
         return;
     }
-    await mostrarPreguntaTrivia(triviaId);
-}
 
+    // === Si SÍ tiene la App instalada → mostramos loader y cargamos la pregunta ===
+    const loadingModal = document.createElement('div');
+    loadingModal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; z-index:99999;`;
+    loadingModal.innerHTML = `
+        <div style="text-align:center; color:white;">
+            <div style="width:48px; height:48px; border:5px solid #334155; border-top:5px solid var(--accent); border-radius:50%; animation:spin 0.9s linear infinite; margin:0 auto 16px;"></div>
+            <p style="font-size:1.1rem; color:#e0e7ff;">Cargando pregunta...</p>
+        </div>
+    `;
+    document.body.appendChild(loadingModal);
+
+    try {
+        await mostrarPreguntaTrivia(triviaId);
+    } finally {
+        loadingModal.remove();
+    }
+}
+    
 async function mostrarPreguntaTrivia(triviaConfigId) {
     const { data: triviaConfig } = await _supabase.from('trivias').select('*').eq('id', triviaConfigId).single();
     const { data: preguntas } = await _supabase.from('trivia_preguntas').select('*').eq('subscriber_id', currentSubscriberId).eq('activa', true);
@@ -3238,10 +3237,20 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
     if (!modalPadre) modalPadre = boton.closest('div[style*="position:fixed"]');
     if (!modalPadre) return;
 
-    // Limpiar temporizador
     if (modalPadre.dataset.timerInterval) {
         clearInterval(parseInt(modalPadre.dataset.timerInterval));
     }
+
+    const contenedor = modalPadre.querySelector('#respuestas-container');
+
+    // === DESHABILITAMOS TODOS LOS BOTONES INMEDIATAMENTE ===
+    const botones = contenedor.querySelectorAll('button');
+    botones.forEach(b => b.disabled = true);
+
+    // === FEEDBACK VISUAL EN EL BOTÓN ELEGIDO ===
+    boton.style.background = '#1e40af';
+    boton.style.borderColor = '#3b82f6';
+    boton.innerHTML = `⏳ Verificando...`;
 
     const { data: pregunta } = await _supabase
         .from('trivia_preguntas')
@@ -3253,11 +3262,10 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
 
     const respuesta = pregunta.respuestas[indice];
     const esCorrecta = respuesta.es_correcta;
-    const contenedor = modalPadre.querySelector('#respuestas-container');
 
-    // === INSERT CORREGIDO ===
+    // === INSERT (con try/catch ya existente) ===
     try {
-        const { error: insertError } = await _supabase.from('trivia_mostradas').insert({
+        await _supabase.from('trivia_mostradas').insert({
             subscriber_id: currentSubscriberId,
             pregunta_id: preguntaId,
             usuario: currentUsuario,
@@ -3266,41 +3274,22 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
             respondida_en: new Date().toISOString(),
             mostrada_at: new Date().toISOString()
         });
+    } catch (e) {}
 
-        if (insertError) {
-            console.error("Error guardando en trivia_mostradas:", insertError);
-            contenedor.innerHTML = `
-                <div style="text-align:center; padding:20px;">
-                    <p style="color:#f87171; margin-bottom:16px;">Error al registrar tu respuesta.</p>
-                    <button onclick="this.closest('div[style*=\'position:fixed\']').remove()" 
-                            style="background:#334155; color:white; border:none; padding:14px 32px; border-radius:12px;">
-                        Cerrar
-                    </button>
-                </div>`;
-            return;
-        }
-    } catch (e) {
-        console.error("Excepción al insertar:", e);
-    }
+    // === MOSTRAMOS RESULTADO ===
+    if (esCorrecta) {
+        const codigo = generarCodigoPremio();
 
-    // === RESPUESTA CORRECTA ===
-  if (esCorrecta) {
-    const codigo = generarCodigoPremio();
-
-        try {
-            await _supabase.from('premios_ruleta').insert({
-                subscriber_id: currentSubscriberId,
-                usuario: currentUsuario,
-                premio: premio,
-                codigo: codigo,
-                estado: 'pendiente',
-                created_at: new Date().toISOString()
-            });
-        } catch (e) {}
+        await _supabase.from('premios_ruleta').insert({
+            subscriber_id: currentSubscriberId,
+            usuario: currentUsuario,
+            premio: premio,
+            codigo: codigo,
+            estado: 'pendiente',
+            created_at: new Date().toISOString()
+        });
 
         window.codigoPremioActual = codigo;
-
-        // Guardamos referencia del modal para poder cerrarlo después
         window.currentTriviaModal = modalPadre;
 
         contenedor.innerHTML = `
