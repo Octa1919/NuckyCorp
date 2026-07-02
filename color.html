@@ -3248,11 +3248,17 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
 }
 
 function copiarCodigoTrivia(codigo, boton) {
-    navigator.clipboard.writeText(codigo).then(() => {
-        const original = boton.innerHTML;
+    const textoParaCopiar = `Gané en la trivia, este es mi código: ${codigo}`;
+    
+    navigator.clipboard.writeText(textoParaCopiar).then(() => {
+        const originalText = boton.innerHTML;
         boton.innerHTML = '✅ Copiado';
-        setTimeout(() => boton.innerHTML = original, 2000);
-    }).catch(() => alert("No se pudo copiar"));
+        setTimeout(() => {
+            boton.innerHTML = originalText;
+        }, 2200);
+    }).catch(() => {
+        alert("No se pudo copiar el código");
+    });
 }
 
 function reclamarPremioTriviaChatwoot(codigo, elemento) {
