@@ -3460,8 +3460,7 @@ function cerrarModalTriviaInstalacion() { const m = document.querySelector('.tri
     return regex.test(limpio);
 }
 
-    function mostrarModalAgregarTelefono() {
-    // Eliminar modal anterior si existe
+function mostrarModalAgregarTelefono() {
     const existente = document.getElementById('modal-telefono');
     if (existente) existente.remove();
 
@@ -3471,22 +3470,32 @@ function cerrarModalTriviaInstalacion() { const m = document.querySelector('.tri
 
     modal.innerHTML = `
         <div style="background:#1e2937; width:92%; max-width:420px; border-radius:24px; padding:28px 24px; border:3px solid var(--modal-border);">
+            
             <h3 style="text-align:center; color:#e0e7ff; margin-bottom:8px; font-size:1.45rem;">📱 Agregar WhatsApp</h3>
             <p style="text-align:center; color:#94a3b8; margin-bottom:24px; font-size:1rem;">
                 Necesitamos tu número de WhatsApp para poder usar Ruleta VIP y Trivia.
             </p>
 
+            <!-- Input con bloque fijo -->
             <div style="margin-bottom:20px;">
                 <label style="color:#cbd5e1; font-size:0.95rem; display:block; margin-bottom:8px;">Número de WhatsApp</label>
                 
-                <div style="display:flex; align-items:center; background:#0f172a; border:2px solid #475569; border-radius:16px; padding:4px 16px;">
-                    <span style="font-size:1.6rem; margin-right:10px;">🇦🇷</span>
+                <div style="display:flex; align-items:center; background:#0f172a; border:2px solid #475569; border-radius:16px; overflow:hidden;">
+                    
+                    <!-- Bloque fijo (solo lectura) -->
+                    <div style="display:flex; align-items:center; padding:14px 18px; background:#1e2937; border-right:2px solid #475569; white-space:nowrap;">
+                        <span style="font-size:1.55rem; margin-right:8px;">🇦🇷</span>
+                        <span style="color:#e0e7ff; font-size:1.2rem; font-weight:700;">+54 9</span>
+                    </div>
+
+                    <!-- Input editable (solo el número local) -->
                     <input type="tel" id="input-telefono" 
-                           value="+54 9 " 
-                           style="flex:1; background:transparent; border:none; color:white; font-size:1.2rem; outline:none; padding:12px 0;">
+                           placeholder="11 2345-6789"
+                           style="flex:1; background:transparent; border:none; color:white; font-size:1.2rem; outline:none; padding:14px 18px;">
                 </div>
+                
                 <small style="color:#64748b; display:block; margin-top:6px;">
-                    Ejemplo: +54 9 11 2345-6789
+                    Ejemplo: 11 2345-6789
                 </small>
             </div>
 
@@ -3511,23 +3520,31 @@ function cerrarModalTriviaInstalacion() { const m = document.querySelector('.tri
         if (input) input.focus();
     }, 300);
 }
-
-    async function guardarTelefonoUsuario() {
+    
+async function guardarTelefonoUsuario() {
     const input = document.getElementById('input-telefono');
     if (!input) return;
 
-    let telefono = input.value.trim();
+    const numeroLocal = input.value.trim();
 
-    // Validación
-    if (!validarTelefonoArgentina(telefono)) {
-        alert("Por favor ingresá un número de WhatsApp argentino válido.\nEjemplo: +54 9 11 2345-6789");
+    // Validación básica
+    if (!numeroLocal || numeroLocal.length < 8) {
+        alert("Por favor ingresá un número de WhatsApp válido.");
+        return;
+    }
+
+    // Armamos el número completo
+    const telefonoCompleto = `+54 9 ${numeroLocal}`.replace(/\s+/g, '');
+
+    if (!validarTelefonoArgentina(telefonoCompleto)) {
+        alert("El formato del número no es válido. Ejemplo: 11 2345-6789");
         return;
     }
 
     // Guardamos en la base de datos
     const { error } = await _supabase
         .from('usuarios')
-        .update({ telefono: telefono })
+        .update({ telefono: telefonoCompleto })
         .eq('username', currentUsuario)
         .eq('subscriber_id', currentSubscriberId);
 
@@ -3536,7 +3553,6 @@ function cerrarModalTriviaInstalacion() { const m = document.querySelector('.tri
         return;
     }
 
-    // Cerramos el modal
     const modal = document.getElementById('modal-telefono');
     if (modal) modal.remove();
 
