@@ -1838,28 +1838,55 @@ function abrirChatwoot() {
 }
 
     function hideChatwootWidget() {
-    setTimeout(() => {
-        const chatwootElements = document.querySelectorAll('.woot-widget-holder, .chatwoot-bubble');
-        chatwootElements.forEach(el => {
-            if (el) el.style.display = 'none';
-        });
-    }, 500);
-}
+        setTimeout(() => {
+            const chatwootElements = document.querySelectorAll('.woot-widget-holder, .chatwoot-bubble');
+            chatwootElements.forEach(el => {
+                if (el) el.style.display = 'none';
+            });
+        }, 500);
+    }
     
-    async function cargarSaldo() {
+       async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
 
-        const { data } = await _supabase
-            .from('cbus')
-            .select('banco, alias_nombre, cbu')
-            .eq('subscriber_id', currentSubscriberId)
-            .eq('activo', true)
-            .single();
-
+        const modal = document.getElementById('modal-cargar-saldo');
         const content = document.getElementById('cbu-dynamic-content');
 
-        if (data && data.cbu) {
-            // === HAY CBU ACTIVO ===
+        // Abrimos el modal inmediatamente
+        modal.style.display = 'flex';
+
+        // Mostramos loader mientras consultamos
+        content.innerHTML = `
+            <div style="text-align:center; padding:60px 20px;">
+                <div style="width:44px; height:44px; border:5px solid #334155; border-top:5px solid var(--accent); border-radius:50%; animation:spin 0.85s linear infinite; margin:0 auto 20px;"></div>
+                <p style="color:#94a3b8; font-size:1.05rem;">Cargando datos de pago...</p>
+            </div>
+        `;
+
+        try {
+            const { data, error } = await _supabase
+                .from('cbus')
+                .select('banco, alias_nombre, cbu')
+                .eq('subscriber_id', currentSubscriberId)
+                .eq('activo', true)
+                .single();
+
+            if (error || !data || !data.cbu) {
+                // No hay CBU activo
+                content.innerHTML = `
+                    <div style="background:#111827; padding:40px 20px; border-radius:16px; text-align:center;">
+                        <p style="font-size:1.3rem; color:#fda4af; margin-bottom:16px;">⚠️ No hay CBU activo en este momento</p>
+                        <p style="color:#e0e7ff; line-height:1.6;">Por favor escribinos desde<br><strong>Atención Personalizada</strong> para obtener el CBU actualizado.</p>
+                    </div>
+
+                    <button onclick="enviarComprobante()" style="width:100%; padding:18px; background:linear-gradient(90deg, #c026d3, #db2777); color:white; border:none; border-radius:14px; font-weight:700; font-size:1.25rem; margin-top:24px;">
+                        💬 Ir a Atención Personalizada
+                    </button>
+                `;
+                return;
+            }
+
+            // Mostramos el CBU fresco
             content.innerHTML = `
                 <div style="background:#111827; padding:22px; border-radius:16px; margin-bottom:24px;">
                     <div style="font-size:1.3rem; line-height:1.9;">
@@ -1875,27 +1902,24 @@ function abrirChatwoot() {
                     📋 Copiar CBU
                 </button>
 
-                <button onclick="enviarComprobante()" style="width:100%; padding:18px; background:linear-gradient(90deg, #c026d3, #db2777); color:white; border:none; border-radius:14px; font-weight:700; font-size:1.25rem; margin-bottom:16px;">
+                <button onclick="enviarComprobante()" style="width:100%; padding:18px; background:linear-gradient(90deg, #c026d3, #db2777); color:white; border:none; border-radius:14px; font-weight:700; font-size:1.25rem;">
                     📸 Enviar comprobante
                 </button>
             `;
+
             window.currentCBU = data.cbu;
-        } else {
-            // === NO HAY CBU ACTIVO ===
+
+        } catch (err) {
+            console.error("Error al cargar CBU:", err);
             content.innerHTML = `
-                <div style="background:#111827; padding:40px 20px; border-radius:16px; text-align:center;">
-                    <p style="font-size:1.3rem; color:#fda4af; margin-bottom:16px;">⚠️ No hay CBU activo en este momento</p>
-                    <p style="color:#e0e7ff; line-height:1.6;">Por favor escribinos desde<br><strong>Atención Personalizada</strong> para obtener el CBU actualizado.</p>
+                <div style="text-align:center; padding:40px 20px;">
+                    <p style="color:#f87171; margin-bottom:20px;">Ocurrió un problema al cargar la información de pago.</p>
+                    <button onclick="cargarSaldo()" style="padding:14px 32px; background:#334155; color:white; border:none; border-radius:12px; font-weight:600;">
+                        Reintentar
+                    </button>
                 </div>
-
-                <button onclick="enviarComprobante()" style="width:100%; padding:18px; background:linear-gradient(90deg, #c026d3, #db2777); color:white; border:none; border-radius:14px; font-weight:700; font-size:1.25rem; margin-bottom:16px;">
-                    💬 Ir a Atención Personalizada
-                </button>
             `;
-            window.currentCBU = null;
         }
-
-        document.getElementById('modal-cargar-saldo').style.display = 'flex';
     }
 
      function copiarCBU() {
