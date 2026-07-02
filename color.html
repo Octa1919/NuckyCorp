@@ -3327,6 +3327,12 @@ function instalarAppDesdeTrivia(boton) {
     boton.closest('div[style*="position:fixed"]').remove();
     instalarApp();
 }
+
+    function instalarAppDesdeTrivia() {
+    const modal = document.querySelector('.trivia-modal');
+    if (modal) modal.remove();
+    instalarApp();
+}
 </script>
 </body>
 </html>
