@@ -3319,6 +3319,9 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
     if (!modalPadre) modalPadre = boton.closest('div[style*="position:fixed"]');
     if (!modalPadre) return;
 
+    // === NUEVA LÍNEA ===
+    window.currentTriviaModal = modalPadre;
+
     if (modalPadre.dataset.timerInterval) {
         clearInterval(parseInt(modalPadre.dataset.timerInterval));
     }
@@ -3411,14 +3414,21 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
     }
     // === RESPUESTA INCORRECTA ===
     else {
-        contenedor.innerHTML = 
-            '<div style="text-align:center; padding:20px 10px;">' +
-                '<div style="font-size:2.8rem; margin-bottom:12px;">😕</div>' +
-                '<h3 style="color:#f87171; margin-bottom:10px;">Respuesta incorrecta</h3>' +
-                '<p style="color:#94a3b8; margin-bottom:24px;">La respuesta correcta era:<br><strong>' + pregunta.respuestas.find(r => r.es_correcta).texto + '</strong></p>' +
-                '<button onclick="this.closest(\'div[style*=\\\'position:fixed\\\']\').remove()" style="background:#334155; color:white; border:none; padding:14px 32px; border-radius:12px;">Cerrar</button>' +
-            '</div>';
-    }
+    contenedor.innerHTML = `
+        <div style="text-align:center; padding:20px 10px;">
+            <div style="font-size:2.8rem; margin-bottom:12px;">😕</div>
+            <h3 style="color:#f87171; margin-bottom:10px;">Respuesta incorrecta</h3>
+            <p style="color:#94a3b8; margin-bottom:24px;">
+                La respuesta correcta era:<br>
+                <strong>${pregunta.respuestas.find(r => r.es_correcta).texto}</strong>
+            </p>
+
+            <button onclick="window.currentTriviaModal.remove()" 
+                    style="background:#334155; color:white; border:none; padding:14px 32px; border-radius:12px;">
+                Cerrar
+            </button>
+        </div>
+    `;
 }
 
 function copiarCodigoTrivia(codigo, boton) {
