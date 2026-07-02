@@ -3086,7 +3086,6 @@ async function verificarYMostrarTrivia() {
     if (!currentSubscriberId || !currentUsuario) return;
 
     try {
-        // 1. Verificar si el suscriptor tiene Trivia activada
         const { data: triviaConfig } = await _supabase
             .from('trivias')
             .select('*')
@@ -3094,10 +3093,10 @@ async function verificarYMostrarTrivia() {
             .eq('activa', true)
             .single();
 
-        if (!triviaConfig) return; // No tiene Trivia activa
+        if (!triviaConfig) return;
 
-        // 2. Verificar última vez que este usuario vio una trivia
-        const { data: ultimaMostrada } = await _supabase
+        // Verificar si respondió en las últimas 24hs
+        const { data: ultima } = await _supabase
             .from('trivia_mostradas')
             .select('mostrada_en')
             .eq('usuario', currentUsuario)
@@ -3107,27 +3106,26 @@ async function verificarYMostrarTrivia() {
             .single();
 
         const ahora = new Date();
-        let debeMostrar = true;
+        let puedeMostrar = true;
 
-        if (ultimaMostrada) {
-            const ultima = new Date(ultimaMostrada.mostrada_en);
-            const horasPasadas = (ahora - ultima) / (1000 * 60 * 60);
+        if (ultima) {
+            const ultimaFecha = new Date(ultima.mostrada_en);
+            const horasPasadas = (ahora - ultimaFecha) / (1000 * 60 * 60);
 
-            if (horasPasadas < triviaConfig.periodicidad_horas) {
-                debeMostrar = false;
+            if (horasPasadas < 24) {
+                puedeMostrar = false;
             }
         }
 
-        if (debeMostrar) {
-            // Buscar una pregunta que este usuario aún no haya visto (o la que menos veces vio)
-            await mostrarTriviaModal(triviaConfig);
+        if (puedeMostrar) {
+            mostrarIntroTrivia(triviaConfig);
         }
 
     } catch (err) {
-        console.log("No hay trivia disponible o error:", err);
+        console.log("Error verificando Trivia:", err);
     }
 }
-
+    
 async function mostrarTriviaModal(triviaConfig) {
     const { data: preguntas } = await _supabase
         .from('trivia_preguntas')
