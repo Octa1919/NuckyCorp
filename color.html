@@ -2111,17 +2111,16 @@ async function abrirRuleta() {
             }
         }
 
-        // Verificar que tenga teléfono registrado
-        if (!currentUsuario) return;
-
-        const { data: userData } = await _supabase
+        // === Verificar que tenga teléfono registrado ===
+        const { data: userTelefono, error: telError } = await _supabase
             .from('usuarios')
             .select('telefono')
             .eq('username', currentUsuario)
             .eq('subscriber_id', currentSubscriberId)
             .single();
 
-        if (!userData?.telefono || !validarTelefonoArgentina(userData.telefono)) {
+        if (telError || !userTelefono?.telefono || !validarTelefonoArgentina(userTelefono.telefono)) {
+            document.getElementById('modal-ruleta').style.display = 'none';
             mostrarModalAgregarTelefono();
             return;
         }
