@@ -3330,30 +3330,15 @@ async function responderTrivia(indiceRespuesta, preguntaId, premioCorrecto, boto
     }
 }
 
-async function reclamarPremioTrivia(premio, elemento) {
-    const codigo = generarCodigoPremio();
+function reclamarPremioTrivia(premio, elemento) {
+    const modal = elemento.closest('div[style*="position:fixed"]');
+    if (modal) modal.remove();
 
-    try {
-        await _supabase.from('premios_ruleta').insert({
-            subscriber_id: currentSubscriberId,
-            usuario: currentUsuario,
-            premio: premio,
-            codigo: codigo,
-            estado: 'pendiente',
-            created_at: new Date().toISOString()
-        });
+    // Reutilizamos el modal de premio que ya existe en la app
+    document.getElementById('premio-ganado-texto').innerText = premio;
+    document.getElementById('codigo-premio').innerText = window.codigoPremioActual || '—';
 
-        elemento.closest('div[style*="position:fixed"]').remove();
-
-        // Mostramos el premio ganado (reutilizamos el modal que ya existe)
-        window.codigoPremioActual = codigo;
-        document.getElementById('premio-ganado-texto').innerText = premio;
-        document.getElementById('codigo-premio').innerText = codigo;
-        document.getElementById('modal-premio-ganado').style.display = 'flex';
-
-    } catch (err) {
-        alert("Hubo un error al reclamar el premio. Intentá nuevamente.");
-    }
+    document.getElementById('modal-premio-ganado').style.display = 'flex';
 }
 
 function instalarAppDesdeTrivia(boton) {
