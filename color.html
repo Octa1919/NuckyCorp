@@ -3379,9 +3379,8 @@ function reclamarPremioTriviaChatwoot(codigo, elemento) {
     if (window.$chatwoot) {
         window.$chatwoot.toggle("open");
 
-        // Usamos setTimeout para darle tiempo al chat de abrirse
-        setTimeout(() => {
-            const mensaje = `Hola, quiero reclamar mi premio de Trivia.\nMi código es: ${codigo}`;
+        setTimeout(function() {
+            const mensaje = "Hola, quiero reclamar mi premio de Trivia. Mi código es: " + codigo;
             window.$chatwoot.sendMessage(mensaje);
         }, 1300);
     } else {
