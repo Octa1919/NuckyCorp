@@ -3367,11 +3367,15 @@ function cerrarModalTriviaInstalacion() {
     if (modal) modal.remove();
 }
 
-    function copiarCodigoTrivia(codigo, boton) {
+function copiarCodigoTrivia(codigo, boton) {
     navigator.clipboard.writeText(codigo).then(() => {
         const originalText = boton.innerHTML;
         boton.innerHTML = '✅ Copiado';
-        setTimeout(() => boton.innerHTML = originalText, 2000);
+        setTimeout(() => {
+            boton.innerHTML = originalText;
+        }, 2000);
+    }).catch(() => {
+        alert("No se pudo copiar el código");
     });
 }
 
@@ -3381,11 +3385,15 @@ function reclamarPremioTriviaChatwoot(codigo, elemento) {
 
     if (window.$chatwoot) {
         window.$chatwoot.toggle("open");
+
+        // Usamos setTimeout para darle tiempo al chat de abrirse
         setTimeout(() => {
-            window.$chatwoot.sendMessage(`Hola, quiero reclamar mi premio de Trivia.\nCódigo: ${codigo}`);
-        }, 1200);
+            const mensaje = `Hola, quiero reclamar mi premio de Trivia.\nMi código es: ${codigo}`;
+            window.$chatwoot.sendMessage(mensaje);
+        }, 1300);
     } else {
-        alert("No se pudo abrir el chat en este momento.");
+        alert("No se pudo abrir el chat en este momento. Por favor contactanos por Atención Personalizada.");
+    }
 }
 </script>
 </body>
