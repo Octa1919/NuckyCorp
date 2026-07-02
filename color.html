@@ -3086,6 +3086,7 @@ async function verificarYMostrarTrivia() {
     if (!currentSubscriberId || !currentUsuario) return;
 
     try {
+        // 1. Obtener configuración de Trivia del suscriptor
         const { data: triviaConfig } = await _supabase
             .from('trivias')
             .select('*')
@@ -3095,29 +3096,63 @@ async function verificarYMostrarTrivia() {
 
         if (!triviaConfig) return;
 
-        // Verificar si respondió en las últimas 24hs
-        const { data: ultima } = await _supabase
+        const horasCooldown = triviaConfig.periodicidad_horas || 24;
+
+        // 2. Buscar la última interacción del usuario con Trivia
+        const { data: ultimaInteraccion } = await _supabase
             .from('trivia_mostradas')
-            .select('mostrada_en')
+            .select('*')
             .eq('usuario', currentUsuario)
             .eq('subscriber_id', currentSubscriberId)
-            .order('mostrada_en', { ascending: false })
+            .order('respondida_en', { ascending: false })
             .limit(1)
             .single();
 
+        if (!ultimaInteraccion) {
+            // Nunca interactuó → mostrar
+            mostrarIntroTrivia(triviaConfig);
+            return;
+        }
+
         const ahora = new Date();
-        let puedeMostrar = true;
+        let debeMostrar = false;
 
-        if (ultima) {
-            const ultimaFecha = new Date(ultima.mostrada_en);
-            const horasPasadas = (ahora - ultimaFecha) / (1000 * 60 * 60);
+        if (!ultimaInteraccion.respondida) {
+            // La vio pero no respondió → mostrar de nuevo
+            debeMostrar = true;
+        } 
+        else if (ultimaInteraccion.respondida && !ultimaInteraccion.es_correcta) {
+            // Respondió incorrectamente → verificar cooldown
+            const ultimaRespuesta = new Date(ultimaInteraccion.respondida_en);
+            const horasPasadas = (ahora - ultimaRespuesta) / (1000 * 60 * 60);
 
-            if (horasPasadas < 24) {
-                puedeMostrar = false;
+            if (horasPasadas >= horasCooldown) {
+                debeMostrar = true;
+            }
+        } 
+        else if (ultimaInteraccion.respondida && ultimaInteraccion.es_correcta) {
+            // Respondió correctamente → verificar si el premio fue entregado
+            const { data: ultimoPremio } = await _supabase
+                .from('premios_ruleta')
+                .select('estado, entregado_at')
+                .eq('usuario', currentUsuario)
+                .eq('subscriber_id', currentSubscriberId)
+                .ilike('premio', `%${triviaConfig.premio_correcto || ''}%`) // aproximación
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (ultimoPremio && ultimoPremio.estado === 'entregado' && ultimoPremio.entregado_at) {
+                const fechaEntrega = new Date(ultimoPremio.entregado_at);
+                const horasPasadas = (ahora - fechaEntrega) / (1000 * 60 * 60);
+
+                if (horasPasadas >= horasCooldown) {
+                    debeMostrar = true;
+                }
             }
         }
 
-        if (puedeMostrar) {
+        if (debeMostrar) {
             mostrarIntroTrivia(triviaConfig);
         }
 
