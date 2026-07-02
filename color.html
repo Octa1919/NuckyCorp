@@ -3256,12 +3256,17 @@ function copiarCodigoTrivia(codigo, boton) {
 }
 
 function reclamarPremioTriviaChatwoot(codigo, elemento) {
+    // Cerrar el modal de triunfo
     const modal = elemento.closest('div[style*="position:fixed"]');
     if (modal) modal.remove();
+
+    // Abrir Chatwoot
     if (window.$chatwoot) {
         window.$chatwoot.toggle("open");
+
         setTimeout(() => {
-            window.$chatwoot.sendMessage("Hola, quiero reclamar mi premio de Trivia. Mi código es: " + codigo);
+            const mensaje = "Hola, quiero reclamar mi premio de Trivia. Mi código es: " + codigo;
+            window.$chatwoot.sendMessage(mensaje);
         }, 1300);
     } else {
         alert("No se pudo abrir el chat. Contactanos por Atención Personalizada.");
