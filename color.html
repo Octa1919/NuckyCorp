@@ -3337,9 +3337,9 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
             premio: premio,
             codigo: codigo,
             estado: 'pendiente',
+            origen: 'trivia',                    // ← Agregamos esto
             created_at: new Date().toISOString()
         });
-
         window.codigoPremioActual = codigo;
         window.currentTriviaModal = modalPadre;
 
