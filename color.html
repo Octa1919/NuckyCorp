@@ -3395,6 +3395,58 @@ async function iniciarTrivia(triviaId, boton) {
     // Si tiene la App instalada → mostrar la pregunta real
     await mostrarPreguntaTrivia(triviaId);
 }
+
+    async function mostrarPreguntaTrivia(triviaConfigId) {
+    // Traemos la config completa + una pregunta
+    const { data: triviaConfig } = await _supabase
+        .from('trivias')
+        .select('*')
+        .eq('id', triviaConfigId)
+        .single();
+
+    const { data: preguntas } = await _supabase
+        .from('trivia_preguntas')
+        .select('*')
+        .eq('subscriber_id', currentSubscriberId)
+        .eq('activa', true);
+
+    if (!preguntas || preguntas.length === 0) return;
+
+    const pregunta = preguntas[Math.floor(Math.random() * preguntas.length)];
+    const premio = triviaConfig.premio_correcto || "fichas gratis";
+
+    const modal = document.createElement('div');
+    modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:99999;`;
+
+    modal.innerHTML = `
+        <div style="background:var(--glass); width:92%; max-width:480px; border-radius:24px; padding:26px; border:3px solid var(--modal-border); color:white;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h3 style="margin:0; color:var(--accent);">🎯 Trivia</h3>
+                <div id="trivia-timer" style="background:#0f172a; padding:6px 14px; border-radius:20px; font-weight:700; color:#f87171;">
+                    30s
+                </div>
+            </div>
+
+            <div style="background:#0f172a; padding:18px; border-radius:16px; margin-bottom:20px;">
+                <p style="font-size:1.15rem; margin:0;">${pregunta.pregunta}</p>
+            </div>
+
+            <div id="respuestas-container" style="display:flex; flex-direction:column; gap:12px;">
+                ${pregunta.respuestas.map((r, i) => `
+                    <button onclick="responderTriviaConTimer(${i}, '${pregunta.id}', '${premio}', this)" 
+                            style="width:100%; padding:16px; background:#334155; color:white; border:none; border-radius:14px; font-size:1.05rem; text-align:left;">
+                        ${r.texto}
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Iniciar temporizador de 30 segundos
+    iniciarTemporizadorTrivia(modal);
+}
 </script>
 </body>
 </html>
