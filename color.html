@@ -2234,6 +2234,7 @@ function generarPremiosEnRuletaDorada() {
 async function spinRuleta() {
     const wheel = document.getElementById('ruleta-wheel');
     const btn = document.getElementById('btn-spin');
+
     if (!btn || btn.disabled) return;
 
     btn.disabled = true;
@@ -2246,33 +2247,53 @@ async function spinRuleta() {
     const codigo = generarCodigoPremio();
 
     try {
+        // Guardar premio
         await _supabase.from('premios_ruleta').insert({
             subscriber_id: currentSubscriberId,
             usuario: currentUsuario,
             premio: premioLimpio,
             codigo: codigo,
             estado: "pendiente",
+            origen: "ruleta",
             created_at: new Date().toISOString()
         });
+
+        window.premioActual = { premio: premioLimpio, codigo: codigo };
+        window.codigoPremioActual = codigo;
+
+        // Animación
+        const segmentCenter = (winningIndex * 60) + 30;
+        const spins = 8 * 360;
+        const totalRotation = spins - segmentCenter;
+
+        wheel.style.transition = 'transform 5.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
+        wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+        // Reset del botón garantizado
+        setTimeout(() => {
+            try {
+                mostrarPremioGanado(premioLimpio, codigo);
+            } catch (e) {
+                console.error("Error en mostrarPremioGanado:", e);
+            }
+
+            // Siempre reseteamos el botón
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = "🎲 GIRAR RULETA";
+            }
+        }, 5400);
+
     } catch (err) {
-        console.error("Error guardando premio:", err);
+        console.error("Error al girar la ruleta:", err);
+        alert("Ocurrió un error al procesar el premio.");
+
+        // Reset del botón aunque falle todo
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = "🎲 GIRAR RULETA";
+        }
     }
-
-    window.premioActual = { premio: premioLimpio, codigo: codigo };
-    window.codigoPremioActual = codigo;
-
-    const segmentCenter = (winningIndex * 60) + 30;
-    const spins = 8 * 360;
-    const totalRotation = spins - segmentCenter;
-
-    wheel.style.transition = 'transform 5.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
-    wheel.style.transform = `rotate(${totalRotation}deg)`;
-
-    setTimeout(() => {
-        mostrarPremioGanado(premioLimpio, codigo);
-        btn.disabled = false;
-        btn.innerText = "GIRAR RULETA";
-    }, 5400);
 }
 
 // === GIRAR RULETA DORADA ===
