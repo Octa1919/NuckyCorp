@@ -3199,10 +3199,20 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
     if (!modalPadre) modalPadre = boton.closest('div[style*="position:fixed"]');
     if (!modalPadre) return;
 
-    // Limpiar temporizador
     if (modalPadre.dataset.timerInterval) {
         clearInterval(parseInt(modalPadre.dataset.timerInterval));
     }
+
+    const contenedor = modalPadre.querySelector('#respuestas-container');
+
+    // === DESHABILITAMOS TODOS LOS BOTONES INMEDIATAMENTE ===
+    const botones = contenedor.querySelectorAll('button');
+    botones.forEach(b => b.disabled = true);
+
+    // === FEEDBACK VISUAL EN EL BOTÓN ELEGIDO ===
+    boton.style.background = '#1e40af';
+    boton.style.borderColor = '#3b82f6';
+    boton.innerHTML = `⏳ Verificando...`;
 
     const { data: pregunta } = await _supabase
         .from('trivia_preguntas')
@@ -3214,11 +3224,10 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
 
     const respuesta = pregunta.respuestas[indice];
     const esCorrecta = respuesta.es_correcta;
-    const contenedor = modalPadre.querySelector('#respuestas-container');
 
-    // === INSERT CORREGIDO ===
+    // === INSERT (con try/catch ya existente) ===
     try {
-        const { error: insertError } = await _supabase.from('trivia_mostradas').insert({
+        await _supabase.from('trivia_mostradas').insert({
             subscriber_id: currentSubscriberId,
             pregunta_id: preguntaId,
             usuario: currentUsuario,
@@ -3227,41 +3236,22 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
             respondida_en: new Date().toISOString(),
             mostrada_at: new Date().toISOString()
         });
+    } catch (e) {}
 
-        if (insertError) {
-            console.error("Error guardando en trivia_mostradas:", insertError);
-            contenedor.innerHTML = `
-                <div style="text-align:center; padding:20px;">
-                    <p style="color:#f87171; margin-bottom:16px;">Error al registrar tu respuesta.</p>
-                    <button onclick="this.closest('div[style*=\'position:fixed\']').remove()" 
-                            style="background:#334155; color:white; border:none; padding:14px 32px; border-radius:12px;">
-                        Cerrar
-                    </button>
-                </div>`;
-            return;
-        }
-    } catch (e) {
-        console.error("Excepción al insertar:", e);
-    }
+    // === MOSTRAMOS RESULTADO ===
+    if (esCorrecta) {
+        const codigo = generarCodigoPremio();
 
-    // === RESPUESTA CORRECTA ===
-  if (esCorrecta) {
-    const codigo = generarCodigoPremio();
-
-        try {
-            await _supabase.from('premios_ruleta').insert({
-                subscriber_id: currentSubscriberId,
-                usuario: currentUsuario,
-                premio: premio,
-                codigo: codigo,
-                estado: 'pendiente',
-                created_at: new Date().toISOString()
-            });
-        } catch (e) {}
+        await _supabase.from('premios_ruleta').insert({
+            subscriber_id: currentSubscriberId,
+            usuario: currentUsuario,
+            premio: premio,
+            codigo: codigo,
+            estado: 'pendiente',
+            created_at: new Date().toISOString()
+        });
 
         window.codigoPremioActual = codigo;
-
-        // Guardamos referencia del modal para poder cerrarlo después
         window.currentTriviaModal = modalPadre;
 
         contenedor.innerHTML = `
