@@ -2087,8 +2087,8 @@ async function abrirRuleta() {
     document.getElementById('btn-spin').innerText = "Cargando...";
 
     try {
-        // === 4. Cargar datos en paralelo ===
-        const [userData, subData, premioPendiente] = await Promise.all([
+         // === 4. Cargar datos en paralelo (sin verificar premio pendiente) ===
+        const [userData, subData] = await Promise.all([
             _supabase.from('usuarios')
                 .select('racha_ruleta, ultima_ruleta')
                 .eq('username', currentUsuario)
@@ -2097,15 +2097,24 @@ async function abrirRuleta() {
             _supabase.from('suscriptores')
                 .select('dias_dorada, premios_normal, premios_dorada')
                 .eq('id', currentSubscriberId)
-                .single(),
-
-            verificarPremioPendiente()
+                .single()
         ]);
 
-        // === 5. Verificar premio pendiente ===
-        if (premioPendiente) {
+        // === 5. Verificar SOLO premios pendientes de RULETA ===
+        const { data: premioPendienteRuleta } = await _supabase
+            .from('premios_ruleta')
+            .select('*')
+            .eq('usuario', currentUsuario)
+            .eq('subscriber_id', currentSubscriberId)
+            .eq('estado', 'pendiente')
+            .eq('origen', 'ruleta')           // ← Solo premios de la ruleta
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (premioPendienteRuleta) {
             ruletaModal.style.display = 'none';
-            premioPendienteActual = premioPendiente;
+            premioPendienteActual = premioPendienteRuleta;
             mostrarModalPremioPendiente();
             return;
         }
