@@ -1186,6 +1186,7 @@
     // ==================== ONE SIGNAL ====================
     const ONESIGNAL_APP_ID = "f1d17c3e-a156-4a64-a288-c1a4f04f686d";
 
+    // ==================== ONE SIGNAL - INICIALIZACIÓN SEGURA ====================
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
@@ -1193,27 +1194,29 @@
             allowLocalhostAsSecureOrigin: true,
             notifyButton: { enable: false }
         });
+
         console.log("✅ OneSignal SDK inicializado");
 
-            // === LISTENER SEGURO DE CAMBIOS EN NOTIFICACIONES ===
-    setTimeout(() => {
-        try {
-            if (OneSignal.User && OneSignal.User.pushSubscription) {
-                OneSignal.User.pushSubscription.addEventListener("change", async function(event) {
-                    console.log("%c[OneSignal] Cambio en suscripción detectado", "color:#a78bfa");
+        // === LISTENER SEGURO DE CAMBIOS EN NOTIFICACIONES ===
+        setTimeout(() => {
+            try {
+                if (OneSignal.User && OneSignal.User.pushSubscription) {
+                    OneSignal.User.pushSubscription.addEventListener("change", async function(event) {
+                        console.log("%c[OneSignal] Cambio en suscripción detectado", "color:#a78bfa");
 
-                    try {
-                        const optedIn = event.current?.optedIn === true;
-                        await OneSignal.User.addTag("notifications_enabled", optedIn ? "true" : "false");
-                    } catch (e) {
-                        console.warn("Error actualizando tag de notificaciones:", e);
-                    }
-                });
+                        try {
+                            const optedIn = event.current?.optedIn === true;
+                            await OneSignal.User.addTag("notifications_enabled", optedIn ? "true" : "false");
+                        } catch (e) {
+                            console.warn("Error actualizando tag de notificaciones:", e);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn("No se pudo agregar el listener de notificaciones:", e);
             }
-        } catch (e) {
-            console.warn("No se pudo agregar el listener de notificaciones:", e);
-        }
-    }, 1500);
+        }, 1500);
+    });
 
     let currentSubscriberId = null;
     let currentUsuario = null;
