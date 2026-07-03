@@ -1260,7 +1260,6 @@ async function loginJugador() {
 
     if (!username || !password) return alert("Usuario y contraseña son obligatorios");
 
-    // === MOSTRAMOS CARGA INMEDIATAMENTE ===
     showLoadingScreen("Iniciando sesión...");
 
     try {
@@ -1276,22 +1275,43 @@ async function loginJugador() {
             return alert("Credenciales incorrectas");
         }
 
-        // Validaciones de suscriptor...
-        if (!subscriberIdInstalacion) {
+        // ========================================================
+        // LÓGICA DE VINCULACIÓN ESTRICTA (App instalada vs Navegador)
+        // ========================================================
+        const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
+                            window.navigator.standalone === true;
+
+        if (isInstalled) {
+            // === APP INSTALADA: Vinculación permanente ===
+            const yaVinculado = localStorage.getItem('subscriber_id_instalacion');
+
+            if (!yaVinculado) {
+                // Primera vez que se usa esta instalación → la vinculamos
+                localStorage.setItem('subscriber_id_instalacion', data.subscriber_id);
+                subscriberIdInstalacion = data.subscriber_id;
+            } else {
+                subscriberIdInstalacion = yaVinculado;
+            }
+
+            // Bloqueo duro: solo permite el suscriptor con el que se instaló
+            if (data.subscriber_id !== subscriberIdInstalacion) {
+                hideLoadingScreen();
+                return alert(
+                    "❌ Esta aplicación instalada está vinculada a otro agente.\n\n" +
+                    "Solo podés iniciar sesión con usuarios de ese agente.\n" +
+                    "Si querés usar otro agente, instalá la App desde su link correspondiente."
+                );
+            }
+        } else {
+            // === NAVEGADOR: Cada pestaña respeta su propio ?s= ===
             subscriberIdInstalacion = data.subscriber_id;
             localStorage.setItem('subscriber_id_instalacion', data.subscriber_id);
-        }
-
-        if (data.subscriber_id !== subscriberIdInstalacion) {
-            hideLoadingScreen();
-            return alert("Estas credenciales no corresponden a este agente.");
         }
 
         currentSubscriberId = data.subscriber_id;
         currentUsuario = username;
         currentPassword = password;
 
-        // Guardar sesión
         const sessionData = { username: currentUsuario, subscriber_id: currentSubscriberId };
         if (recordar) {
             localStorage.setItem('nucky_session', JSON.stringify(sessionData));
@@ -1299,28 +1319,23 @@ async function loginJugador() {
             sessionStorage.setItem('nucky_session', JSON.stringify(sessionData));
         }
 
-        // Verificar plan y estado de cuenta en paralelo
         await Promise.all([
             detectarPlanPremium(),
             verificarEstadoCuenta()
         ]);
 
-        // Aplicar colores y mostrar dashboard
         aplicarColoresDelSuscriptor(data.suscriptores);
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(data.suscriptores);
-
         hideLoadingScreen();
 
-        // === TRIVIA: La mostramos casi inmediatamente ===
         setTimeout(() => {
             verificarYMostrarTrivia();
-        }, 400);   // Bajamos de 1800ms a 400ms
+        }, 400);
 
-        // Inicializar Chatwoot y suscripciones
         if (data.suscriptores?.chatwoot_website_token) {
             inicializarChatwoot(data.suscriptores.chatwoot_website_token, data.suscriptores.chatwoot_hmac_secret);
         }
@@ -1334,7 +1349,6 @@ async function loginJugador() {
         alert("Ocurrió un error al iniciar sesión.");
     }
 }
-
     // ==================== VERIFICAR ESTADO DE LA CUENTA (ACTIVO / SUSPENDIDO) ====================
 async function verificarEstadoCuenta() {
     if (!currentSubscriberId) {
@@ -2618,22 +2632,24 @@ async function restoreSession() {
         const session = JSON.parse(savedSession);
         const savedSubscriberId = session.subscriber_id;
 
-        const urlSubscriberId = getSubscriberFromUrl();
+        const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
+                            window.navigator.standalone === true;
 
-        // === LÓGICA ESTRICTA DE AISLAMIENTO ===
-        // Si la URL actual tiene un suscriptor diferente al de la sesión guardada → NO restauramos
-        if (urlSubscriberId && urlSubscriberId !== savedSubscriberId) {
-            console.log("%c[RESTORE] URL de otro suscriptor detectada. No se restaura sesión.", "color:#f59e0b");
-            return false;
+        if (isInstalled) {
+            // === APP INSTALADA: Solo restaura si coincide con la vinculación permanente ===
+            if (subscriberIdInstalacion && savedSubscriberId !== subscriberIdInstalacion) {
+                console.log("%c[RESTORE] App instalada con suscriptor diferente. No se restaura.", "color:#ef4444");
+                return false;
+            }
+        } else {
+            // === NAVEGADOR: Permite convivir pestañas con diferentes suscriptores ===
+            const urlSubscriberId = getSubscriberFromUrl();
+            if (urlSubscriberId && urlSubscriberId !== savedSubscriberId) {
+                console.log("%c[RESTORE] Pestaña con URL de otro suscriptor. Mostrando login.", "color:#f59e0b");
+                return false;
+            }
         }
 
-        // Si ya tenemos contexto de instalación y no coincide con la sesión guardada → tampoco restauramos
-        if (subscriberIdInstalacion && savedSubscriberId !== subscriberIdInstalacion) {
-            console.log("%c[RESTORE] Sesión de otro suscriptor. No se restaura.", "color:#f59e0b");
-            return false;
-        }
-
-        // === Si llegamos acá, es seguro restaurar ===
         currentUsuario = session.username;
         currentSubscriberId = savedSubscriberId;
 
@@ -2660,7 +2676,6 @@ async function restoreSession() {
         document.getElementById('hamburger-btn').style.display = 'block';
 
         await cargarDatosSuscriptor(subData);
-
         hideLoadingScreen();
 
         setTimeout(() => {
@@ -2683,8 +2698,6 @@ async function restoreSession() {
     } catch (e) {
         hideLoadingScreen();
         console.error("Error en restoreSession():", e);
-        localStorage.removeItem('nucky_session');
-        sessionStorage.removeItem('nucky_session');
         return false;
     }
 }
