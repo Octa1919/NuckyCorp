@@ -2651,11 +2651,13 @@ async function restoreSession() {
                             window.navigator.standalone === true;
 
         if (isInstalled) {
+            // App instalada: solo restaura si coincide con la vinculación
             if (subscriberIdInstalacion && savedSubscriberId !== subscriberIdInstalacion) {
                 hideLoadingScreen();
                 return false;
             }
         } else {
+            // Navegador: cada pestaña es independiente según su URL
             const urlSubscriberId = getSubscriberFromUrl();
             if (urlSubscriberId && urlSubscriberId !== savedSubscriberId) {
                 hideLoadingScreen();
