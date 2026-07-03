@@ -1263,47 +1263,38 @@ async function loginJugador() {
     showLoadingScreen("Iniciando sesión...");
 
     try {
+        // === DETERMINAMOS EL SUSCRIPTOR ESPERADO SEGÚN EL CONTEXTO ===
+        const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
+                            window.navigator.standalone === true;
+
+        let expectedSubscriberId = subscriberIdInstalacion;
+
+        // Si no hay contexto de instalación, lo tomamos de la URL
+        if (!expectedSubscriberId) {
+            expectedSubscriberId = getSubscriberFromUrl();
+        }
+
+        if (!expectedSubscriberId) {
+            hideLoadingScreen();
+            return alert("No se pudo determinar el agente. Usá el link correcto.");
+        }
+
+        // === QUERY DE LOGIN CON FILTRO POR SUSCRIPTOR ===
         const { data, error } = await _supabase
             .from('usuarios')
             .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color)')
             .eq('username', username)
             .eq('password', password)
+            .eq('subscriber_id', expectedSubscriberId)   // ← FILTRO CLAVE
             .single();
 
         if (error || !data) {
             hideLoadingScreen();
-            return alert("Credenciales incorrectas");
+            return alert("Credenciales incorrectas o no pertenecen a este agente.");
         }
 
-        // ========================================================
-        // LÓGICA DE VINCULACIÓN ESTRICTA (App instalada vs Navegador)
-        // ========================================================
-        const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
-                            window.navigator.standalone === true;
-
-        if (isInstalled) {
-            // === APP INSTALADA: Vinculación permanente ===
-            const yaVinculado = localStorage.getItem('subscriber_id_instalacion');
-
-            if (!yaVinculado) {
-                // Primera vez que se usa esta instalación → la vinculamos
-                localStorage.setItem('subscriber_id_instalacion', data.subscriber_id);
-                subscriberIdInstalacion = data.subscriber_id;
-            } else {
-                subscriberIdInstalacion = yaVinculado;
-            }
-
-            // Bloqueo duro: solo permite el suscriptor con el que se instaló
-            if (data.subscriber_id !== subscriberIdInstalacion) {
-                hideLoadingScreen();
-                return alert(
-                    "❌ Esta aplicación instalada está vinculada a otro agente.\n\n" +
-                    "Solo podés iniciar sesión con usuarios de ese agente.\n" +
-                    "Si querés usar otro agente, instalá la App desde su link correspondiente."
-                );
-            }
-        } else {
-            // === NAVEGADOR: Cada pestaña respeta su propio ?s= ===
+        // === VINCULACIÓN (solo si no estaba vinculado aún) ===
+        if (isInstalled && !subscriberIdInstalacion) {
             subscriberIdInstalacion = data.subscriber_id;
             localStorage.setItem('subscriber_id_instalacion', data.subscriber_id);
         }
