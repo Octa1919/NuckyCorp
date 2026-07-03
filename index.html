@@ -1195,23 +1195,25 @@
         });
         console.log("✅ OneSignal SDK inicializado");
 
-        // === LISTENER DE CAMBIOS EN NOTIFICACIONES (NO BORRAR) ===
-        OneSignal.User.pushSubscription.addEventListener("change", async function(event) {
-            console.log("%c[OneSignal] Cambio detectado en suscripción", "color:#a78bfa", event);
+            // === LISTENER SEGURO DE CAMBIOS EN NOTIFICACIONES ===
+    setTimeout(() => {
+        try {
+            if (OneSignal.User && OneSignal.User.pushSubscription) {
+                OneSignal.User.pushSubscription.addEventListener("change", async function(event) {
+                    console.log("%c[OneSignal] Cambio en suscripción detectado", "color:#a78bfa");
 
-            try {
-                if (event.current && event.current.optedIn === true) {
-                    await OneSignal.User.addTag("notifications_enabled", "true");
-                    console.log("%c[OneSignal] Notificaciones ACTIVADAS por el usuario", "color:#22c55e");
-                } else {
-                    await OneSignal.User.addTag("notifications_enabled", "false");
-                    console.log("%c[OneSignal] Notificaciones DESACTIVADAS por el usuario", "color:#f87171");
-                }
-            } catch (e) {
-                console.warn("Error al actualizar tag de notificaciones:", e);
+                    try {
+                        const optedIn = event.current?.optedIn === true;
+                        await OneSignal.User.addTag("notifications_enabled", optedIn ? "true" : "false");
+                    } catch (e) {
+                        console.warn("Error actualizando tag de notificaciones:", e);
+                    }
+                });
             }
-        });
-    });
+        } catch (e) {
+            console.warn("No se pudo agregar el listener de notificaciones:", e);
+        }
+    }, 1500);
 
     let currentSubscriberId = null;
     let currentUsuario = null;
