@@ -2619,6 +2619,8 @@ async function restoreSession() {
     let savedSession = localStorage.getItem('nucky_session') || sessionStorage.getItem('nucky_session');
     if (!savedSession) return false;
 
+    showLoadingScreen("Cargando tu experiencia...");
+
     try {
         const session = JSON.parse(savedSession);
         const savedSubscriberId = session.subscriber_id;
@@ -2627,16 +2629,14 @@ async function restoreSession() {
                             window.navigator.standalone === true;
 
         if (isInstalled) {
-            // === APP INSTALADA: Solo restaura si coincide con la vinculación permanente ===
             if (subscriberIdInstalacion && savedSubscriberId !== subscriberIdInstalacion) {
-                console.log("%c[RESTORE] App instalada con suscriptor diferente. No se restaura.", "color:#ef4444");
+                hideLoadingScreen();
                 return false;
             }
         } else {
-            // === NAVEGADOR: Permite convivir pestañas con diferentes suscriptores ===
             const urlSubscriberId = getSubscriberFromUrl();
             if (urlSubscriberId && urlSubscriberId !== savedSubscriberId) {
-                console.log("%c[RESTORE] Pestaña con URL de otro suscriptor. Mostrando login.", "color:#f59e0b");
+                hideLoadingScreen();
                 return false;
             }
         }
@@ -2653,6 +2653,7 @@ async function restoreSession() {
         if (error || !subData) {
             localStorage.removeItem('nucky_session');
             sessionStorage.removeItem('nucky_session');
+            hideLoadingScreen();
             return false;
         }
 
