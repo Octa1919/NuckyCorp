@@ -2618,13 +2618,24 @@ async function restoreSession() {
         const session = JSON.parse(savedSession);
         const savedSubscriberId = session.subscriber_id;
 
-        // Validaciones de suscriptor...
+        const urlSubscriberId = getSubscriberFromUrl();
 
+        // === LÓGICA ESTRICTA DE AISLAMIENTO ===
+        // Si la URL actual tiene un suscriptor diferente al de la sesión guardada → NO restauramos
+        if (urlSubscriberId && urlSubscriberId !== savedSubscriberId) {
+            console.log("%c[RESTORE] URL de otro suscriptor detectada. No se restaura sesión.", "color:#f59e0b");
+            return false;
+        }
+
+        // Si ya tenemos contexto de instalación y no coincide con la sesión guardada → tampoco restauramos
+        if (subscriberIdInstalacion && savedSubscriberId !== subscriberIdInstalacion) {
+            console.log("%c[RESTORE] Sesión de otro suscriptor. No se restaura.", "color:#f59e0b");
+            return false;
+        }
+
+        // === Si llegamos acá, es seguro restaurar ===
         currentUsuario = session.username;
         currentSubscriberId = savedSubscriberId;
-
-        // === MOSTRAMOS CARGA TEMPRANO ===
-        showLoadingScreen("Cargando tu experiencia...");
 
         const { data: subData, error } = await _supabase
             .from('suscriptores')
@@ -2633,7 +2644,6 @@ async function restoreSession() {
             .single();
 
         if (error || !subData) {
-            hideLoadingScreen();
             localStorage.removeItem('nucky_session');
             sessionStorage.removeItem('nucky_session');
             return false;
@@ -2653,7 +2663,6 @@ async function restoreSession() {
 
         hideLoadingScreen();
 
-        // Trivia mucho más rápido
         setTimeout(() => {
             verificarYMostrarTrivia();
         }, 350);
@@ -2674,6 +2683,8 @@ async function restoreSession() {
     } catch (e) {
         hideLoadingScreen();
         console.error("Error en restoreSession():", e);
+        localStorage.removeItem('nucky_session');
+        sessionStorage.removeItem('nucky_session');
         return false;
     }
 }
