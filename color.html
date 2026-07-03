@@ -1214,13 +1214,13 @@ function inicializarContextoInstalacion() {
                         window.navigator.standalone === true;
 
     if (isInstalled) {
-        // === MODO APP INSTALADA ===
+        // === MODO APP INSTALADA (PWA) ===
         if (guardado) {
-            // Ya tiene una vinculación → la respetamos siempre
+            // Ya tiene vinculación permanente → la usamos siempre
             subscriberIdInstalacion = guardado;
             window.__subscriberIdInstalacion = guardado;
         } else if (urlId) {
-            // Primera vez que se abre la App instalada con un link → vinculamos
+            // Primera vez que se abre con link → vinculamos permanentemente
             localStorage.setItem('subscriber_id_instalacion', urlId);
             subscriberIdInstalacion = urlId;
             window.__subscriberIdInstalacion = urlId;
@@ -1228,11 +1228,10 @@ function inicializarContextoInstalacion() {
             subscriberIdInstalacion = null;
         }
     } else {
-        // === MODO NAVEGADOR (pestañas) ===
+        // === MODO NAVEGADOR (pestañas normales) ===
         if (urlId) {
-            // En navegador siempre priorizamos el ?s= de la URL actual
+            // Priorizamos el ?s= de la URL actual de esta pestaña
             subscriberIdInstalacion = urlId;
-            localStorage.setItem('subscriber_id_instalacion', urlId);
         } else if (guardado) {
             subscriberIdInstalacion = guardado;
         } else {
@@ -1240,10 +1239,6 @@ function inicializarContextoInstalacion() {
         }
     }
 }
-
-    document.addEventListener('DOMContentLoaded', () => {
-    inicializarContextoInstalacion();
-});
 
 // ==================== OBTENER IP DEL CLIENTE (Edge Function) ====================
 async function obtenerIP() {
