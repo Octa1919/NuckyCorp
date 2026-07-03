@@ -1214,13 +1214,12 @@ function inicializarContextoInstalacion() {
                         window.navigator.standalone === true;
 
     if (isInstalled) {
-        // === MODO APP INSTALADA (PWA) ===
+        // MODO APP INSTALADA → Prioridad absoluta al valor guardado
         if (guardado) {
-            // Ya tiene vinculación permanente → la usamos siempre
             subscriberIdInstalacion = guardado;
             window.__subscriberIdInstalacion = guardado;
         } else if (urlId) {
-            // Primera vez que se abre con link → vinculamos permanentemente
+            // Primera vez que se abre con link → guardamos permanentemente
             localStorage.setItem('subscriber_id_instalacion', urlId);
             subscriberIdInstalacion = urlId;
             window.__subscriberIdInstalacion = urlId;
@@ -1228,9 +1227,8 @@ function inicializarContextoInstalacion() {
             subscriberIdInstalacion = null;
         }
     } else {
-        // === MODO NAVEGADOR (pestañas normales) ===
+        // MODO NAVEGADOR → Cada pestaña respeta su ?s=
         if (urlId) {
-            // Priorizamos el ?s= de la URL actual de esta pestaña
             subscriberIdInstalacion = urlId;
         } else if (guardado) {
             subscriberIdInstalacion = guardado;
