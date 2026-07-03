@@ -1209,13 +1209,35 @@
 
 function inicializarContextoInstalacion() {
     const guardado = localStorage.getItem('subscriber_id_instalacion');
+    const urlId = getSubscriberFromUrl();
+    const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
+                        window.navigator.standalone === true;
 
-    if (guardado) {
-        subscriberIdInstalacion = guardado;
-    } else if (window.__subscriberIdInstalacion) {
-        subscriberIdInstalacion = window.__subscriberIdInstalacion;
+    if (isInstalled) {
+        // === MODO APP INSTALADA ===
+        if (guardado) {
+            // Ya tiene una vinculación → la respetamos siempre
+            subscriberIdInstalacion = guardado;
+            window.__subscriberIdInstalacion = guardado;
+        } else if (urlId) {
+            // Primera vez que se abre la App instalada con un link → vinculamos
+            localStorage.setItem('subscriber_id_instalacion', urlId);
+            subscriberIdInstalacion = urlId;
+            window.__subscriberIdInstalacion = urlId;
+        } else {
+            subscriberIdInstalacion = null;
+        }
     } else {
-        subscriberIdInstalacion = null;
+        // === MODO NAVEGADOR (pestañas) ===
+        if (urlId) {
+            // En navegador siempre priorizamos el ?s= de la URL actual
+            subscriberIdInstalacion = urlId;
+            localStorage.setItem('subscriber_id_instalacion', urlId);
+        } else if (guardado) {
+            subscriberIdInstalacion = guardado;
+        } else {
+            subscriberIdInstalacion = null;
+        }
     }
 }
 
