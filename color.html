@@ -2641,19 +2641,19 @@ async function restoreSession() {
     try {
         const session = JSON.parse(savedSession);
         const savedSubscriberId = session.subscriber_id;
-
+        const urlSubscriberId = getSubscriberFromUrl();
         const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
                             window.navigator.standalone === true;
 
         if (isInstalled) {
-            // App instalada: solo restaura si coincide con la vinculación
+            // App instalada: debe coincidir con la vinculación permanente
             if (subscriberIdInstalacion && savedSubscriberId !== subscriberIdInstalacion) {
                 hideLoadingScreen();
                 return false;
             }
         } else {
-            // Navegador: cada pestaña es independiente según su URL
-            const urlSubscriberId = getSubscriberFromUrl();
+            // Navegador: solo restauramos si el ?s= de la URL coincide con la sesión guardada
+            // Si no hay ?s= en la URL actual, igual intentamos restaurar (útil al recargar)
             if (urlSubscriberId && urlSubscriberId !== savedSubscriberId) {
                 hideLoadingScreen();
                 return false;
