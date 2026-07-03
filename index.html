@@ -2075,6 +2075,7 @@ let ruletaPremios = [];
 let ruletaPremiosDorados = [];
 
 // === ABROR RULETA ===
+// === ABRIR RULETA (VERSIÓN CORREGIDA CON RACHA DINÁMICA) ===
 async function abrirRuleta() {
     if (!currentSubscriberId || !currentUsuario) {
         return alert("Error: No se detectó usuario o suscriptor");
@@ -2115,89 +2116,90 @@ async function abrirRuleta() {
     document.getElementById('btn-spin').disabled = true;
     document.getElementById('btn-spin').innerText = "Cargando...";
 
-  try {
-    // === 4. Cargar datos en paralelo ===
-    const [userData, subData] = await Promise.all([
-        _supabase.from('usuarios')
-            .select('racha_ruleta, ultima_ruleta')
-            .eq('username', currentUsuario)
-            .single(),
+    try {
+        // === 4. Cargar datos en paralelo ===
+        const [userData, subData] = await Promise.all([
+            _supabase.from('usuarios')
+                .select('racha_ruleta, ultima_ruleta')
+                .eq('username', currentUsuario)
+                .single(),
 
-        _supabase.from('suscriptores')
-            .select('dias_dorada, premios_normal, premios_dorada')
-            .eq('id', currentSubscriberId)
-            .single()
-    ]);
+            _supabase.from('suscriptores')
+                .select('dias_dorada, premios_normal, premios_dorada')
+                .eq('id', currentSubscriberId)
+                .single()
+        ]);
 
-    // === ACTUALIZAR EL CONTADOR DE RACHA (NUEVO) ===
-    const rachaActual = userData.data?.racha_ruleta || 0;
-    const diasParaDorada = subData.data?.dias_dorada || 7;
+        // === ACTUALIZAR CONTADOR DE RACHA (dinámico) ===
+        const rachaActual = userData.data?.racha_ruleta || 0;
+        const diasParaDorada = subData.data?.dias_dorada || 7;
 
-    const rachaSpan = document.getElementById('racha-count');
-    if (rachaSpan) {
-        rachaSpan.textContent = `${rachaActual} / ${diasParaDorada}`;
-    }
+        const rachaSpan = document.getElementById('racha-count');
+        if (rachaSpan) {
+            rachaSpan.textContent = `${rachaActual} / ${diasParaDorada}`;
+        }
 
-    // === 5. Verificar SOLO premios pendientes de RULETA ===
-    const { data: premioPendienteRuleta } = await _supabase
-        .from('premios_ruleta')
-        .select('*')
-        .eq('usuario', currentUsuario)
-        .eq('subscriber_id', currentSubscriberId)
-        .eq('estado', 'pendiente')
-        .eq('origen', 'ruleta')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        // === 5. Verificar SOLO premios pendientes de RULETA ===
+        const { data: premioPendienteRuleta } = await _supabase
+            .from('premios_ruleta')
+            .select('*')
+            .eq('usuario', currentUsuario)
+            .eq('subscriber_id', currentSubscriberId)
+            .eq('estado', 'pendiente')
+            .eq('origen', 'ruleta')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
 
-    if (premioPendienteRuleta) {
-        ruletaModal.style.display = 'none';
-        premioPendienteActual = premioPendienteRuleta;
-        mostrarModalPremioPendiente();
-        return;
-    }
-
-    // === 6. Verificar cooldown de 24hs ===
-    if (userData.data?.ultima_ruleta) {
-        const ultima = new Date(userData.data.ultima_ruleta);
-        const ahora = new Date();
-        const horasPasados = (ahora - ultima) / (1000 * 60 * 60);
-
-        if (horasPasados < 24) {
+        if (premioPendienteRuleta) {
             ruletaModal.style.display = 'none';
-            mostrarCooldownRuleta(userData.data.ultima_ruleta);
+            premioPendienteActual = premioPendienteRuleta;
+            mostrarModalPremioPendiente();
             return;
         }
-    }
 
-    // === 7. Determinar si es Ruleta Normal o Dorada ===
-    if (rachaActual >= diasParaDorada) {
-        // RULETA DORADA
+        // === 6. Verificar cooldown de 24hs ===
+        if (userData.data?.ultima_ruleta) {
+            const ultima = new Date(userData.data.ultima_ruleta);
+            const ahora = new Date();
+            const horasPasados = (ahora - ultima) / (1000 * 60 * 60);
+
+            if (horasPasados < 24) {
+                ruletaModal.style.display = 'none';
+                mostrarCooldownRuleta(userData.data.ultima_ruleta);
+                return;
+            }
+        }
+
+        // === 7. Determinar si es Ruleta Normal o Dorada ===
+        if (rachaActual >= diasParaDorada) {
+            // === RULETA DORADA ===
+            ruletaModal.style.display = 'none';
+
+            ruletaPremiosDorados = subData.data?.premios_dorada
+                ? subData.data.premios_dorada.split(',').map(p => p.trim())
+                : ["50k Fichas", "Bono 100%", "Jackpot", "200k Fichas", "Bono 200%", "Ruleta Extra"];
+
+            generarPremiosEnRuletaDorada();
+            ruletaDoradaModal.style.display = 'flex';
+
+        } else {
+            // === RULETA NORMAL ===
+            ruletaPremios = subData.data?.premios_normal
+                ? subData.data.premios_normal.split(',').map(p => p.trim())
+                : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
+
+            generarPremiosEnRuleta();
+
+            document.getElementById('btn-spin').disabled = false;
+            document.getElementById('btn-spin').innerText = "🎲 GIRAR RULETA";
+        }
+
+    } catch (err) {
+        console.error("Error al abrir la Ruleta:", err);
         ruletaModal.style.display = 'none';
-
-        ruletaPremiosDorados = subData.data?.premios_dorada
-            ? subData.data.premios_dorada.split(',').map(p => p.trim())
-            : ["50k Fichas", "Bono 100%", "Jackpot", "200k Fichas", "Bono 200%", "Ruleta Extra"];
-
-        generarPremiosEnRuletaDorada();
-        ruletaDoradaModal.style.display = 'flex';
-
-    } else {
-        // RULETA NORMAL
-        ruletaPremios = subData.data?.premios_normal
-            ? subData.data.premios_normal.split(',').map(p => p.trim())
-            : ["1000/fichas/gratis", "10% extra", "5000/fichas", "Bono 20%", "2000/fichas", "Ruleta Dorada"];
-
-        generarPremiosEnRuleta();
-
-        document.getElementById('btn-spin').disabled = false;
-        document.getElementById('btn-spin').innerText = "🎲 GIRAR RULETA";
+        alert("Ocurrió un error al cargar la Ruleta. Intentá nuevamente.");
     }
-
-} catch (err) {
-    console.error("Error al abrir la Ruleta:", err);
-    ruletaModal.style.display = 'none';
-    alert("Ocurrió un error al cargar la Ruleta. Intentá nuevamente.");
 }
 
 // === GENERAR PREMIOS ===
