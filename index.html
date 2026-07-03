@@ -2626,6 +2626,7 @@ function instalarDesdeModalRuleta() {
 }
 
 // ==================== ONE SIGNAL - CONFIGURACIÓN ROBUSTA ====================
+// ==================== ONE SIGNAL - CONFIGURACIÓN ROBUSTA (VERSIÓN SEGURA) ====================
 async function configurarOneSignalUsuario(reintento = 0) {
     const MAX_REINTENTOS = 3;
 
@@ -2637,10 +2638,10 @@ async function configurarOneSignalUsuario(reintento = 0) {
 
         const externalUserId = `${currentUsuario}__${currentSubscriberId}`;
 
-        // 1. Identificar al usuario en OneSignal
+        // Login del usuario
         await OneSignal.login(externalUserId);
 
-        // 2. Agregar tags básicos
+        // Tags básicos
         await OneSignal.User.addTags({
             subscriber_id: currentSubscriberId,
             username: currentUsuario,
@@ -2649,48 +2650,45 @@ async function configurarOneSignalUsuario(reintento = 0) {
 
         console.log("✅ OneSignal login exitoso para:", externalUserId);
 
-        // 3. Verificar estado actual de la suscripción (Propuesta 1)
-        const subscription = OneSignal.User.pushSubscription;
-        const isOptedIn = await subscription.optedIn;
+        // === CHEQUEO SEGURO DEL ESTADO DE SUSCRIPCIÓN ===
+        let isOptedIn = false;
+
+        try {
+            // Esperamos un poco por si pushSubscription aún no está disponible
+            if (OneSignal.User && OneSignal.User.pushSubscription) {
+                isOptedIn = await OneSignal.User.pushSubscription.optedIn;
+            }
+        } catch (e) {
+            console.warn("No se pudo leer el estado de suscripción todavía:", e);
+        }
 
         if (isOptedIn) {
             console.log("%c[OneSignal] El usuario ya tiene notificaciones activas", "color:#22c55e");
-            
-            // Marcar como habilitado (Propuesta 5)
             await OneSignal.User.addTag("notifications_enabled", "true");
             return;
         }
 
-        // 4. Intentar activar la suscripción (con reintentos - Propuesta 3)
+        // Intentar activar notificaciones
         try {
-            await subscription.optIn();
-            console.log("%c[OneSignal] Usuario aceptó / activó notificaciones", "color:#22c55e");
-
-            // Marcar como habilitado
-            await OneSignal.User.addTag("notifications_enabled", "true");
-
+            if (OneSignal.User && OneSignal.User.pushSubscription) {
+                await OneSignal.User.pushSubscription.optIn();
+                console.log("%c[OneSignal] Notificaciones activadas", "color:#22c55e");
+                await OneSignal.User.addTag("notifications_enabled", "true");
+            }
         } catch (optInError) {
-            console.warn("Error al hacer optIn():", optInError);
+            console.warn("Error al activar notificaciones:", optInError);
 
-            // Reintentar si aún hay intentos disponibles
             if (reintento < MAX_REINTENTOS) {
-                console.log(`Reintentando activar notificaciones... (${reintento + 1}/${MAX_REINTENTOS})`);
-                setTimeout(() => {
-                    configurarOneSignalUsuario(reintento + 1);
-                }, 2500);
-            } else {
-                console.warn("Se agotaron los reintentos para activar notificaciones.");
+                console.log(`Reintentando... (${reintento + 1}/${MAX_REINTENTOS})`);
+                setTimeout(() => configurarOneSignalUsuario(reintento + 1), 2500);
             }
         }
 
     } catch (error) {
         console.error("Error general en configurarOneSignalUsuario():", error);
 
-        // Reintentar en caso de error general
         if (reintento < MAX_REINTENTOS) {
-            setTimeout(() => {
-                configurarOneSignalUsuario(reintento + 1);
-            }, 3000);
+            setTimeout(() => configurarOneSignalUsuario(reintento + 1), 3000);
         }
     }
 }
