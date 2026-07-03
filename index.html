@@ -1281,15 +1281,23 @@ async function loginJugador() {
         const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
                             window.navigator.standalone === true;
 
-        // === SUSCRIPTOR ESPERADO ===
-        let expectedSubscriberId = subscriberIdInstalacion || getSubscriberFromUrl();
+        // === LÓGICA DEFINITIVA DE SUSCRIPTOR ===
+        let expectedSubscriberId = null;
+
+        if (isInstalled) {
+            // App instalada: usamos SIEMPRE lo que tenga guardado en localStorage
+            expectedSubscriberId = localStorage.getItem('subscriber_id_instalacion');
+        } else {
+            // Navegador: priorizamos el ?s= de la URL actual
+            expectedSubscriberId = getSubscriberFromUrl() || subscriberIdInstalacion;
+        }
 
         if (!expectedSubscriberId) {
             hideLoadingScreen();
             return alert("No se pudo determinar el agente. Usá el link correcto o reinstalá la App.");
         }
 
-        // === LOGIN CON FILTRO ===
+        // === LOGIN CON FILTRO ESTRICTO ===
         const { data, error } = await _supabase
             .from('usuarios')
             .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color)')
@@ -1303,9 +1311,8 @@ async function loginJugador() {
             return alert("Credenciales incorrectas o no pertenecen a este agente.");
         }
 
-        // Vinculación permanente en App instalada (solo la primera vez)
-        if (isInstalled && !subscriberIdInstalacion) {
-            subscriberIdInstalacion = data.subscriber_id;
+        // Guardamos la vinculación si estamos en App instalada y aún no la teníamos
+        if (isInstalled && !localStorage.getItem('subscriber_id_instalacion')) {
             localStorage.setItem('subscriber_id_instalacion', data.subscriber_id);
         }
 
