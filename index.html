@@ -1191,9 +1191,26 @@
         await OneSignal.init({
             appId: ONESIGNAL_APP_ID,
             allowLocalhostAsSecureOrigin: true,
-            notifyButton: { enable: false } // Desactivamos el botón flotante por ahora
+            notifyButton: { enable: false }
         });
         console.log("✅ OneSignal SDK inicializado");
+
+        // === LISTENER DE CAMBIOS EN NOTIFICACIONES (NO BORRAR) ===
+        OneSignal.User.pushSubscription.addEventListener("change", async function(event) {
+            console.log("%c[OneSignal] Cambio detectado en suscripción", "color:#a78bfa", event);
+
+            try {
+                if (event.current && event.current.optedIn === true) {
+                    await OneSignal.User.addTag("notifications_enabled", "true");
+                    console.log("%c[OneSignal] Notificaciones ACTIVADAS por el usuario", "color:#22c55e");
+                } else {
+                    await OneSignal.User.addTag("notifications_enabled", "false");
+                    console.log("%c[OneSignal] Notificaciones DESACTIVADAS por el usuario", "color:#f87171");
+                }
+            } catch (e) {
+                console.warn("Error al actualizar tag de notificaciones:", e);
+            }
+        });
     });
 
     let currentSubscriberId = null;
