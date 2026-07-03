@@ -1281,39 +1281,43 @@ async function loginJugador() {
         const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
                             window.navigator.standalone === true;
 
-        // === LÓGICA DEFINITIVA DE SUSCRIPTOR ===
-        let expectedSubscriberId = null;
+        // === PASO 1: Intentamos determinar el suscriptor esperado ===
+        let expectedSubscriberId = subscriberIdInstalacion || getSubscriberFromUrl();
 
-        if (isInstalled) {
-            // App instalada: usamos SIEMPRE lo que tenga guardado en localStorage
-            expectedSubscriberId = localStorage.getItem('subscriber_id_instalacion');
-        } else {
-            // Navegador: priorizamos el ?s= de la URL actual
-            expectedSubscriberId = getSubscriberFromUrl() || subscriberIdInstalacion;
-        }
-
-        if (!expectedSubscriberId) {
-            hideLoadingScreen();
-            return alert("No se pudo determinar el agente. Usá el link correcto o reinstalá la App.");
-        }
-
-        // === LOGIN CON FILTRO ESTRICTO ===
-        const { data, error } = await _supabase
+        // === PASO 2: Query de login ===
+        // Si tenemos expectedSubscriberId, filtramos (más seguro)
+        // Si no lo tenemos (primera vez en App instalada), consultamos sin filtro
+        let query = _supabase
             .from('usuarios')
             .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color)')
             .eq('username', username)
-            .eq('password', password)
-            .eq('subscriber_id', expectedSubscriberId)
-            .single();
+            .eq('password', password);
+
+        if (expectedSubscriberId) {
+            query = query.eq('subscriber_id', expectedSubscriberId);
+        }
+
+        const { data, error } = await query.single();
 
         if (error || !data) {
             hideLoadingScreen();
             return alert("Credenciales incorrectas o no pertenecen a este agente.");
         }
 
-        // Guardamos la vinculación si estamos en App instalada y aún no la teníamos
-        if (isInstalled && !localStorage.getItem('subscriber_id_instalacion')) {
+        // === PASO 3: Lógica de vinculación (igual que en seguridad.html) ===
+        if (!subscriberIdInstalacion) {
+            // Primera vez que se usa esta instalación → la vinculamos al suscriptor del usuario
+            subscriberIdInstalacion = data.subscriber_id;
             localStorage.setItem('subscriber_id_instalacion', data.subscriber_id);
+        }
+
+        // Bloqueo estricto (igual que en seguridad.html)
+        if (data.subscriber_id !== subscriberIdInstalacion) {
+            hideLoadingScreen();
+            return alert(
+                "Estas credenciales no corresponden a este agente.\n\n" +
+                "Esta App instalada solo permite el acceso con usuarios del agente desde el cual la instalaste."
+            );
         }
 
         currentSubscriberId = data.subscriber_id;
