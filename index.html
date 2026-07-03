@@ -2129,6 +2129,15 @@ async function abrirRuleta() {
                 .single()
         ]);
 
+        // === ACTUALIZAR EL CONTADOR DE RACHA (NUEVO) ===
+        const rachaActual = userData.data?.racha_ruleta || 0;
+        const diasParaDorada = subData.data?.dias_dorada || 7;
+
+        const rachaSpan = document.getElementById('racha-count');
+        if (rachaSpan) {
+            rachaSpan.textContent = `${rachaActual} / ${diasParaDorada}`;
+        }
+
         // === 5. Verificar SOLO premios pendientes de RULETA ===
         const { data: premioPendienteRuleta } = await _supabase
             .from('premios_ruleta')
