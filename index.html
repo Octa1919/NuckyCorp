@@ -1214,13 +1214,13 @@ function inicializarContextoInstalacion() {
                         window.navigator.standalone === true;
 
     if (isInstalled) {
-        // === MODO APP INSTALADA ===
+        // === MODO APP INSTALADA (PWA) ===
         if (guardado) {
-            // Ya tiene una vinculación → la respetamos siempre
+            // Ya tiene vinculación permanente → la usamos siempre
             subscriberIdInstalacion = guardado;
             window.__subscriberIdInstalacion = guardado;
         } else if (urlId) {
-            // Primera vez que se abre la App instalada con un link → vinculamos
+            // Primera vez que se abre con link → vinculamos permanentemente
             localStorage.setItem('subscriber_id_instalacion', urlId);
             subscriberIdInstalacion = urlId;
             window.__subscriberIdInstalacion = urlId;
@@ -1228,11 +1228,10 @@ function inicializarContextoInstalacion() {
             subscriberIdInstalacion = null;
         }
     } else {
-        // === MODO NAVEGADOR (pestañas) ===
+        // === MODO NAVEGADOR (pestañas normales) ===
         if (urlId) {
-            // En navegador siempre priorizamos el ?s= de la URL actual
+            // Priorizamos el ?s= de la URL actual de esta pestaña
             subscriberIdInstalacion = urlId;
-            localStorage.setItem('subscriber_id_instalacion', urlId);
         } else if (guardado) {
             subscriberIdInstalacion = guardado;
         } else {
@@ -1240,10 +1239,6 @@ function inicializarContextoInstalacion() {
         }
     }
 }
-
-    document.addEventListener('DOMContentLoaded', () => {
-    inicializarContextoInstalacion();
-});
 
 // ==================== OBTENER IP DEL CLIENTE (Edge Function) ====================
 async function obtenerIP() {
@@ -1288,19 +1283,15 @@ async function loginJugador() {
         const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
                             window.navigator.standalone === true;
 
-        // === DETERMINAR SUSCRIPTOR ESPERADO ===
-        let expectedSubscriberId = subscriberIdInstalacion;
-
-        if (!expectedSubscriberId) {
-            expectedSubscriberId = getSubscriberFromUrl();
-        }
+        // === SUSCRIPTOR ESPERADO ===
+        let expectedSubscriberId = subscriberIdInstalacion || getSubscriberFromUrl();
 
         if (!expectedSubscriberId) {
             hideLoadingScreen();
-            return alert("No se pudo determinar el agente. Abrí la App o el link correcto.");
+            return alert("No se pudo determinar el agente. Usá el link correcto o reinstalá la App.");
         }
 
-        // === LOGIN CON FILTRO POR SUSCRIPTOR ===
+        // === LOGIN CON FILTRO ===
         const { data, error } = await _supabase
             .from('usuarios')
             .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color)')
@@ -1314,7 +1305,7 @@ async function loginJugador() {
             return alert("Credenciales incorrectas o no pertenecen a este agente.");
         }
 
-        // === VINCULACIÓN (solo en App instalada y si aún no está vinculada) ===
+        // Vinculación permanente en App instalada (solo la primera vez)
         if (isInstalled && !subscriberIdInstalacion) {
             subscriberIdInstalacion = data.subscriber_id;
             localStorage.setItem('subscriber_id_instalacion', data.subscriber_id);
@@ -2646,19 +2637,19 @@ async function restoreSession() {
     try {
         const session = JSON.parse(savedSession);
         const savedSubscriberId = session.subscriber_id;
-
+        const urlSubscriberId = getSubscriberFromUrl();
         const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
                             window.navigator.standalone === true;
 
         if (isInstalled) {
-            // App instalada: solo restaura si coincide con la vinculación
+            // App instalada: debe coincidir con la vinculación permanente
             if (subscriberIdInstalacion && savedSubscriberId !== subscriberIdInstalacion) {
                 hideLoadingScreen();
                 return false;
             }
         } else {
-            // Navegador: cada pestaña es independiente según su URL
-            const urlSubscriberId = getSubscriberFromUrl();
+            // Navegador: solo restauramos si el ?s= de la URL coincide con la sesión guardada
+            // Si no hay ?s= en la URL actual, igual intentamos restaurar (útil al recargar)
             if (urlSubscriberId && urlSubscriberId !== savedSubscriberId) {
                 hideLoadingScreen();
                 return false;
