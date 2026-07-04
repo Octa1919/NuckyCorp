@@ -2759,17 +2759,10 @@ async function configurarOneSignalUsuario(reintento = 0) {
                     const tagName = `etiqueta_${nombre.replace(/\s+/g, "_")}`;
                     etiquetaTags[tagName] = "true";
                 });
-            if (Object.keys(etiquetaTags).length > 0) {
-                await OneSignal.User.addTags(etiquetaTags);
-                console.log("%c[OneSignal] Etiquetas seteadas correctamente", "color:#22c55e", Object.keys(etiquetaTags));
 
-                // === DIAGNÓSTICO TEMPORAL ===
-                 try {
-                      const currentTags = await OneSignal.User.getTags();
-                      console.log("%c[OneSignal] === TAGS ACTUALES DEL USUARIO ===", "color:#a855f7");
-                      console.log(currentTags);
-                } catch (e) {
-                    console.warn("No se pudieron leer los tags actuales:", e);
+                if (Object.keys(etiquetaTags).length > 0) {
+                    await OneSignal.User.addTags(etiquetaTags);
+                    console.log("%c[OneSignal] Etiquetas seteadas correctamente", "color:#22c55e", Object.keys(etiquetaTags));
                 }
             }
         } catch (e) {
