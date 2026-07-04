@@ -2290,6 +2290,16 @@ function generarPremiosEnRuletaDorada() {
 
 // === GIRAR RULETA NORMAL ===
 async function spinRuleta() {
+    const btn = document.getElementById('btn-spin');
+
+    // === NUEVA GUARDIA ===
+    if (premioPendienteActual || window.tienePremioPendienteRuleta) {
+        document.getElementById('modal-ruleta').style.display = 'none';
+        mostrarModalPremioPendiente();
+        return;
+    }
+
+    if (!btn || btn.disabled) return;
     const wheel = document.getElementById('ruleta-wheel');
     const btn = document.getElementById('btn-spin');
 
@@ -2329,19 +2339,19 @@ async function spinRuleta() {
         wheel.style.transform = `rotate(${totalRotation}deg)`;
 
         // Reset del botón garantizado
-        setTimeout(() => {
+       setTimeout(() => {
             try {
                 mostrarPremioGanado(premioLimpio, codigo);
             } catch (e) {
                 console.error("Error en mostrarPremioGanado:", e);
             }
 
-            // Siempre reseteamos el botón
+            // Ya NO re-habilitamos el botón de forma libre
             if (btn) {
-                btn.disabled = false;
-                btn.innerText = "🎲 GIRAR RULETA";
+                btn.disabled = true;                    // ← CAMBIAR a true
+                btn.innerText = "PREMIO PENDIENTE";
             }
-        }, 5400);
+      }, 5400);
 
     } catch (err) {
         console.error("Error al girar la ruleta:", err);
@@ -2357,6 +2367,16 @@ async function spinRuleta() {
 
 // === GIRAR RULETA DORADA ===
 async function spinRuletaDorada() {
+    const btn = document.getElementById('btn-spin');
+
+    // === NUEVA GUARDIA ===
+    if (premioPendienteActual || window.tienePremioPendienteRuleta) {
+        document.getElementById('modal-ruleta').style.display = 'none';
+        mostrarModalPremioPendiente();
+        return;
+    }
+
+    if (!btn || btn.disabled) return;
     const wheel = document.getElementById('ruleta-wheel-dorada');
     if (!wheel) return;
 
@@ -2394,10 +2414,18 @@ async function spinRuletaDorada() {
     wheel.style.transform = `rotate(${totalRotation}deg)`;
 
     setTimeout(() => {
-        mostrarPremioDorado(premioLimpio, codigo);
-        if (centerBtn) centerBtn.style.pointerEvents = 'auto';
-    }, 5404);
-}
+        try {
+            mostrarPremioGanado(premioLimpio, codigo);
+        } catch (e) {
+            console.error("Error en mostrarPremioGanado:", e);
+        }
+
+        // Ya NO re-habilitamos el botón de forma libre
+        if (btn) {
+            btn.disabled = true;                    // ← CAMBIAR a true
+            btn.innerText = "PREMIO PENDIENTE";
+        }
+    }, 5400);
 
 // === MOSTRAR MODAL PREMIO NORMAL ===
 function mostrarPremioGanado(premio, codigo) {
