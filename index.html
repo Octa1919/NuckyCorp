@@ -2725,29 +2725,26 @@ function instalarDesdeModalRuleta() {
 
 // ==================== ONE SIGNAL - CONFIGURACIÓN ROBUSTA (VERSIÓN SEGURA) ====================
 async function configurarOneSignalUsuario(reintento = 0) {
-    const MAX_REINTENTOS = 4;
-
     try {
-        if (typeof OneSignal === "undefined") {
-            if (reintento < MAX_REINTENTOS) {
-                setTimeout(() => configurarOneSignalUsuario(reintento + 1), 2000);
-            }
-            return;
-        }
+        if (typeof OneSignal === "undefined") return;
 
         const externalUserId = `${currentUsuario}__${currentSubscriberId}`;
 
-        // Login en OneSignal
-        await OneSignal.login(externalUserId);
+        // 1. Login
+        await OneSignal.login(externalUserId).catch(() => {});
 
-        // Tags básicos
-        await OneSignal.User.addTags({
-            subscriber_id: currentSubscriberId,
-            username: currentUsuario,
-            app_type: "saas"
-        });
+        // 2. Tags básicos
+        try {
+            await OneSignal.User.addTags({
+                subscriber_id: currentSubscriberId,
+                username: currentUsuario,
+                app_type: "saas"
+            });
+        } catch (e) {
+            console.warn("Tags básicos fallaron:", e);
+        }
 
-        // === NUEVO: Cargar y setear etiquetas del usuario ===
+        // 3. Tags de etiquetas (con manejo suave)
         try {
             const { data: userData } = await _supabase
                 .from('usuarios')
@@ -2756,7 +2753,7 @@ async function configurarOneSignalUsuario(reintento = 0) {
                 .eq('subscriber_id', currentSubscriberId)
                 .single();
 
-            if (userData?.etiquetas && Array.isArray(userData.etiquetas)) {
+            if (userData?.etiquetas && Array.isArray(userData.etiquetas) && userData.etiquetas.length > 0) {
                 const etiquetaTags = {};
                 userData.etiquetas.forEach(nombre => {
                     const tagName = `etiqueta_${nombre.replace(/\s+/g, "_")}`;
@@ -2764,32 +2761,32 @@ async function configurarOneSignalUsuario(reintento = 0) {
                 });
 
                 if (Object.keys(etiquetaTags).length > 0) {
-                    console.log("%c[OneSignal] Tags de etiquetas que se van a enviar:", "color:#f59e0b", etiquetaTags);
                     await OneSignal.User.addTags(etiquetaTags);
-                    console.log("✅ Etiquetas seteadas en OneSignal:", Object.keys(etiquetaTags));
+                    console.log("%c[OneSignal] Etiquetas seteadas correctamente", "color:#22c55e", Object.keys(etiquetaTags));
                 }
             }
         } catch (e) {
-            console.warn("No se pudieron cargar las etiquetas del usuario:", e);
+            console.warn("No se pudieron setear etiquetas:", e);
         }
 
-        console.log("✅ OneSignal configurado correctamente para:", externalUserId);
-
-        // Activar notificaciones si no las tiene
+        // 4. Activar notificaciones (con chequeo seguro)
         try {
-            const isOptedIn = await OneSignal.User.pushSubscription.optedIn;
-            if (!isOptedIn) {
-                await OneSignal.User.pushSubscription.optIn();
+            if (OneSignal.User && OneSignal.User.pushSubscription) {
+                const optedIn = await OneSignal.User.pushSubscription.optedIn;
+                if (!optedIn) {
+                    await OneSignal.User.pushSubscription.optIn();
+                }
             }
-            await OneSignal.User.addTag("notifications_enabled", "true");
         } catch (e) {
             console.warn("No se pudo activar suscripción:", e);
         }
 
+        console.log("✅ OneSignal configurado para:", externalUserId);
+
     } catch (error) {
         console.error("Error en configurarOneSignalUsuario():", error);
-        if (reintento < MAX_REINTENTOS) {
-            setTimeout(() => configurarOneSignalUsuario(reintento + 1), 3500);
+        if (reintento < 2) {
+            setTimeout(() => configurarOneSignalUsuario(reintento + 1), 5000);
         }
     }
 }
