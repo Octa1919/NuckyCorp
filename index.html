@@ -1815,7 +1815,16 @@ let chatwootTokenActual = null;
 function inicializarChatwoot(websiteToken, hmacSecret = null) {
     if (!websiteToken) return;
 
-    if (chatwootTokenActual === websiteToken && window.$chatwoot) return;
+    // Guardamos el hmac por si lo necesitamos después
+    if (hmacSecret) {
+        window.chatwootHmacSecret = hmacSecret;
+    }
+
+    if (chatwootTokenActual === websiteToken && window.$chatwoot) {
+        // Ya está inicializado con el mismo token → solo identificamos
+        identificarUsuarioEnChatwoot();
+        return;
+    }
 
     if (chatwootTokenActual && chatwootTokenActual !== websiteToken && window.$chatwoot) {
         try { window.$chatwoot.reset(); } catch(e) {}
@@ -1823,7 +1832,7 @@ function inicializarChatwoot(websiteToken, hmacSecret = null) {
 
     chatwootTokenActual = websiteToken;
 
-    (function(d,t) {
+    (function(d, t) {
         var BASE_URL = "https://app.chatwoot.com";
         var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
         g.src = BASE_URL + "/packs/js/sdk.js";
@@ -1836,53 +1845,74 @@ function inicializarChatwoot(websiteToken, hmacSecret = null) {
                 baseUrl: BASE_URL
             });
 
-            const identificar = () => {
-    if (!window.$chatwoot || !currentUsuario || !currentSubscriberId) return;
+            // Identificación más robusta
+            window.addEventListener("chatwoot:ready", () => {
+                identificarUsuarioEnChatwoot();
+            }, { once: true });
+
+            // Fallbacks más agresivos
+            setTimeout(() => identificarUsuarioEnChatwoot(), 1200);
+            setTimeout(() => identificarUsuarioEnChatwoot(), 2800);
+            setTimeout(() => identificarUsuarioEnChatwoot(), 4500);
+        };
+    })(document, "script");
+}
+
+  // === NUEVA FUNCIÓN ROBUSTA DE IDENTIFICACIÓN ===
+function identificarUsuarioEnChatwoot(intentos = 0) {
+    const MAX_INTENTOS = 5;
+
+    if (!window.$chatwoot) {
+        console.warn("[Chatwoot] Aún no está listo el widget");
+        return;
+    }
+
+    if (!currentUsuario || !currentSubscriberId) {
+        if (intentos < MAX_INTENTOS) {
+            console.log(`[Chatwoot] Esperando datos de usuario... intento ${intentos + 1}`);
+            setTimeout(() => identificarUsuarioEnChatwoot(intentos + 1), 600);
+        }
+        return;
+    }
 
     try {
-        // === Identificador compuesto (igual que en OneSignal) ===
         const chatwootIdentifier = `${currentUsuario}__${currentSubscriberId}`;
 
         const userPayload = {
-            name: currentUsuario,                    // Nombre real del jugador
-            identifier: chatwootIdentifier,          // Identificador compuesto
+            name: currentUsuario,
+            identifier: chatwootIdentifier,
             custom_attributes: {
-                clave: currentPassword || "No disponible",
                 casino: document.getElementById('casino-name')?.textContent || "Nucky",
                 subscriber_id: currentSubscriberId,
                 username: currentUsuario
+                // NOTA: Se eliminó "clave" (contraseña) por seguridad
             }
         };
 
-        if (hmacSecret) {
-            // === HMAC calculado sobre el identificador compuesto ===
-            const hash = CryptoJS.HmacSHA256(chatwootIdentifier, hmacSecret).toString();
+        // Si existe hmacSecret global, lo aplicamos
+        if (window.chatwootHmacSecret) {
+            const hash = CryptoJS.HmacSHA256(chatwootIdentifier, window.chatwootHmacSecret).toString();
             userPayload.identifier_hash = hash;
         }
 
         window.$chatwoot.setUser(chatwootIdentifier, userPayload);
-        console.log("%c[Chatwoot] Usuario identificado:", "color:#22c55e", chatwootIdentifier);
+        console.log("%c[Chatwoot] Usuario identificado correctamente:", "color:#22c55e", chatwootIdentifier);
 
     } catch (err) {
-        console.error("[Chatwoot] Error identificando usuario:", err);
+        console.error("[Chatwoot] Error al identificar usuario:", err);
     }
-};
-
-            window.addEventListener("chatwoot:ready", identificar, { once: true });
-            setTimeout(identificar, 1800);
-            setTimeout(identificar, 3500);
-        };
-    })(document, "script");
 }
     
 function abrirChatwoot() {
     if (window.$chatwoot) {
+        identificarUsuarioEnChatwoot();           // ← Identificamos antes de abrir
         window.$chatwoot.toggle("open");
     } else if (chatwootTokenActual) {
         inicializarChatwoot(chatwootTokenActual);
         setTimeout(() => {
+            identificarUsuarioEnChatwoot();
             if (window.$chatwoot) window.$chatwoot.toggle("open");
-        }, 2800);
+        }, 2200);
     } else {
         alert("No se pudo conectar con el soporte en este momento.");
     }
@@ -2529,8 +2559,16 @@ function copiarCodigoPendiente() {
 
 function abrirChatwootDesdePendiente() {
     hideModalPremioPendiente();
+
     if (window.$chatwoot) {
+        identificarUsuarioEnChatwoot();
         window.$chatwoot.toggle("open");
+    } else if (chatwootTokenActual) {
+        inicializarChatwoot(chatwootTokenActual);
+        setTimeout(() => {
+            identificarUsuarioEnChatwoot();
+            if (window.$chatwoot) window.$chatwoot.toggle("open");
+        }, 2200);
     } else {
         alert("Chatwoot se está cargando...");
     }
