@@ -2315,7 +2315,8 @@ async function spinRuleta() {
             origen: "ruleta",
             created_at: new Date().toISOString()
         });
-
+      
+        window.tienePremioPendienteRuleta = true;   // Flag de emergencia
         window.premioActual = { premio: premioLimpio, codigo: codigo };
         window.codigoPremioActual = codigo;
 
@@ -2381,7 +2382,7 @@ async function spinRuletaDorada() {
     } catch (err) {
         console.error("Error guardando premio dorado:", err);
     }
-
+    window.tienePremioPendienteRuleta = true;   // Flag de emergencia
     window.premioActual = { premio: premioLimpio, codigo: codigo };
     window.codigoPremioActual = codigo;
 
