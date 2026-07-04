@@ -2097,7 +2097,6 @@ let ruletaPremios = [];
 let ruletaPremiosDorados = [];
 
 // === ABROR RULETA ===
-// === ABRIR RULETA (VERSIÓN CORREGIDA CON RACHA DINÁMICA) ===
 async function abrirRuleta() {
     if (!currentSubscriberId || !currentUsuario) {
         return alert("Error: No se detectó usuario o suscriptor");
@@ -2161,8 +2160,8 @@ async function abrirRuleta() {
             rachaSpan.textContent = `${rachaActual} / ${diasParaDorada}`;
         }
 
-        // === 5. Verificar SOLO premios pendientes de RULETA ===
-        const { data: premioPendienteRuleta } = await _supabase
+        // === 5. Verificar SOLO premios pendientes de RULETA (mejorado) ===
+        const { data: premioPendienteRuleta, error: errorPendiente } = await _supabase
             .from('premios_ruleta')
             .select('*')
             .eq('usuario', currentUsuario)
@@ -2173,9 +2172,10 @@ async function abrirRuleta() {
             .limit(1)
             .single();
 
-        if (premioPendienteRuleta) {
+        if (premioPendienteRuleta && !errorPendiente) {
             ruletaModal.style.display = 'none';
             premioPendienteActual = premioPendienteRuleta;
+            window.tienePremioPendienteRuleta = true;
             mostrarModalPremioPendiente();
             return;
         }
@@ -2293,6 +2293,13 @@ async function spinRuleta() {
     const wheel = document.getElementById('ruleta-wheel');
     const btn = document.getElementById('btn-spin');
 
+    // === GUARDIA CLIENT-SIDE: Bloquea si ya hay premio pendiente ===
+    if (premioPendienteActual || window.tienePremioPendienteRuleta) {
+        document.getElementById('modal-ruleta').style.display = 'none';
+        mostrarModalPremioPendiente();
+        return;
+    }
+
     if (!btn || btn.disabled) return;
 
     btn.disabled = true;
@@ -2316,6 +2323,22 @@ async function spinRuleta() {
             created_at: new Date().toISOString()
         });
 
+        // === NUEVO: Marcar premio pendiente inmediatamente (client-side) ===
+        premioPendienteActual = {
+            premio: premioLimpio,
+            codigo: codigo,
+            estado: "pendiente",
+            origen: "ruleta"
+        };
+        window.tienePremioPendienteRuleta = true;
+
+        // Actualizar ultima_ruleta para que el cooldown de 24hs funcione
+        await _supabase
+            .from('usuarios')
+            .update({ ultima_ruleta: new Date().toISOString() })
+            .eq('username', currentUsuario)
+            .eq('subscriber_id', currentSubscriberId);
+
         window.premioActual = { premio: premioLimpio, codigo: codigo };
         window.codigoPremioActual = codigo;
 
@@ -2327,7 +2350,7 @@ async function spinRuleta() {
         wheel.style.transition = 'transform 5.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
         wheel.style.transform = `rotate(${totalRotation}deg)`;
 
-        // Reset del botón garantizado
+        // Después de la animación: mostrar premio ganado + dejar botón deshabilitado
         setTimeout(() => {
             try {
                 mostrarPremioGanado(premioLimpio, codigo);
@@ -2335,10 +2358,10 @@ async function spinRuleta() {
                 console.error("Error en mostrarPremioGanado:", e);
             }
 
-            // Siempre reseteamos el botón
+            // NO re-habilitamos el botón. Queda deshabilitado hasta que se resuelva el pendiente.
             if (btn) {
-                btn.disabled = false;
-                btn.innerText = "🎲 GIRAR RULETA";
+                btn.disabled = true;
+                btn.innerText = "PREMIO PENDIENTE";
             }
         }, 5400);
 
@@ -2353,11 +2376,18 @@ async function spinRuleta() {
         }
     }
 }
-
+  
 // === GIRAR RULETA DORADA ===
 async function spinRuletaDorada() {
     const wheel = document.getElementById('ruleta-wheel-dorada');
     if (!wheel) return;
+
+    // === GUARDIA CLIENT-SIDE: Bloquea si ya hay premio pendiente ===
+    if (premioPendienteActual || window.tienePremioPendienteRuleta) {
+        document.getElementById('modal-ruleta-dorada').style.display = 'none';
+        mostrarModalPremioPendiente();
+        return;
+    }
 
     const centerBtn = wheel.parentElement.querySelector('div[onclick]');
     if (centerBtn) centerBtn.style.pointerEvents = 'none';
@@ -2375,8 +2405,26 @@ async function spinRuletaDorada() {
             premio: premioLimpio,
             codigo: codigo,
             estado: "pendiente",
+            origen: "ruleta",                    // ← Agregado para que el chequeo de pendiente lo detecte
             created_at: new Date().toISOString()
         });
+
+        // === NUEVO: Marcar premio pendiente inmediatamente (client-side) ===
+        premioPendienteActual = {
+            premio: premioLimpio,
+            codigo: codigo,
+            estado: "pendiente",
+            origen: "ruleta"
+        };
+        window.tienePremioPendienteRuleta = true;
+
+        // Actualizar ultima_ruleta para que el cooldown de 24hs funcione
+        await _supabase
+            .from('usuarios')
+            .update({ ultima_ruleta: new Date().toISOString() })
+            .eq('username', currentUsuario)
+            .eq('subscriber_id', currentSubscriberId);
+
     } catch (err) {
         console.error("Error guardando premio dorado:", err);
     }
@@ -2490,6 +2538,10 @@ function abrirChatwootDesdePendiente() {
 
 function hideModalPremioPendiente() {
     document.getElementById('modal-premio-pendiente').style.display = 'none';
+    // Por si el usuario cierra el modal sin reclamar (defensivo)
+    // El flag se volverá a setear en la próxima apertura de ruleta si sigue pendiente en DB
+    premioPendienteActual = null;
+    window.tienePremioPendienteRuleta = false;
 }
 
     // ==================== COOLDOWN 24HS ====================
@@ -2558,6 +2610,9 @@ function copiarCodigoDorado() {
 
 function reclamarPremio() {
     hideModalPremio();
+    // Limpiamos flag client-side (el registro en DB queda pendiente hasta que soporte lo gestione)
+    premioPendienteActual = null;
+    window.tienePremioPendienteRuleta = false;
     if (window.$chatwoot) window.$chatwoot.toggle("open");
 }
 
