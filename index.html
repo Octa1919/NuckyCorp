@@ -2744,7 +2744,7 @@ async function configurarOneSignalUsuario(reintento = 0) {
             console.warn("Tags básicos fallaron:", e);
         }
 
-        // 3. Tags de etiquetas (con manejo suave)
+        // 3. Tags de etiquetas + Diagnóstico
         try {
             const { data: userData } = await _supabase
                 .from('usuarios')
@@ -2763,6 +2763,15 @@ async function configurarOneSignalUsuario(reintento = 0) {
                 if (Object.keys(etiquetaTags).length > 0) {
                     await OneSignal.User.addTags(etiquetaTags);
                     console.log("%c[OneSignal] Etiquetas seteadas correctamente", "color:#22c55e", Object.keys(etiquetaTags));
+
+                    // === DIAGNÓSTICO TEMPORAL ===
+                    try {
+                        const currentTags = await OneSignal.User.getTags();
+                        console.log("%c[OneSignal] === TAGS ACTUALES DEL USUARIO ===", "color:#a855f7");
+                        console.log(currentTags);
+                    } catch (e) {
+                        console.warn("No se pudieron leer los tags actuales:", e);
+                    }
                 }
             }
         } catch (e) {
