@@ -2723,20 +2723,21 @@ function instalarDesdeModalRuleta() {
     instalarApp(); // Reutiliza la función que ya tenemos
 }
 
-// ==================== ONE SIGNAL - CONFIGURACIÓN ROBUSTA ====================
 // ==================== ONE SIGNAL - CONFIGURACIÓN ROBUSTA (VERSIÓN SEGURA) ====================
 async function configurarOneSignalUsuario(reintento = 0) {
-    const MAX_REINTENTOS = 3;
+    const MAX_REINTENTOS = 4;
 
     try {
         if (typeof OneSignal === "undefined") {
-            console.warn("OneSignal aún no está cargado");
+            if (reintento < MAX_REINTENTOS) {
+                setTimeout(() => configurarOneSignalUsuario(reintento + 1), 2000);
+            }
             return;
         }
 
         const externalUserId = `${currentUsuario}__${currentSubscriberId}`;
 
-        // Login del usuario
+        // Login en OneSignal
         await OneSignal.login(externalUserId);
 
         // Tags básicos
@@ -2746,47 +2747,48 @@ async function configurarOneSignalUsuario(reintento = 0) {
             app_type: "saas"
         });
 
-        console.log("✅ OneSignal login exitoso para:", externalUserId);
-
-        // === CHEQUEO SEGURO DEL ESTADO DE SUSCRIPCIÓN ===
-        let isOptedIn = false;
-
+        // === NUEVO: Cargar y setear etiquetas del usuario ===
         try {
-            // Esperamos un poco por si pushSubscription aún no está disponible
-            if (OneSignal.User && OneSignal.User.pushSubscription) {
-                isOptedIn = await OneSignal.User.pushSubscription.optedIn;
+            const { data: userData } = await _supabase
+                .from('usuarios')
+                .select('etiquetas')
+                .eq('username', currentUsuario)
+                .eq('subscriber_id', currentSubscriberId)
+                .single();
+
+            if (userData?.etiquetas && Array.isArray(userData.etiquetas)) {
+                const etiquetaTags = {};
+                userData.etiquetas.forEach(nombre => {
+                    const tagName = `etiqueta_${nombre.replace(/\s+/g, "_")}`;
+                    etiquetaTags[tagName] = "true";
+                });
+
+                if (Object.keys(etiquetaTags).length > 0) {
+                    await OneSignal.User.addTags(etiquetaTags);
+                    console.log("✅ Etiquetas seteadas en OneSignal:", Object.keys(etiquetaTags));
+                }
             }
         } catch (e) {
-            console.warn("No se pudo leer el estado de suscripción todavía:", e);
+            console.warn("No se pudieron cargar las etiquetas del usuario:", e);
         }
 
-        if (isOptedIn) {
-            console.log("%c[OneSignal] El usuario ya tiene notificaciones activas", "color:#22c55e");
-            await OneSignal.User.addTag("notifications_enabled", "true");
-            return;
-        }
+        console.log("✅ OneSignal configurado correctamente para:", externalUserId);
 
-        // Intentar activar notificaciones
+        // Activar notificaciones si no las tiene
         try {
-            if (OneSignal.User && OneSignal.User.pushSubscription) {
+            const isOptedIn = await OneSignal.User.pushSubscription.optedIn;
+            if (!isOptedIn) {
                 await OneSignal.User.pushSubscription.optIn();
-                console.log("%c[OneSignal] Notificaciones activadas", "color:#22c55e");
-                await OneSignal.User.addTag("notifications_enabled", "true");
             }
-        } catch (optInError) {
-            console.warn("Error al activar notificaciones:", optInError);
-
-            if (reintento < MAX_REINTENTOS) {
-                console.log(`Reintentando... (${reintento + 1}/${MAX_REINTENTOS})`);
-                setTimeout(() => configurarOneSignalUsuario(reintento + 1), 2500);
-            }
+            await OneSignal.User.addTag("notifications_enabled", "true");
+        } catch (e) {
+            console.warn("No se pudo activar suscripción:", e);
         }
 
     } catch (error) {
-        console.error("Error general en configurarOneSignalUsuario():", error);
-
+        console.error("Error en configurarOneSignalUsuario():", error);
         if (reintento < MAX_REINTENTOS) {
-            setTimeout(() => configurarOneSignalUsuario(reintento + 1), 3000);
+            setTimeout(() => configurarOneSignalUsuario(reintento + 1), 3500);
         }
     }
 }
