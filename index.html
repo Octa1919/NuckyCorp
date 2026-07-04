@@ -2764,6 +2764,7 @@ async function configurarOneSignalUsuario(reintento = 0) {
                 });
 
                 if (Object.keys(etiquetaTags).length > 0) {
+                    console.log("%c[OneSignal] Tags de etiquetas que se van a enviar:", "color:#f59e0b", etiquetaTags);
                     await OneSignal.User.addTags(etiquetaTags);
                     console.log("✅ Etiquetas seteadas en OneSignal:", Object.keys(etiquetaTags));
                 }
