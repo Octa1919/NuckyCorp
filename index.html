@@ -1370,6 +1370,7 @@ async function loginJugador() {
             verificarYMostrarTrivia();
         }, 400);
 
+
         if (data.suscriptores?.chatwoot_website_token) {
             inicializarChatwoot(data.suscriptores.chatwoot_website_token, data.suscriptores.chatwoot_hmac_secret);
         }
@@ -1382,6 +1383,9 @@ async function loginJugador() {
         hideLoadingScreen();
         alert("Ocurrió un error al iniciar sesión.");
     }
+    setTimeout(() => {
+      configurarOneSignalUsuario();
+    }, 600);
 }
   
     // ==================== VERIFICAR ESTADO DE LA CUENTA (ACTIVO / SUSPENDIDO) ====================
