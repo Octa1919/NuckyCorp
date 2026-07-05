@@ -2725,60 +2725,29 @@ function instalarDesdeModalRuleta() {
 
 // ==================== ONE SIGNAL - CONFIGURACIÓN ROBUSTA (VERSIÓN SEGURA) ====================
 async function configurarOneSignalUsuario(reintento = 0) {
+    const MAX_REINTENTOS = 3;
+
     try {
-        if (typeof OneSignal === "undefined") return;
+        if (typeof OneSignal === "undefined") {
+            if (reintento < MAX_REINTENTOS) {
+                setTimeout(() => configurarOneSignalUsuario(reintento + 1), 2500);
+            }
+            return;
+        }
 
         const externalUserId = `${currentUsuario}__${currentSubscriberId}`;
 
-        // 1. Login
-        await OneSignal.login(externalUserId).catch(() => {});
+        // Login principal
+        await OneSignal.login(externalUserId);
 
-        // 2. Tags básicos
-        try {
-            await OneSignal.User.addTags({
-                subscriber_id: currentSubscriberId,
-                username: currentUsuario,
-                app_type: "saas"
-            });
-        } catch (e) {
-            console.warn("Tags básicos fallaron:", e);
-        }
+        // Tags básicos
+        await OneSignal.User.addTags({
+            subscriber_id: currentSubscriberId,
+            username: currentUsuario,
+            app_type: "saas"
+        }).catch(() => {});
 
-        // 3. Tags de etiquetas + Diagnóstico
-        try {
-            const { data: userData } = await _supabase
-                .from('usuarios')
-                .select('etiquetas')
-                .eq('username', currentUsuario)
-                .eq('subscriber_id', currentSubscriberId)
-                .single();
-
-            if (userData?.etiquetas && Array.isArray(userData.etiquetas) && userData.etiquetas.length > 0) {
-                const etiquetaTags = {};
-                userData.etiquetas.forEach(nombre => {
-                    const tagName = `etiqueta_${nombre.replace(/\s+/g, "_")}`;
-                    etiquetaTags[tagName] = "true";
-                });
-
-                if (Object.keys(etiquetaTags).length > 0) {
-                    await OneSignal.User.addTags(etiquetaTags);
-                    console.log("%c[OneSignal] Etiquetas seteadas correctamente", "color:#22c55e", Object.keys(etiquetaTags));
-
-                    // === DIAGNÓSTICO TEMPORAL ===
-                    try {
-                        const currentTags = await OneSignal.User.getTags();
-                        console.log("%c[OneSignal] === TAGS ACTUALES DEL USUARIO ===", "color:#a855f7");
-                        console.log(currentTags);
-                    } catch (e) {
-                        console.warn("No se pudieron leer los tags actuales:", e);
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn("No se pudieron setear etiquetas:", e);
-        }
-
-        // 4. Activar notificaciones (con chequeo seguro)
+        // Activar notificaciones de forma segura
         try {
             if (OneSignal.User && OneSignal.User.pushSubscription) {
                 const optedIn = await OneSignal.User.pushSubscription.optedIn;
@@ -2790,12 +2759,12 @@ async function configurarOneSignalUsuario(reintento = 0) {
             console.warn("No se pudo activar suscripción:", e);
         }
 
-        console.log("✅ OneSignal configurado para:", externalUserId);
+        console.log("%c✅ OneSignal configurado correctamente para:", "color:#22c55e", externalUserId);
 
     } catch (error) {
         console.error("Error en configurarOneSignalUsuario():", error);
-        if (reintento < 2) {
-            setTimeout(() => configurarOneSignalUsuario(reintento + 1), 5000);
+        if (reintento < MAX_REINTENTOS) {
+            setTimeout(() => configurarOneSignalUsuario(reintento + 1), 4000);
         }
     }
 }
