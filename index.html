@@ -1370,7 +1370,6 @@ async function loginJugador() {
             verificarYMostrarTrivia();
         }, 400);
 
-
         if (data.suscriptores?.chatwoot_website_token) {
             inicializarChatwoot(data.suscriptores.chatwoot_website_token, data.suscriptores.chatwoot_hmac_secret);
         }
@@ -1383,9 +1382,6 @@ async function loginJugador() {
         hideLoadingScreen();
         alert("Ocurrió un error al iniciar sesión.");
     }
-    setTimeout(() => {
-      configurarOneSignalUsuario();
-    }, 600);
 }
   
     // ==================== VERIFICAR ESTADO DE LA CUENTA (ACTIVO / SUSPENDIDO) ====================
@@ -2727,86 +2723,70 @@ function instalarDesdeModalRuleta() {
     instalarApp(); // Reutiliza la función que ya tenemos
 }
 
+// ==================== ONE SIGNAL - CONFIGURACIÓN ROBUSTA ====================
 // ==================== ONE SIGNAL - CONFIGURACIÓN ROBUSTA (VERSIÓN SEGURA) ====================
 async function configurarOneSignalUsuario(reintento = 0) {
-    const MAX_REINTENTOS = 2;
+    const MAX_REINTENTOS = 3;
 
     try {
         if (typeof OneSignal === "undefined") {
-            console.warn("OneSignal no está cargado todavía");
+            console.warn("OneSignal aún no está cargado");
             return;
         }
 
         const externalUserId = `${currentUsuario}__${currentSubscriberId}`;
-        console.log("Intentando configurar OneSignal para:", externalUserId);
 
-        // 1. Login
-        await OneSignal.login(externalUserId).catch(() => {});
+        // Login del usuario
+        await OneSignal.login(externalUserId);
 
-        // 2. Tags básicos
+        // Tags básicos
+        await OneSignal.User.addTags({
+            subscriber_id: currentSubscriberId,
+            username: currentUsuario,
+            app_type: "saas"
+        });
+
+        console.log("✅ OneSignal login exitoso para:", externalUserId);
+
+        // === CHEQUEO SEGURO DEL ESTADO DE SUSCRIPCIÓN ===
+        let isOptedIn = false;
+
         try {
-            await OneSignal.User.addTags({
-                subscriber_id: currentSubscriberId,
-                username: currentUsuario,
-                app_type: "saas"
-            });
-        } catch (e) {
-            console.warn("No se pudieron setear tags básicos:", e);
-        }
-
-        // 3. Tags de etiquetas (leídos de la base de datos)
-        try {
-            const { data: userData } = await _supabase
-                .from('usuarios')
-                .select('etiquetas')
-                .eq('username', currentUsuario)
-                .eq('subscriber_id', currentSubscriberId)
-                .single();
-
-            if (userData?.etiquetas && Array.isArray(userData.etiquetas) && userData.etiquetas.length > 0) {
-                const etiquetaTags = {};
-
-                userData.etiquetas.forEach(nombre => {
-                    const tagName = `etiqueta_${nombre.replace(/\s+/g, "_")}`;
-                    etiquetaTags[tagName] = "true";
-                });
-
-                if (Object.keys(etiquetaTags).length > 0) {
-                    await OneSignal.User.addTags(etiquetaTags);
-                    console.log("%c[OneSignal] Etiquetas seteadas:", "color:#22c55e", Object.keys(etiquetaTags));
-
-                    // Diagnóstico: ver qué tags tiene realmente el usuario
-                    try {
-                        const currentTags = await OneSignal.User.getTags();
-                        console.log("%c[OneSignal] Tags actuales del usuario:", "color:#a855f7", currentTags);
-                    } catch (e) {
-                        console.warn("No se pudieron leer los tags actuales:", e);
-                    }
-                }
+            // Esperamos un poco por si pushSubscription aún no está disponible
+            if (OneSignal.User && OneSignal.User.pushSubscription) {
+                isOptedIn = await OneSignal.User.pushSubscription.optedIn;
             }
         } catch (e) {
-            console.warn("No se pudieron setear tags de etiquetas:", e);
+            console.warn("No se pudo leer el estado de suscripción todavía:", e);
         }
 
-        // 4. Forzar activación de notificaciones
+        if (isOptedIn) {
+            console.log("%c[OneSignal] El usuario ya tiene notificaciones activas", "color:#22c55e");
+            await OneSignal.User.addTag("notifications_enabled", "true");
+            return;
+        }
+
+        // Intentar activar notificaciones
         try {
             if (OneSignal.User && OneSignal.User.pushSubscription) {
-                const optedIn = await OneSignal.User.pushSubscription.optedIn;
-                if (!optedIn) {
-                    await OneSignal.User.pushSubscription.optIn();
-                    console.log("%c[OneSignal] Notificaciones activadas (optIn)", "color:#22c55e");
-                }
+                await OneSignal.User.pushSubscription.optIn();
+                console.log("%c[OneSignal] Notificaciones activadas", "color:#22c55e");
+                await OneSignal.User.addTag("notifications_enabled", "true");
             }
-        } catch (e) {
-            console.warn("No se pudo activar suscripción:", e);
+        } catch (optInError) {
+            console.warn("Error al activar notificaciones:", optInError);
+
+            if (reintento < MAX_REINTENTOS) {
+                console.log(`Reintentando... (${reintento + 1}/${MAX_REINTENTOS})`);
+                setTimeout(() => configurarOneSignalUsuario(reintento + 1), 2500);
+            }
         }
 
-        console.log("%c✅ OneSignal configurado correctamente", "color:#22c55e");
-
     } catch (error) {
-        console.error("Error en configurarOneSignalUsuario():", error);
+        console.error("Error general en configurarOneSignalUsuario():", error);
+
         if (reintento < MAX_REINTENTOS) {
-            setTimeout(() => configurarOneSignalUsuario(reintento + 1), 4500);
+            setTimeout(() => configurarOneSignalUsuario(reintento + 1), 3000);
         }
     }
 }
