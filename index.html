@@ -2725,45 +2725,38 @@ function instalarDesdeModalRuleta() {
 
 // ==================== ONE SIGNAL - CONFIGURACIÓN ROBUSTA (VERSIÓN SEGURA) ====================
 async function configurarOneSignalUsuario(reintento = 0) {
-    const MAX_REINTENTOS = 3;
-
     try {
         if (typeof OneSignal === "undefined") {
-            if (reintento < MAX_REINTENTOS) {
-                setTimeout(() => configurarOneSignalUsuario(reintento + 1), 2500);
-            }
+            console.warn("OneSignal no está cargado todavía");
             return;
         }
 
         const externalUserId = `${currentUsuario}__${currentSubscriberId}`;
+        console.log("Intentando configurar OneSignal para:", externalUserId);
 
-        // Login principal
         await OneSignal.login(externalUserId);
 
-        // Tags básicos
         await OneSignal.User.addTags({
             subscriber_id: currentSubscriberId,
             username: currentUsuario,
             app_type: "saas"
-        }).catch(() => {});
+        });
 
-        // Activar notificaciones de forma segura
-        try {
-            if (OneSignal.User && OneSignal.User.pushSubscription) {
-                const optedIn = await OneSignal.User.pushSubscription.optedIn;
-                if (!optedIn) {
-                    await OneSignal.User.pushSubscription.optIn();
-                }
+        // Forzar activación de notificaciones
+        if (OneSignal.User && OneSignal.User.pushSubscription) {
+            try {
+                await OneSignal.User.pushSubscription.optIn();
+                console.log("%c[OneSignal] optIn() ejecutado", "color:#22c55e");
+            } catch (e) {
+                console.warn("optIn() falló:", e);
             }
-        } catch (e) {
-            console.warn("No se pudo activar suscripción:", e);
         }
 
-        console.log("%c✅ OneSignal configurado correctamente para:", "color:#22c55e", externalUserId);
+        console.log("%c✅ OneSignal configurado correctamente", "color:#22c55e");
 
     } catch (error) {
         console.error("Error en configurarOneSignalUsuario():", error);
-        if (reintento < MAX_REINTENTOS) {
+        if (reintento < 2) {
             setTimeout(() => configurarOneSignalUsuario(reintento + 1), 4000);
         }
     }
