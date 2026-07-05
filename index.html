@@ -2723,70 +2723,88 @@ function instalarDesdeModalRuleta() {
     instalarApp(); // Reutiliza la función que ya tenemos
 }
 
-// ==================== ONE SIGNAL - CONFIGURACIÓN ROBUSTA ====================
-// ==================== ONE SIGNAL - CONFIGURACIÓN ROBUSTA (VERSIÓN SEGURA) ====================
+// ==================== ONE SIGNAL - CONFIGURACIÓN ROBUSTA (VERSIÓN MEJORADA) ====================
 async function configurarOneSignalUsuario(reintento = 0) {
-    const MAX_REINTENTOS = 3;
+    const MAX_REINTENTOS = 4;
+    const externalUserId = `${currentUsuario}__${currentSubscriberId}`;
 
     try {
         if (typeof OneSignal === "undefined") {
-            console.warn("OneSignal aún no está cargado");
+            console.warn("[OneSignal] SDK aún no está disponible");
+            if (reintento < MAX_REINTENTOS) {
+                setTimeout(() => configurarOneSignalUsuario(reintento + 1), 1800);
+            }
             return;
         }
 
-        const externalUserId = `${currentUsuario}__${currentSubscriberId}`;
+        // === PASO 1: Verificar si ya estamos logueados con el usuario correcto ===
+        let currentOneSignalId = null;
+        try {
+            if (OneSignal.User && typeof OneSignal.User.getOnesignalId === "function") {
+                currentOneSignalId = await OneSignal.User.getOnesignalId();
+            }
+        } catch (e) {
+            // Ignoramos error si aún no hay ID
+        }
 
-        // Login del usuario
+        // === PASO 2: Si hay un usuario distinto logueado → hacemos logout primero ===
+        if (currentOneSignalId && currentOneSignalId !== externalUserId) {
+            console.log("%c[OneSignal] Usuario anterior detectado. Haciendo logout...", "color:#f59e0b");
+            try {
+                await OneSignal.logout();
+                await new Promise(resolve => setTimeout(resolve, 600)); // Pequeña pausa para que el SDK se estabilice
+            } catch (logoutErr) {
+                console.warn("[OneSignal] Error en logout (puede ser normal):", logoutErr);
+            }
+        }
+
+        // === PASO 3: Login con el usuario actual ===
+        console.log("%c[OneSignal] Ejecutando login con:", "color:#67e8f9", externalUserId);
         await OneSignal.login(externalUserId);
 
-        // Tags básicos
+        // === PASO 4: Tags básicos ===
         await OneSignal.User.addTags({
             subscriber_id: currentSubscriberId,
             username: currentUsuario,
             app_type: "saas"
         });
 
-        console.log("✅ OneSignal login exitoso para:", externalUserId);
+        console.log("%c✅ OneSignal login exitoso para:", "color:#22c55e", externalUserId);
 
-        // === CHEQUEO SEGURO DEL ESTADO DE SUSCRIPCIÓN ===
+        // === PASO 5: Verificar y activar notificaciones si corresponde ===
         let isOptedIn = false;
-
         try {
-            // Esperamos un poco por si pushSubscription aún no está disponible
             if (OneSignal.User && OneSignal.User.pushSubscription) {
                 isOptedIn = await OneSignal.User.pushSubscription.optedIn;
             }
         } catch (e) {
-            console.warn("No se pudo leer el estado de suscripción todavía:", e);
+            console.warn("[OneSignal] No se pudo leer estado de suscripción todavía");
         }
 
         if (isOptedIn) {
-            console.log("%c[OneSignal] El usuario ya tiene notificaciones activas", "color:#22c55e");
             await OneSignal.User.addTag("notifications_enabled", "true");
-            return;
-        }
-
-        // Intentar activar notificaciones
-        try {
-            if (OneSignal.User && OneSignal.User.pushSubscription) {
-                await OneSignal.User.pushSubscription.optIn();
-                console.log("%c[OneSignal] Notificaciones activadas", "color:#22c55e");
-                await OneSignal.User.addTag("notifications_enabled", "true");
-            }
-        } catch (optInError) {
-            console.warn("Error al activar notificaciones:", optInError);
-
-            if (reintento < MAX_REINTENTOS) {
-                console.log(`Reintentando... (${reintento + 1}/${MAX_REINTENTOS})`);
-                setTimeout(() => configurarOneSignalUsuario(reintento + 1), 2500);
+            console.log("%c[OneSignal] Usuario ya tiene notificaciones activas", "color:#22c55e");
+        } else {
+            try {
+                if (OneSignal.User && OneSignal.User.pushSubscription) {
+                    await OneSignal.User.pushSubscription.optIn();
+                    await OneSignal.User.addTag("notifications_enabled", "true");
+                    console.log("%c[OneSignal] Notificaciones activadas automáticamente", "color:#22c55e");
+                }
+            } catch (optInErr) {
+                console.warn("[OneSignal] No se pudo activar opt-in:", optInErr);
             }
         }
 
     } catch (error) {
-        console.error("Error general en configurarOneSignalUsuario():", error);
+        console.error(`❌ Error en configurarOneSignalUsuario() [intento ${reintento + 1}]:`, error);
 
         if (reintento < MAX_REINTENTOS) {
-            setTimeout(() => configurarOneSignalUsuario(reintento + 1), 3000);
+            const delay = 2200 + (reintento * 1200); // Delay progresivo
+            console.log(`[OneSignal] Reintentando en ${delay}ms...`);
+            setTimeout(() => configurarOneSignalUsuario(reintento + 1), delay);
+        } else {
+            console.error("[OneSignal] Se agotaron los reintentos. El usuario no quedó identificado en OneSignal.");
         }
     }
 }
