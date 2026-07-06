@@ -2034,11 +2034,14 @@ function abrirChatwoot() {
         if (!window.currentCBU) return alert("No hay CBU para copiar");
         navigator.clipboard.writeText(window.currentCBU).then(() => alert("✅ CBU copiado")).catch(() => alert("No se pudo copiar"));
     }
-    function copiarAliasJugador(alias) {
-        if (!alias) return;
-        navigator.clipboard.writeText(alias)
-            .then(() => alert("✅ Alias copiado"))
-            .catch(() => alert("No se pudo copiar"));
+    function copiarAliasJugador() {
+      if (!window.currentAlias) {
+          return alert("No hay Alias para copiar");
+      }
+    
+      navigator.clipboard.writeText(window.currentAlias)
+          .then(() => alert("✅ Alias copiado"))
+          .catch(() => alert("No se pudo copiar"));
     }
     function enviarComprobante() {
         hideCargarSaldoModal();
