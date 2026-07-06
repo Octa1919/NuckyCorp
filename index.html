@@ -1370,6 +1370,10 @@ async function loginJugador() {
             verificarYMostrarTrivia();
         }, 400);
 
+        setTimeout(() => {
+            configurarOneSignalUsuario();
+        }, 1200);   // ← Aumentado también
+
         if (data.suscriptores?.chatwoot_website_token) {
             inicializarChatwoot(data.suscriptores.chatwoot_website_token, data.suscriptores.chatwoot_hmac_secret);
         }
