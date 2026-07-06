@@ -1931,7 +1931,7 @@ function abrirChatwoot() {
         }, 500);
     }
     
-       async function cargarSaldo() {
+    async function cargarSaldo() {
         if (!currentSubscriberId) return alert("Error: No se detectó suscriptor");
 
         const modal = document.getElementById('modal-cargar-saldo');
@@ -1951,7 +1951,7 @@ function abrirChatwoot() {
         try {
             const { data, error } = await _supabase
                 .from('cbus')
-                .select('banco, alias_nombre, cbu')
+                .select('banco, alias_nombre, cbu, alias')   // ← Agregamos 'alias'
                 .eq('subscriber_id', currentSubscriberId)
                 .eq('activo', true)
                 .single();
@@ -1971,15 +1971,40 @@ function abrirChatwoot() {
                 return;
             }
 
-            // Mostramos el CBU fresco
+            // Guardamos los datos para las funciones de copiar
+            window.currentCBU = data.cbu;
+            window.currentAlias = data.alias || null;
+
+            // === RENDERIZADO ACTUALIZADO CON ALIAS ===
             content.innerHTML = `
                 <div style="background:#111827; padding:22px; border-radius:16px; margin-bottom:24px;">
-                    <div style="font-size:1.3rem; line-height:1.9;">
+                
+                    <div style="font-size:1.3rem; line-height:1.9; margin-bottom:12px;">
                         <strong style="color:#67e8f9;">Banco:</strong> ${data.banco || "—"}<br>
                         <strong style="color:#67e8f9;">Titular:</strong> ${data.alias_nombre || "—"}
                     </div>
-                    <div style="margin-top:16px; font-size:1.32rem; font-weight:700; color:#a5f3fc; text-align:center; background:#0f172a; padding:14px; border-radius:10px;">
-                        ${data.cbu}
+
+                    <!-- NUEVO: Alias corto destacado y fácil de copiar -->
+                    ${data.alias ? `
+                        <div style="margin: 14px 0 8px 0;">
+                            <div style="color:#94a3b8; font-size:0.95rem; margin-bottom:6px; font-weight:500;">Alias (fácil de copiar)</div>
+                            <div onclick="copiarAliasJugador()" 
+                                 style="background:#0f172a; border: 2px dashed #22d3ee; border-radius:12px; padding:16px; 
+                                        text-align:center; font-size:1.4rem; font-weight:700; color:#67e8f9; cursor:pointer; user-select:none;">
+                                ${data.alias}
+                                <span style="font-size:1rem; margin-left:10px; color:#64748b;">📋</span>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- CBU -->
+                    <div style="margin-top:12px;">
+                        <div style="color:#94a3b8; font-size:0.95rem; margin-bottom:6px; font-weight:500;">CBU</div>
+                        <div onclick="copiarCBU()" 
+                             style="margin-top:4px; font-size:1.32rem; font-weight:700; color:#a5f3fc; text-align:center; 
+                                    background:#0f172a; padding:16px; border-radius:10px; cursor:pointer; user-select:none;">
+                            ${data.cbu}
+                        </div>
                     </div>
                 </div>
 
@@ -1991,8 +2016,6 @@ function abrirChatwoot() {
                     📸 Enviar comprobante
                 </button>
             `;
-
-            window.currentCBU = data.cbu;
 
         } catch (err) {
             console.error("Error al cargar CBU:", err);
@@ -2010,6 +2033,12 @@ function abrirChatwoot() {
      function copiarCBU() {
         if (!window.currentCBU) return alert("No hay CBU para copiar");
         navigator.clipboard.writeText(window.currentCBU).then(() => alert("✅ CBU copiado")).catch(() => alert("No se pudo copiar"));
+    }
+    function copiarAliasJugador(alias) {
+        if (!alias) return;
+        navigator.clipboard.writeText(alias)
+            .then(() => alert("✅ Alias copiado"))
+            .catch(() => alert("No se pudo copiar"));
     }
     function enviarComprobante() {
         hideCargarSaldoModal();
