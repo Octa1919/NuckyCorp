@@ -1563,7 +1563,7 @@ function iniciarSuscripcionEstadoCuenta() {
     // ==================== RECUPERAR DATOS ====================
     async function recuperarDatos() {
         const subscriberParam = getSubscriberFromUrl();
-        let whatsapp = "5492478425018";
+        let whatsapp = "0";
         if (subscriberParam) {
             const { data } = await _supabase
                 .from('suscriptores')
@@ -1683,7 +1683,7 @@ async function detectarPlanPremium() {
         if (menu) menu.style.right = '-100%';
 
         // Obtenemos el whatsapp del suscriptor
-        let whatsapp = "5492478425018";
+        let whatsapp = "0";
         if (currentSubscriberId) {
             const { data } = await _supabase
                 .from('suscriptores')
