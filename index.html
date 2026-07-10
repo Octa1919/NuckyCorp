@@ -1649,13 +1649,22 @@ async function detectarPlanPremium() {
             return alert("La contraseña debe contener al menos una mayúscula, una minúscula y un número");
         }
 
-        const { error } = await _supabase
-            .from('usuarios')
-            .update({ password: nuevaPass })
-            .eq('username', currentUsuario)
-            .eq('subscriber_id', currentSubscriberId);
+        let data;
+        try {
+            const resp = await fetch(`${SUPABASE_URL}/functions/v1/guardar-password-jugador`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario, nueva_password: nuevaPass })
+            });
+            data = await resp.json();
+        } catch (e) {
+            return alert("Error de conexión. Intentá nuevamente.");
+        }
 
-        if (error) alert("Error al guardar: " + error.message);
+        if (!data.success) alert("Error al guardar: " + (data.error || ''));
         else {
             alert("✅ Tu contraseña ha sido actualizada correctamente");
             hidePerfilModal();
@@ -3162,40 +3171,19 @@ async function crearNuevoUsuario() {
         const ip = await obtenerIP();
         console.log("IP obtenida:", ip);
 
-        // Verificar si ya existe un usuario con la misma IP + mismo suscriptor
-        if (ip) {
-            const { data: usuariosExistentes, error: errorCheck } = await _supabase
-                .from('usuarios')
-                .select('id')
-                .eq('subscriber_id', subscriberId)
-                .eq('ultima_ip', ip);
-
-            if (errorCheck) {
-                console.error("Error al verificar IP duplicada:", errorCheck);
-            }
-
-            console.log("Usuarios existentes con misma IP:", usuariosExistentes);
-
-            if (usuariosExistentes && usuariosExistentes.length > 0) {
-                return alert("Ya tienes un usuario registrado desde este dispositivo con este agente.");
-            }
-        }
-
-        // Crear el usuario
-        const { error } = await _supabase.from('usuarios').insert({
-            username: username,
-            password: password,
-            subscriber_id: subscriberId,
-            ultima_ip: ip || null,
-            created_at: new Date().toISOString()
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/crear-usuario-jugador`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password, subscriber_id: subscriberId, ip: ip || null })
         });
+        const data = await resp.json();
 
-        if (error) {
-            console.error("Error al insertar usuario:", error);
-            if (error.code === '23505') {
-                return alert("Ese nombre de usuario ya está en uso.");
-            }
-            return alert("Ocurrió un error al crear el usuario.");
+        if (!data.success) {
+            console.error("Error al crear usuario:", data.error);
+            return alert(data.error || "Ocurrió un error al crear el usuario.");
         }
 
         alert("✅ Usuario creado correctamente");
