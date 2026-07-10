@@ -1396,11 +1396,15 @@ async function verificarEstadoCuenta() {
     }
 
     try {
-        const { data: susUser } = await _supabase
-            .from('suscriptores_users')
-            .select('activo')
-            .eq('subscriber_id', currentSubscriberId)
-            .single();
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/estado-cuenta-suscriptor`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ subscriber_id: currentSubscriberId })
+        });
+        const susUser = await resp.json();
 
         cuentaActiva = susUser?.activo === true;
 
@@ -1452,17 +1456,12 @@ function iniciarSuscripcionPlanJugador() {
     suscripcionPlanJugador = _supabase
         .channel('plan-jugador-' + currentSubscriberId)
         .on(
-            'postgres_changes',
-            {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'suscriptores_users',
-                filter: `subscriber_id=eq.${currentSubscriberId}`
-            },
-            async (payload) => {
+            'broadcast',
+            { event: 'estado_actualizado' },
+            async ({ payload }) => {
                 console.log('%c[REALTIME] Cambio de plan detectado', 'color:#f59e0b', payload);
 
-                if (payload.new.plan_id !== payload.old.plan_id) {
+                if (payload.plan_id !== payload.old_plan_id) {
                     await detectarPlanPremium();
 
                     // Actualizar visualmente el botón de la ruleta
@@ -1485,18 +1484,13 @@ function iniciarSuscripcionEstadoCuenta() {
     suscripcionEstadoCuenta = _supabase
         .channel('estado-cuenta-' + currentSubscriberId)
         .on(
-            'postgres_changes',
-            {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'suscriptores_users',
-                filter: `subscriber_id=eq.${currentSubscriberId}`
-            },
-            async (payload) => {
+            'broadcast',
+            { event: 'estado_actualizado' },
+            async ({ payload }) => {
                 console.log('%c[REALTIME] Cambio de estado de cuenta detectado', 'color:#f59e0b', payload);
 
-                const estabaActiva = payload.old.activo;
-                const estaActivaAhora = payload.new.activo;
+                const estabaActiva = payload.old_activo;
+                const estaActivaAhora = payload.activo;
 
                 if (estabaActiva !== estaActivaAhora) {
                     
@@ -1587,23 +1581,17 @@ async function detectarPlanPremium() {
     if (!currentSubscriberId) return false;
 
     try {
-        // Paso 1: Obtener el plan_id del suscriptor
-        const { data: susUser } = await _supabase
-            .from('suscriptores_users')
-            .select('plan_id')
-            .eq('subscriber_id', currentSubscriberId)
-            .single();
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/plan-suscriptor`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ subscriber_id: currentSubscriberId })
+        });
+        const plan = await resp.json();
 
-        if (susUser?.plan_id) {
-            // Paso 2: Consultar la tabla planes
-            const { data: plan } = await _supabase
-                .from('planes')
-                .select('es_premium')
-                .eq('id', susUser.plan_id)
-                .single();
-
-            esPlanPremium = plan?.es_premium === true;
-        }
+        esPlanPremium = plan?.es_premium === true;
 
         console.log("%c[PLAN] ¿Es Plan Premium?:", "color:#22c55e", esPlanPremium);
         return esPlanPremium;
