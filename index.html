@@ -1306,25 +1306,23 @@ async function loginJugador() {
         // === PASO 1: Intentamos determinar el suscriptor esperado ===
         let expectedSubscriberId = subscriberIdInstalacion || getSubscriberFromUrl();
 
-        // === PASO 2: Query de login ===
-        // Si tenemos expectedSubscriberId, filtramos (más seguro)
-        // Si no lo tenemos (primera vez en App instalada), consultamos sin filtro
-        let query = _supabase
-            .from('usuarios')
-            .select('*, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color)')
-            .eq('username', username)
-            .eq('password', password);
+        // === PASO 2: Verificación de credenciales via Edge Function segura ===
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/login-jugador`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password, expected_subscriber_id: expectedSubscriberId || null })
+        });
+        const result = await resp.json();
 
-        if (expectedSubscriberId) {
-            query = query.eq('subscriber_id', expectedSubscriberId);
-        }
-
-        const { data, error } = await query.single();
-
-        if (error || !data) {
+        if (!resp.ok || !result.success) {
             hideLoadingScreen();
             return alert("Credenciales incorrectas o no pertenecen a este agente.");
         }
+
+        const data = result.data;
 
         // === PASO 3: Lógica de vinculación (igual que en seguridad.html) ===
         if (!subscriberIdInstalacion) {
