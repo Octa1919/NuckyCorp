@@ -2175,14 +2175,17 @@ async function abrirRuleta() {
     }
 
     // === 2. Verificar que tenga teléfono registrado ===
-    const { data: userTelefono, error: telError } = await _supabase
-        .from('usuarios')
-        .select('telefono')
-        .eq('username', currentUsuario)
-        .eq('subscriber_id', currentSubscriberId)
-        .single();
+    const respTelefono = await fetch(`${SUPABASE_URL}/functions/v1/obtener-telefono-jugador`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario })
+    });
+    const userTelefono = await respTelefono.json();
 
-    if (telError || !userTelefono?.telefono || !validarTelefonoArgentina(userTelefono.telefono)) {
+    if (!respTelefono.ok || !userTelefono?.telefono || !validarTelefonoArgentina(userTelefono.telefono)) {
         mostrarModalAgregarTelefono();
         return;
     }
@@ -3418,12 +3421,15 @@ async function iniciarTrivia(triviaId, boton) {
     if (introModal) introModal.remove();
 
     // === NUEVA VERIFICACIÓN DE TELÉFONO ===
-    const { data: userData } = await _supabase
-        .from('usuarios')
-        .select('telefono')
-        .eq('username', currentUsuario)
-        .eq('subscriber_id', currentSubscriberId)
-        .single();
+    const respTelefono = await fetch(`${SUPABASE_URL}/functions/v1/obtener-telefono-jugador`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario })
+    });
+    const userData = await respTelefono.json();
 
     if (!userData?.telefono || !validarTelefonoArgentina(userData.telefono)) {
         mostrarModalAgregarTelefono();
@@ -3814,13 +3820,23 @@ async function guardarTelefonoUsuario() {
     }
 
     // Guardamos en la base de datos
-    const { error } = await _supabase
-        .from('usuarios')
-        .update({ telefono: telefonoCompleto })
-        .eq('username', currentUsuario)
-        .eq('subscriber_id', currentSubscriberId);
+    let dataTelefono;
+    try {
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/guardar-telefono-jugador`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario, telefono: telefonoCompleto })
+        });
+        dataTelefono = await resp.json();
+    } catch (e) {
+        alert("Error al guardar el número. Intentá nuevamente.");
+        return;
+    }
 
-    if (error) {
+    if (!dataTelefono.success) {
         alert("Error al guardar el número. Intentá nuevamente.");
         return;
     }
