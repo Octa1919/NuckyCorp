@@ -2204,10 +2204,14 @@ async function abrirRuleta() {
     try {
         // === 4. Cargar datos en paralelo ===
         const [userData, subData] = await Promise.all([
-            _supabase.from('usuarios')
-                .select('racha_ruleta, ultima_ruleta')
-                .eq('username', currentUsuario)
-                .single(),
+            fetch(`${SUPABASE_URL}/functions/v1/racha-ruleta-jugador`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: currentUsuario })
+            }).then(r => r.json()).then(data => ({ data })),
 
             _supabase.from('suscriptores')
                 .select('dias_dorada, premios_normal, premios_dorada')
@@ -2397,11 +2401,14 @@ async function spinRuleta() {
         window.tienePremioPendienteRuleta = true;
 
         // Actualizar ultima_ruleta para que el cooldown de 24hs funcione
-        await _supabase
-            .from('usuarios')
-            .update({ ultima_ruleta: new Date().toISOString() })
-            .eq('username', currentUsuario)
-            .eq('subscriber_id', currentSubscriberId);
+        await fetch(`${SUPABASE_URL}/functions/v1/actualizar-ultima-ruleta-jugador`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario })
+        });
 
         window.premioActual = { premio: premioLimpio, codigo: codigo };
         window.codigoPremioActual = codigo;
@@ -2483,11 +2490,14 @@ async function spinRuletaDorada() {
         window.tienePremioPendienteRuleta = true;
 
         // Actualizar ultima_ruleta para que el cooldown de 24hs funcione
-        await _supabase
-            .from('usuarios')
-            .update({ ultima_ruleta: new Date().toISOString() })
-            .eq('username', currentUsuario)
-            .eq('subscriber_id', currentSubscriberId);
+        await fetch(`${SUPABASE_URL}/functions/v1/actualizar-ultima-ruleta-jugador`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario })
+        });
 
     } catch (err) {
         console.error("Error guardando premio dorado:", err);
