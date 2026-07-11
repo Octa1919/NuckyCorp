@@ -90,7 +90,9 @@ Deno.serve(async (req) => {
       : PREMIOS_DEFAULT;
 
     const winningIndex = Math.floor(Math.random() * 6);
-    const premio = (lista[winningIndex] || "Premio").replace(/\//g, " ");
+    // La flecha de la ruleta queda un casillero desfasada respecto al orden de la lista
+    const correctedIndex = (winningIndex - 1 + 6) % 6;
+    const premio = (lista[correctedIndex] || "Premio").replace(/\//g, " ");
     const codigo = generarCodigo();
 
     // 4. Guardamos el premio y actualizamos el cooldown
