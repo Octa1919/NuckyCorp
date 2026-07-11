@@ -2229,18 +2229,17 @@ async function abrirRuleta() {
         }
 
         // === 5. Verificar SOLO premios pendientes de RULETA (mejorado) ===
-        const { data: premioPendienteRuleta, error: errorPendiente } = await _supabase
-            .from('premios_ruleta')
-            .select('*')
-            .eq('usuario', currentUsuario)
-            .eq('subscriber_id', currentSubscriberId)
-            .eq('estado', 'pendiente')
-            .eq('origen', 'ruleta')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
+        const respPendiente = await fetch(`${SUPABASE_URL}/functions/v1/premio-ruleta-info-jugador`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario, estado: 'pendiente', origen: 'ruleta' })
+        });
+        const { data: premioPendienteRuleta } = await respPendiente.json();
 
-        if (premioPendienteRuleta && !errorPendiente) {
+        if (premioPendienteRuleta) {
             ruletaModal.style.display = 'none';
             premioPendienteActual = premioPendienteRuleta;
             window.tienePremioPendienteRuleta = true;
@@ -2545,21 +2544,17 @@ function mostrarPremioDorado(premio, codigo) {
 let premioPendienteActual = null;
 
 async function verificarPremioPendiente() {
-    const { data, error } = await _supabase
-        .from('premios_ruleta')
-        .select('id, premio, codigo, estado, origen, created_at, entregado_at')
-        .eq('usuario', currentUsuario)
-        .eq('subscriber_id', currentSubscriberId)
-        .eq('estado', 'pendiente')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/premio-ruleta-info-jugador`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario, estado: 'pendiente' })
+    });
+    const { data } = await resp.json();
 
-    if (error || !data) {
-        return null;
-    }
-
-    return data;
+    return data || null;
 }
 
 async function mostrarModalPremioPendiente() {
@@ -3391,7 +3386,15 @@ async function verificarYMostrarTrivia() {
             const horasPasadas = (ahora - new Date(ultimaInteraccion.respondida_en)) / (1000 * 60 * 60);
             if (horasPasadas >= horasCooldown) debeMostrar = true;
         } else if (ultimaInteraccion.respondida && ultimaInteraccion.es_correcta) {
-            const { data: ultimoPremio } = await _supabase.from('premios_ruleta').select('estado, entregado_at').eq('usuario', currentUsuario).eq('subscriber_id', currentSubscriberId).eq('origen', 'trivia').order('created_at', { ascending: false }).limit(1).single();
+            const respUltimoPremio = await fetch(`${SUPABASE_URL}/functions/v1/premio-ruleta-info-jugador`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario, origen: 'trivia' })
+            });
+            const { data: ultimoPremio } = await respUltimoPremio.json();
             if (ultimoPremio?.estado === 'entregado' && ultimoPremio.entregado_at) {
                 const horasPasadas = (ahora - new Date(ultimoPremio.entregado_at)) / (1000 * 60 * 60);
                 if (horasPasadas >= horasCooldown) debeMostrar = true;
