@@ -1944,14 +1944,17 @@ function abrirChatwoot() {
         `;
 
         try {
-            const { data, error } = await _supabase
-                .from('cbus')
-                .select('banco, alias_nombre, cbu, alias')   // ← Agregamos 'alias'
-                .eq('subscriber_id', currentSubscriberId)
-                .eq('activo', true)
-                .single();
+            const respCbu = await fetch(`${SUPABASE_URL}/functions/v1/cbu-activo-jugador`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subscriber_id: currentSubscriberId })
+            });
+            const { data } = await respCbu.json();
 
-            if (error || !data || !data.cbu) {
+            if (!data || !data.cbu) {
                 // No hay CBU activo
                 content.innerHTML = `
                     <div style="background:#111827; padding:40px 20px; border-radius:16px; text-align:center;">
