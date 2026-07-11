@@ -2373,35 +2373,9 @@ async function spinRuleta() {
     btn.disabled = true;
     btn.innerText = "GIRANDO...";
 
-    const winningIndex = Math.floor(Math.random() * 6);
-    const correctedIndex = (winningIndex - 1 + 6) % 6;
-    const premioOriginal = ruletaPremios[correctedIndex] || "Premio";
-    const premioLimpio = premioOriginal.replace(/\//g, ' ');
-    const codigo = generarCodigoPremio();
-
     try {
-        // Guardar premio
-        await _supabase.from('premios_ruleta').insert({
-            subscriber_id: currentSubscriberId,
-            usuario: currentUsuario,
-            premio: premioLimpio,
-            codigo: codigo,
-            estado: "pendiente",
-            origen: "ruleta",
-            created_at: new Date().toISOString()
-        });
-
-        // === NUEVO: Marcar premio pendiente inmediatamente (client-side) ===
-        premioPendienteActual = {
-            premio: premioLimpio,
-            codigo: codigo,
-            estado: "pendiente",
-            origen: "ruleta"
-        };
-        window.tienePremioPendienteRuleta = true;
-
-        // Actualizar ultima_ruleta para que el cooldown de 24hs funcione
-        await fetch(`${SUPABASE_URL}/functions/v1/actualizar-ultima-ruleta-jugador`, {
+        // El servidor decide el premio y hace los chequeos de pendiente/cooldown
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/girar-ruleta-jugador`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${SUPABASE_KEY}`,
@@ -2409,6 +2383,29 @@ async function spinRuleta() {
             },
             body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario })
         });
+        const resultado = await resp.json();
+
+        if (!resp.ok || !resultado.success) {
+            if (resultado.error === 'cooldown') {
+                mostrarCooldownRuleta(resultado.ultima_ruleta);
+            } else {
+                alert(resultado.error || "Ocurrió un error al procesar el premio.");
+            }
+            btn.disabled = false;
+            btn.innerText = "🎲 GIRAR RULETA";
+            return;
+        }
+
+        const { winningIndex, premio: premioLimpio, codigo } = resultado;
+
+        // === Marcar premio pendiente inmediatamente (client-side) ===
+        premioPendienteActual = {
+            premio: premioLimpio,
+            codigo: codigo,
+            estado: "pendiente",
+            origen: "ruleta"
+        };
+        window.tienePremioPendienteRuleta = true;
 
         window.premioActual = { premio: premioLimpio, codigo: codigo };
         window.codigoPremioActual = codigo;
@@ -2463,24 +2460,32 @@ async function spinRuletaDorada() {
     const centerBtn = wheel.parentElement.querySelector('div[onclick]');
     if (centerBtn) centerBtn.style.pointerEvents = 'none';
 
-    const winningIndex = Math.floor(Math.random() * 6);
-    const correctedIndex = (winningIndex - 1 + 6) % 6;
-    const premioOriginal = ruletaPremiosDorados[correctedIndex] || "Premio Dorado";
-    const premioLimpio = premioOriginal.replace(/\//g, ' ');
-    const codigo = generarCodigoPremio();
-
     try {
-        await _supabase.from('premios_ruleta').insert({
-            subscriber_id: currentSubscriberId,
-            usuario: currentUsuario,
-            premio: premioLimpio,
-            codigo: codigo,
-            estado: "pendiente",
-            origen: "ruleta",                    // ← Agregado para que el chequeo de pendiente lo detecte
-            created_at: new Date().toISOString()
+        // El servidor decide el premio y hace los chequeos de pendiente/cooldown/racha
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/girar-ruleta-dorada-jugador`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario })
         });
+        const resultado = await resp.json();
 
-        // === NUEVO: Marcar premio pendiente inmediatamente (client-side) ===
+        if (!resp.ok || !resultado.success) {
+            if (resultado.error === 'cooldown') {
+                document.getElementById('modal-ruleta-dorada').style.display = 'none';
+                mostrarCooldownRuleta(resultado.ultima_ruleta);
+            } else {
+                alert(resultado.error || "Ocurrió un error al procesar el premio.");
+            }
+            if (centerBtn) centerBtn.style.pointerEvents = 'auto';
+            return;
+        }
+
+        const { winningIndex, premio: premioLimpio, codigo } = resultado;
+
+        // === Marcar premio pendiente inmediatamente (client-side) ===
         premioPendienteActual = {
             premio: premioLimpio,
             codigo: codigo,
@@ -2489,34 +2494,25 @@ async function spinRuletaDorada() {
         };
         window.tienePremioPendienteRuleta = true;
 
-        // Actualizar ultima_ruleta para que el cooldown de 24hs funcione
-        await fetch(`${SUPABASE_URL}/functions/v1/actualizar-ultima-ruleta-jugador`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario })
-        });
+        window.premioActual = { premio: premioLimpio, codigo: codigo };
+        window.codigoPremioActual = codigo;
+
+        const segmentCenter = (winningIndex * 60) + 30;
+        const spins = 8 * 360;
+        const totalRotation = spins - segmentCenter;
+
+        wheel.style.transition = 'transform 5.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
+        wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+        setTimeout(() => {
+            mostrarPremioDorado(premioLimpio, codigo);
+            if (centerBtn) centerBtn.style.pointerEvents = 'auto';
+        }, 5404);
 
     } catch (err) {
         console.error("Error guardando premio dorado:", err);
-    }
-
-    window.premioActual = { premio: premioLimpio, codigo: codigo };
-    window.codigoPremioActual = codigo;
-
-    const segmentCenter = (winningIndex * 60) + 30;
-    const spins = 8 * 360;
-    const totalRotation = spins - segmentCenter;
-
-    wheel.style.transition = 'transform 5.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
-    wheel.style.transform = `rotate(${totalRotation}deg)`;
-
-    setTimeout(() => {
-        mostrarPremioDorado(premioLimpio, codigo);
         if (centerBtn) centerBtn.style.pointerEvents = 'auto';
-    }, 5404);
+    }
 }
 
 // === MOSTRAR MODAL PREMIO NORMAL ===
