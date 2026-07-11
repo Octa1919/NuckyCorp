@@ -3391,7 +3391,7 @@ async function verificarYMostrarTrivia() {
             const horasPasadas = (ahora - new Date(ultimaInteraccion.respondida_en)) / (1000 * 60 * 60);
             if (horasPasadas >= horasCooldown) debeMostrar = true;
         } else if (ultimaInteraccion.respondida && ultimaInteraccion.es_correcta) {
-            const { data: ultimoPremio } = await _supabase.from('premios_ruleta').select('estado, entregado_at').eq('usuario', currentUsuario).eq('subscriber_id', currentSubscriberId).order('created_at', { ascending: false }).limit(1).single();
+            const { data: ultimoPremio } = await _supabase.from('premios_ruleta').select('estado, entregado_at').eq('usuario', currentUsuario).eq('subscriber_id', currentSubscriberId).eq('origen', 'trivia').order('created_at', { ascending: false }).limit(1).single();
             if (ultimoPremio?.estado === 'entregado' && ultimoPremio.entregado_at) {
                 const horasPasadas = (ahora - new Date(ultimoPremio.entregado_at)) / (1000 * 60 * 60);
                 if (horasPasadas >= horasCooldown) debeMostrar = true;
@@ -3577,58 +3577,46 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
     boton.style.borderColor = '#3b82f6';
     boton.innerHTML = `⏳ Verificando...`;
 
-    // Obtener la pregunta
-    const { data: pregunta } = await _supabase
-        .from('trivia_preguntas')
-        .select('*')
-        .eq('id', preguntaId)
-        .single();
-
-    if (!pregunta) return;
-
-    const respuesta = pregunta.respuestas[indice];
-    const esCorrecta = respuesta.es_correcta;
-
-    // === Guardar respuesta en trivia_mostradas ===
+    // El servidor valida la respuesta, guarda el registro y decide el premio
+    let resultado;
     try {
-        await _supabase.from('trivia_mostradas').insert({
-            subscriber_id: currentSubscriberId,
-            pregunta_id: preguntaId,
-            usuario: currentUsuario,
-            respondida: true,
-            es_correcta: esCorrecta,
-            respondida_en: new Date().toISOString(),
-            mostrada_at: new Date().toISOString()
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/responder-trivia-jugador`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                subscriber_id: currentSubscriberId,
+                username: currentUsuario,
+                pregunta_id: preguntaId,
+                respuesta_index: indice
+            })
         });
+        resultado = await resp.json();
     } catch (e) {
-        console.error("Error guardando en trivia_mostradas:", e);
+        contenedor.innerHTML = `<div style="text-align:center; padding:20px;"><p style="color:#f87171;">Ocurrió un error. Intentá nuevamente.</p><button onclick="window.currentTriviaModal.remove()" style="padding:14px 32px; background:#334155; color:white; border:none; border-radius:12px;">Cerrar</button></div>`;
+        return;
     }
+
+    if (!resultado.success) {
+        contenedor.innerHTML = `<div style="text-align:center; padding:20px;"><p style="color:#f87171;">${resultado.error || 'Ocurrió un error'}</p><button onclick="window.currentTriviaModal.remove()" style="padding:14px 32px; background:#334155; color:white; border:none; border-radius:12px;">Cerrar</button></div>`;
+        return;
+    }
+
+    const esCorrecta = resultado.esCorrecta;
 
     // === RESPUESTA CORRECTA ===
     if (esCorrecta) {
-        const codigo = generarCodigoPremio();
-
-        try {
-            await _supabase.from('premios_ruleta').insert({
-                subscriber_id: currentSubscriberId,
-                usuario: currentUsuario,
-                premio: premio,
-                codigo: codigo,
-                estado: 'pendiente',
-                origen: 'trivia',
-                created_at: new Date().toISOString()
-            });
-        } catch (e) {
-            console.error("Error guardando premio de trivia:", e);
-        }
-
+        const codigo = resultado.codigo;
+        const premioGanado = resultado.premio;
         window.codigoPremioActual = codigo;
 
         contenedor.innerHTML = `
             <div style="text-align:center; padding:4px 0 8px;">
                 <div style="font-size:3.2rem; margin-bottom:8px;">🎉</div>
                 <h3 style="color:#22c55e; margin-bottom:6px; font-size:1.6rem;">¡Correcto!</h3>
-                <p style="margin-bottom:16px; color:#e0e7ff;">Ganaste: <strong>${premio}</strong></p>
+                <p style="margin-bottom:16px; color:#e0e7ff;">Ganaste: <strong>${premioGanado}</strong></p>
 
                 <div style="background:#0f172a; border:2px solid #22c55e; border-radius:16px; padding:16px; margin-bottom:22px;">
                     <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:4px;">Tu código de premio</p>
@@ -3662,7 +3650,7 @@ async function responderTriviaConTimer(indice, preguntaId, premio, boton, modalP
                 <h3 style="color:#f87171; margin-bottom:10px;">Respuesta incorrecta</h3>
                 <p style="color:#94a3b8; margin-bottom:24px;">
                     La respuesta correcta era:<br>
-                    <strong>${pregunta.respuestas.find(r => r.es_correcta).texto}</strong>
+                    <strong>${resultado.respuestaCorrectaTexto}</strong>
                 </p>
 
                 <button onclick="window.currentTriviaModal.remove()" 
