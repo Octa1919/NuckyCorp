@@ -3888,54 +3888,6 @@ async function guardarTelefonoUsuario() {
 
     alert("✅ Número de WhatsApp guardado correctamente.");
 }
-
-  async function guardarNuevaEtiqueta(btn) {
-    const nombreInput = document.getElementById('nueva-etiqueta-nombre');
-    const colorInput = document.getElementById('nueva-etiqueta-color');
-
-    const nombre = nombreInput.value.trim();
-    const color = colorInput.value;
-
-    if (!nombre) {
-        return alert("El nombre de la etiqueta es obligatorio");
-    }
-
-    // Verificar duplicado
-    const { data: existente } = await _supabase
-        .from('etiquetas')
-        .select('id')
-        .eq('subscriber_id', currentSubscriberId)
-        .ilike('nombre', nombre)
-        .limit(1);
-
-    if (existente && existente.length > 0) {
-        return alert("Ya existe una etiqueta con ese nombre.");
-    }
-
-    const { error } = await _supabase.from('etiquetas').insert({
-        subscriber_id: currentSubscriberId,
-        nombre: nombre,
-        color: color
-    });
-
-    if (error) {
-        alert("Error al guardar la etiqueta: " + error.message);
-    } else {
-        // === FORMA MÁS SEGURA DE CERRAR EL MODAL ===
-        const modal = btn.closest('div[style*="position:fixed"]') || btn.closest('.modal-etiqueta');
-        
-        if (modal) {
-            modal.remove();
-        } else {
-            // Fallback: busca el último modal creado
-            const ultimoModal = document.querySelector('div[style*="position:fixed"]');
-            if (ultimoModal) ultimoModal.remove();
-        }
-
-        alert("✅ Etiqueta creada correctamente");
-        await cargarEtiquetas();
-    }
-}
 </script>
 </body>
 </html>
