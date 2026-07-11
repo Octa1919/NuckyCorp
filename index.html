@@ -535,6 +535,7 @@
     <!-- LOGIN -->
     <div id="login-screen">
         <div class="card" style="margin-top:90px; max-width:420px; margin-left:auto; margin-right:auto; padding:42px 32px;">
+            <h3 id="login-casino-name" style="display:none; text-align:center; margin:0 0 6px; background: linear-gradient(90deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.3rem;"></h3>
             <h2 style="text-align:center; margin-bottom:32px;">Iniciar Sesión</h2>
             <input type="text" id="login-user" placeholder="Usuario">
             <div style="position: relative; margin-bottom: 18px;">
@@ -1305,6 +1306,13 @@ async function loginJugador() {
 
         // === PASO 1: Intentamos determinar el suscriptor esperado ===
         let expectedSubscriberId = subscriberIdInstalacion || getSubscriberFromUrl();
+
+        if (!expectedSubscriberId) {
+            hideLoadingScreen();
+            return alert(
+                "No se pudo identificar el agente. Ingresá con el link personalizado que te dieron."
+            );
+        }
 
         // === PASO 2: Verificación de credenciales via Edge Function segura ===
         const resp = await fetch(`${SUPABASE_URL}/functions/v1/login-jugador`, {
@@ -3338,12 +3346,44 @@ function mostrarMensajeCierreSesion() {
 //     validarContextoSuscriptorActivo();
 // });
 
+// ======================================================
+// PRECARGAR TEMA DEL SUSCRIPTOR ANTES DEL LOGIN
+// ======================================================
+async function precargarTemaSuscriptor() {
+    const subId = subscriberIdInstalacion || getSubscriberFromUrl();
+    if (!subId) return;
+
+    try {
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/suscriptor-info-jugador`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ subscriber_id: subId })
+        });
+        const { data, error } = await resp.json();
+        if (error || !data) return;
+
+        aplicarColoresDelSuscriptor(data);
+
+        const nombreEl = document.getElementById('login-casino-name');
+        if (nombreEl && data.nombre_casino) {
+            nombreEl.textContent = data.nombre_casino;
+            nombreEl.style.display = 'block';
+        }
+    } catch (err) {
+        console.warn("No se pudo precargar el tema del suscriptor:", err);
+    }
+}
+
 // =============================================
 // INICIO DE LA APLICACIÓN
 // =============================================
 window.onload = async () => {
     checkIfAppIsInstalled();
     inicializarContextoInstalacion();
+    precargarTemaSuscriptor();
     const restored = await restoreSession();
     if (!restored) {
         document.getElementById('login-screen').style.display = 'block';

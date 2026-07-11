@@ -20,24 +20,27 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (!expected_subscriber_id) {
+      return new Response(
+        JSON.stringify({ error: "Falta el contexto del agente (expected_subscriber_id)." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    let query = supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from("usuarios")
       .select(
         "subscriber_id, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, primary_color, accent_color, button_text_color, modal_border_color)"
       )
       .eq("username", username)
-      .eq("password", password);
-
-    if (expected_subscriber_id) {
-      query = query.eq("subscriber_id", expected_subscriber_id);
-    }
-
-    const { data, error } = await query.single();
+      .eq("password", password)
+      .eq("subscriber_id", expected_subscriber_id)
+      .single();
 
     if (error || !data) {
       return new Response(
