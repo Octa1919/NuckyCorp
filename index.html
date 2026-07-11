@@ -3369,7 +3369,14 @@ async function verificarYMostrarTrivia() {
 
     try {
         const [triviaRes, interaccionRes] = await Promise.all([
-            _supabase.from('trivias').select('*').eq('subscriber_id', currentSubscriberId).eq('activa', true).single(),
+            fetch(`${SUPABASE_URL}/functions/v1/trivia-config-jugador`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subscriber_id: currentSubscriberId })
+            }).then(r => r.json()).then(data => ({ data: data.data })),
             _supabase.from('trivia_mostradas').select('*').eq('usuario', currentUsuario).eq('subscriber_id', currentSubscriberId).order('respondida_en', { ascending: false }).limit(1).single()
         ]);
 
@@ -3475,12 +3482,18 @@ async function iniciarTrivia(triviaId, boton) {
 }
     
 async function mostrarPreguntaTrivia(triviaConfigId) {
-    const { data: triviaConfig } = await _supabase.from('trivias').select('*').eq('id', triviaConfigId).single();
-    const { data: preguntas } = await _supabase.from('trivia_preguntas').select('*').eq('subscriber_id', currentSubscriberId).eq('activa', true);
-    if (!preguntas || preguntas.length === 0) return;
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/trivia-pregunta-random-jugador`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ subscriber_id: currentSubscriberId })
+    });
+    const { data: pregunta } = await resp.json();
+    if (!pregunta) return;
 
-    const pregunta = preguntas[Math.floor(Math.random() * preguntas.length)];
-    const premio = triviaConfig.premio_correcto || "fichas gratis";
+    const premio = "";
 
     const modal = document.createElement('div');
     modal.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.94); display:flex; align-items:center; justify-content:center; z-index:99999;`;
