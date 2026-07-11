@@ -1253,6 +1253,15 @@ function inicializarContextoInstalacion() {
         // MODO NAVEGADOR → Cada pestaña respeta su ?s=
         if (urlId) {
             subscriberIdInstalacion = urlId;
+            // Lo guardamos solo si todavía no había nada: el manifest instala con
+            // start_url "/" (sin ?s=), así que si el usuario instala la app antes
+            // de loguearse, esta es la única forma de que la app instalada sepa a
+            // qué suscriptor pertenece. Si ya había un valor guardado (dispositivo
+            // ya vinculado a un suscriptor), no lo tocamos: una visita a otro link
+            // no debe poder reasignar una instalación ya bloqueada.
+            if (!guardado) {
+                localStorage.setItem('subscriber_id_instalacion', urlId);
+            }
         } else if (guardado) {
             subscriberIdInstalacion = guardado;
         } else {
