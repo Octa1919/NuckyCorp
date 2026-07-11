@@ -3406,7 +3406,14 @@ async function verificarYMostrarTrivia() {
                 },
                 body: JSON.stringify({ subscriber_id: currentSubscriberId })
             }).then(r => r.json()).then(data => ({ data: data.data })),
-            _supabase.from('trivia_mostradas').select('*').eq('usuario', currentUsuario).eq('subscriber_id', currentSubscriberId).order('respondida_en', { ascending: false }).limit(1).single()
+            fetch(`${SUPABASE_URL}/functions/v1/trivia-ultima-interaccion-jugador`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario })
+            }).then(r => r.json())
         ]);
 
         const triviaConfig = triviaRes.data;
