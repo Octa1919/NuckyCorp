@@ -1373,7 +1373,7 @@ async function loginJugador() {
         }, 1200);   // ← Aumentado también
 
         if (data.suscriptores?.chatwoot_website_token) {
-            inicializarChatwoot(data.suscriptores.chatwoot_website_token, data.suscriptores.chatwoot_hmac_secret);
+            inicializarChatwoot(data.suscriptores.chatwoot_website_token);
         }
 
         if (typeof iniciarSuscripcionPlanJugador === 'function') iniciarSuscripcionPlanJugador();
@@ -1557,11 +1557,15 @@ function iniciarSuscripcionEstadoCuenta() {
         const subscriberParam = getSubscriberFromUrl();
         let whatsapp = "0";
         if (subscriberParam) {
-            const { data } = await _supabase
-                .from('suscriptores')
-                .select('whatsapp')
-                .eq('id', subscriberParam)
-                .single();
+            const resp = await fetch(`${SUPABASE_URL}/functions/v1/suscriptor-info-jugador`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subscriber_id: subscriberParam })
+            });
+            const { data } = await resp.json();
             if (data && data.whatsapp) whatsapp = data.whatsapp;
         }
         const mensaje = encodeURIComponent("Hola, olvidé mis datos de acceso. Por favor ayúdame.");
@@ -1680,11 +1684,15 @@ async function detectarPlanPremium() {
         // Obtenemos el whatsapp del suscriptor
         let whatsapp = "0";
         if (currentSubscriberId) {
-            const { data } = await _supabase
-                .from('suscriptores')
-                .select('whatsapp')
-                .eq('id', currentSubscriberId)
-                .single();
+            const resp = await fetch(`${SUPABASE_URL}/functions/v1/suscriptor-info-jugador`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subscriber_id: currentSubscriberId })
+            });
+            const { data } = await resp.json();
             if (data && data.whatsapp) whatsapp = data.whatsapp;
         }
 
@@ -1714,11 +1722,15 @@ async function detectarPlanPremium() {
         if (menu) menu.style.right = '-100%';
 
         // Cargamos los links del suscriptor
-        const { data } = await _supabase
-            .from('suscriptores')
-            .select('whatsapp, telegram, instagram')
-            .eq('id', currentSubscriberId)
-            .single();
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/suscriptor-info-jugador`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ subscriber_id: currentSubscriberId })
+        });
+        const { data } = await resp.json();
 
         window.currentContactLinks = data || {};
         document.getElementById('modal-contacto').style.display = 'flex';
@@ -1811,13 +1823,8 @@ function isAppInstalled() {
 // ==================== CHATWOOT DINÁMICO POR SUSCRIPTOR ====================
 let chatwootTokenActual = null;
 
-function inicializarChatwoot(websiteToken, hmacSecret = null) {
+function inicializarChatwoot(websiteToken) {
     if (!websiteToken) return;
-
-    // Guardamos el hmac por si lo necesitamos después
-    if (hmacSecret) {
-        window.chatwootHmacSecret = hmacSecret;
-    }
 
     if (chatwootTokenActual === websiteToken && window.$chatwoot) {
         // Ya está inicializado con el mismo token → solo identificamos
@@ -1858,7 +1865,7 @@ function inicializarChatwoot(websiteToken, hmacSecret = null) {
 }
 
   // === NUEVA FUNCIÓN ROBUSTA DE IDENTIFICACIÓN ===
-function identificarUsuarioEnChatwoot(intentos = 0) {
+async function identificarUsuarioEnChatwoot(intentos = 0) {
     const MAX_INTENTOS = 5;
 
     if (!window.$chatwoot) {
@@ -1888,10 +1895,20 @@ function identificarUsuarioEnChatwoot(intentos = 0) {
             }
         };
 
-        // Si existe hmacSecret global, lo aplicamos
-        if (window.chatwootHmacSecret) {
-            const hash = CryptoJS.HmacSHA256(chatwootIdentifier, window.chatwootHmacSecret).toString();
-            userPayload.identifier_hash = hash;
+        // El hash se calcula del lado del servidor; el navegador nunca ve el secreto
+        try {
+            const resp = await fetch(`${SUPABASE_URL}/functions/v1/chatwoot-hash-jugador`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subscriber_id: currentSubscriberId, username: currentUsuario })
+            });
+            const { hash } = await resp.json();
+            if (hash) userPayload.identifier_hash = hash;
+        } catch (e) {
+            console.warn("[Chatwoot] No se pudo obtener el hash de identificación:", e);
         }
 
         window.$chatwoot.setUser(chatwootIdentifier, userPayload);
@@ -2084,11 +2101,15 @@ async function abrirCronograma() {
         return;
     }
 
-    const { data, error } = await _supabase
-        .from('suscriptores')
-        .select('cronograma_url, cronograma_updated_at')
-        .eq('id', currentSubscriberId)
-        .single();
+    const respCrono = await fetch(`${SUPABASE_URL}/functions/v1/suscriptor-info-jugador`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ subscriber_id: currentSubscriberId })
+    });
+    const { data, error } = await respCrono.json();
 
     if (error || !data || !data.cronograma_url) {
         container.innerHTML = `
@@ -2216,10 +2237,14 @@ async function abrirRuleta() {
                 body: JSON.stringify({ username: currentUsuario, subscriber_id: currentSubscriberId })
             }).then(r => r.json()).then(data => ({ data })),
 
-            _supabase.from('suscriptores')
-                .select('dias_dorada, premios_normal, premios_dorada')
-                .eq('id', currentSubscriberId)
-                .single()
+            fetch(`${SUPABASE_URL}/functions/v1/suscriptor-info-jugador`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subscriber_id: currentSubscriberId })
+            }).then(r => r.json())
         ]);
 
         // === ACTUALIZAR CONTADOR DE RACHA (dinámico) ===
@@ -2881,11 +2906,15 @@ async function restoreSession() {
         currentUsuario = session.username;
         currentSubscriberId = savedSubscriberId;
 
-        const { data: subData, error } = await _supabase
-            .from('suscriptores')
-            .select('id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, chatwoot_hmac_secret, primary_color, accent_color, button_text_color, modal_border_color')
-            .eq('id', currentSubscriberId)
-            .single();
+        const respSubData = await fetch(`${SUPABASE_URL}/functions/v1/suscriptor-info-jugador`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ subscriber_id: currentSubscriberId })
+        });
+        const { data: subData, error } = await respSubData.json();
 
         if (error || !subData) {
             localStorage.removeItem('nucky_session');
@@ -2919,7 +2948,7 @@ async function restoreSession() {
         }, 1400);
 
         if (subData.chatwoot_website_token) {
-            inicializarChatwoot(subData.chatwoot_website_token, subData.chatwoot_hmac_secret);
+            inicializarChatwoot(subData.chatwoot_website_token);
         }
 
         return true;

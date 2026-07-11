@@ -11,11 +11,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { username, password, expected_subscriber_id } = await req.json();
+    const { subscriber_id } = await req.json();
 
-    if (!username || !password) {
+    if (!subscriber_id) {
       return new Response(
-        JSON.stringify({ error: "Usuario y contraseña son obligatorios" }),
+        JSON.stringify({ error: "Falta subscriber_id" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -25,29 +25,23 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    let query = supabaseAdmin
-      .from("usuarios")
+    const { data, error } = await supabaseAdmin
+      .from("suscriptores")
       .select(
-        "subscriber_id, suscriptores(id, nombre_casino, sala1_link, sala2_link, sala3_link, sala4_link, chatwoot_website_token, primary_color, accent_color, button_text_color, modal_border_color)"
+        "id, nombre_casino, whatsapp, telegram, instagram, sala1_link, sala2_link, sala3_link, sala4_link, dias_dorada, premios_normal, premios_dorada, cronograma_url, cronograma_updated_at, chatwoot_website_token, primary_color, accent_color, button_text_color, modal_border_color"
       )
-      .eq("username", username)
-      .eq("password", password);
-
-    if (expected_subscriber_id) {
-      query = query.eq("subscriber_id", expected_subscriber_id);
-    }
-
-    const { data, error } = await query.single();
+      .eq("id", subscriber_id)
+      .single();
 
     if (error || !data) {
       return new Response(
-        JSON.stringify({ error: "Credenciales incorrectas o no pertenecen a este agente." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "No se encontró el suscriptor" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     return new Response(
-      JSON.stringify({ success: true, data }),
+      JSON.stringify({ data }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch {
