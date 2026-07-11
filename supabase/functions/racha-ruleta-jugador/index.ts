@@ -11,11 +11,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { username } = await req.json();
+    const { username, subscriber_id } = await req.json();
 
-    if (!username) {
+    if (!username || !subscriber_id) {
       return new Response(
-        JSON.stringify({ error: "Falta username" }),
+        JSON.stringify({ error: "Faltan datos" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -29,6 +29,7 @@ Deno.serve(async (req) => {
       .from("usuarios")
       .select("racha_ruleta, ultima_ruleta")
       .eq("username", username)
+      .eq("subscriber_id", subscriber_id)
       .single();
 
     return new Response(

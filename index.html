@@ -2210,7 +2210,7 @@ async function abrirRuleta() {
                     'Authorization': `Bearer ${SUPABASE_KEY}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ username: currentUsuario })
+                body: JSON.stringify({ username: currentUsuario, subscriber_id: currentSubscriberId })
             }).then(r => r.json()).then(data => ({ data })),
 
             _supabase.from('suscriptores')
