@@ -1316,7 +1316,12 @@ async function loginJugador() {
         // === PASO 1: Intentamos determinar el suscriptor esperado ===
         let expectedSubscriberId = subscriberIdInstalacion || getSubscriberFromUrl();
 
-        if (!expectedSubscriberId) {
+        // En el navegador (no instalada) siempre debería haber un ?s= real: si no
+        // lo hay, cortamos acá con un mensaje claro. En la app instalada NO
+        // exigimos esto: iOS no comparte localStorage con Safari, así que una
+        // instalación nueva llega sin contexto y necesita poder loguearse igual
+        // para autodescubrir y vincularse a su suscriptor (ver PASO 3).
+        if (!expectedSubscriberId && !isInstalled) {
             hideLoadingScreen();
             return alert(
                 "No se pudo identificar el agente. Ingresá con el link personalizado que te dieron."
