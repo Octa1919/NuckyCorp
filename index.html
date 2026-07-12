@@ -535,6 +535,9 @@
     <!-- LOGIN -->
     <div id="login-screen">
         <div class="card" style="margin-top:90px; max-width:420px; margin-left:auto; margin-right:auto; padding:42px 32px;">
+            <button onclick="abrirWhatsappLogin()" style="width:100%; padding:14px; background:#25D366; color:white; border:none; border-radius:12px; margin-bottom:24px; font-size:1.05rem;">
+                📱 Hablar por WhatsApp
+            </button>
             <h3 id="login-casino-name" style="display:none; text-align:center; margin:0 0 6px; background: linear-gradient(90deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.3rem;"></h3>
             <h2 style="text-align:center; margin-bottom:32px;">Iniciar Sesión</h2>
             <input type="text" id="login-user" placeholder="Usuario">
@@ -559,7 +562,11 @@
             <input type="checkbox" id="recordarme" checked style="width: 18px; height: 18px; accent-color: #c026d3;">
             <label for="recordarme" style="color: #c4b5fd; font-size: 1.05rem; cursor: pointer;">Recordarme</label>
             </div>
-            
+
+            <button onclick="abrirWhatsappCrearUsuario()" style="width:100%; padding:14px; background:#25D366; color:white; border:none; border-radius:12px; font-size:1.05rem;">
+                📝 Crear usuario
+            </button>
+
             <!-- <a onclick="showRegistroModal()" class="login-link" style="margin-top:8px; cursor:pointer; display: none;">Crear cuenta nueva</a> -->>
             <!-- <a onclick="recuperarDatos()" class="login-link" style="display: none;">Olvidé mis datos</a> -->
         </div>
@@ -3380,6 +3387,7 @@ async function precargarTemaSuscriptor() {
         if (error || !data) return;
 
         aplicarColoresDelSuscriptor(data);
+        window.currentContactLinks = data;
 
         const nombreEl = document.getElementById('login-casino-name');
         if (nombreEl && data.nombre_casino) {
@@ -3389,6 +3397,46 @@ async function precargarTemaSuscriptor() {
     } catch (err) {
         console.warn("No se pudo precargar el tema del suscriptor:", err);
     }
+}
+
+// ======================================================
+// WHATSAPP DESDE LA PANTALLA DE LOGIN (sin sesión iniciada)
+// ======================================================
+async function abrirWhatsappSuscriptor(mensajeTexto) {
+    let numero = window.currentContactLinks?.whatsapp;
+
+    if (!numero) {
+        const subId = subscriberIdInstalacion || getSubscriberFromUrl();
+        if (!subId) return alert("No se pudo identificar el agente.");
+
+        try {
+            const resp = await fetch(`${SUPABASE_URL}/functions/v1/suscriptor-info-jugador`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subscriber_id: subId })
+            });
+            const { data } = await resp.json();
+            numero = data?.whatsapp;
+        } catch (err) {
+            console.warn("No se pudo obtener el WhatsApp del suscriptor:", err);
+        }
+    }
+
+    if (!numero) return alert("Este agente todavía no configuró un WhatsApp de contacto.");
+
+    const mensaje = encodeURIComponent(mensajeTexto);
+    window.open(`https://wa.me/${numero}?text=${mensaje}`, "_blank");
+}
+
+function abrirWhatsappLogin() {
+    return abrirWhatsappSuscriptor("Hola, quiero más información.");
+}
+
+function abrirWhatsappCrearUsuario() {
+    return abrirWhatsappSuscriptor("Hola, quiero crear una cuenta nueva.");
 }
 
 // =============================================
