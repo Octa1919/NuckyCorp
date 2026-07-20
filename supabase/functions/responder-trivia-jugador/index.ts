@@ -52,6 +52,66 @@ Deno.serve(async (req) => {
       );
     }
 
+    const { data: triviaConfig } = await supabaseAdmin
+      .from("trivias")
+      .select("premio_correcto, periodicidad_horas")
+      .eq("subscriber_id", subscriber_id)
+      .eq("activa", true)
+      .single();
+
+    const horasCooldown = triviaConfig?.periodicidad_horas || 24;
+
+    // Cooldown del lado del servidor: mismo criterio que ya usa el navegador para
+    // decidir si mostrar la trivia (horas desde la última respuesta incorrecta, u
+    // horas desde que se entregó el último premio), pero validado acá para que no
+    // dependa de que el cliente se comporte bien (o de que tenga la versión al día).
+    const { data: ultimaInteraccion } = await supabaseAdmin
+      .from("trivia_mostradas")
+      .select("respondida, es_correcta, respondida_en")
+      .eq("usuario", username)
+      .eq("subscriber_id", subscriber_id)
+      .order("respondida_en", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (ultimaInteraccion?.respondida) {
+      const ahoraMs = Date.now();
+
+      if (!ultimaInteraccion.es_correcta) {
+        const horasPasadas =
+          (ahoraMs - new Date(ultimaInteraccion.respondida_en).getTime()) / (1000 * 60 * 60);
+        if (horasPasadas < horasCooldown) {
+          return new Response(
+            JSON.stringify({ success: false, error: "Todavía no podés volver a responder la trivia" }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      } else {
+        const { data: ultimoPremio } = await supabaseAdmin
+          .from("premios_ruleta")
+          .select("estado, entregado_at")
+          .eq("usuario", username)
+          .eq("subscriber_id", subscriber_id)
+          .eq("origen", "trivia")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (ultimoPremio?.estado === "entregado" && ultimoPremio.entregado_at) {
+          const horasPasadas =
+            (ahoraMs - new Date(ultimoPremio.entregado_at).getTime()) / (1000 * 60 * 60);
+          if (horasPasadas < horasCooldown) {
+            return new Response(
+              JSON.stringify({ success: false, error: "Todavía no podés volver a responder la trivia" }),
+              { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        }
+        // Si el último premio de trivia todavía no está "entregado", ya se bloqueó
+        // arriba con el chequeo de pendiente — acá no hace falta duplicarlo.
+      }
+    }
+
     const { data: pregunta } = await supabaseAdmin
       .from("trivia_preguntas")
       .select("*")
@@ -67,7 +127,8 @@ Deno.serve(async (req) => {
 
     const respuesta = pregunta.respuestas?.[respuesta_index];
     const esCorrecta = respuesta?.es_correcta === true;
-    const respuestaCorrectaTexto = pregunta.respuestas?.find((r: { es_correcta: boolean }) => r.es_correcta)?.texto || "";
+    const respuestaCorrectaTexto =
+      pregunta.respuestas?.find((r: { es_correcta: boolean }) => r.es_correcta)?.texto || "";
 
     await supabaseAdmin.from("trivia_mostradas").insert({
       subscriber_id,
@@ -83,13 +144,6 @@ Deno.serve(async (req) => {
     let codigo: string | null = null;
 
     if (esCorrecta) {
-      const { data: triviaConfig } = await supabaseAdmin
-        .from("trivias")
-        .select("premio_correcto")
-        .eq("subscriber_id", subscriber_id)
-        .eq("activa", true)
-        .single();
-
       premio = triviaConfig?.premio_correcto || "fichas gratis";
       codigo = generarCodigo();
 

@@ -117,9 +117,11 @@ Deno.serve(async (req) => {
       created_at: new Date().toISOString(),
     });
 
+    // Reseteamos la racha: ganar la Dorada es la "recompensa" de la racha, así que
+    // vuelve a empezar de cero en vez de dejar al jugador habilitado para siempre.
     await supabaseAdmin
       .from("usuarios")
-      .update({ ultima_ruleta: new Date().toISOString() })
+      .update({ ultima_ruleta: new Date().toISOString(), racha_ruleta: 0 })
       .eq("username", username)
       .eq("subscriber_id", subscriber_id);
 

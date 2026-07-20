@@ -3439,6 +3439,31 @@ function abrirWhatsappCrearUsuario() {
     return abrirWhatsappSuscriptor("Hola, quiero crear una cuenta nueva.");
 }
 
+// ======================================================
+// VERIFICACIÓN DE VERSIÓN: recarga sola si hay una versión más nueva publicada
+// ======================================================
+let __versionActual = null;
+
+async function chequearVersionApp() {
+    try {
+        const resp = await fetch(location.pathname, { method: 'HEAD', cache: 'no-store' });
+        const marca = resp.headers.get('etag') || resp.headers.get('last-modified');
+        if (!marca) return;
+
+        if (!__versionActual) {
+            __versionActual = marca;
+            return;
+        }
+
+        if (marca !== __versionActual) {
+            console.log('%c[Versión] Hay una versión nueva de la app, recargando...', 'color:#22c55e');
+            window.location.reload();
+        }
+    } catch (err) {
+        console.warn('No se pudo chequear la versión de la app:', err);
+    }
+}
+
 // =============================================
 // INICIO DE LA APLICACIÓN
 // =============================================
@@ -3446,6 +3471,11 @@ window.onload = async () => {
     checkIfAppIsInstalled();
     inicializarContextoInstalacion();
     precargarTemaSuscriptor();
+    chequearVersionApp();
+    setInterval(chequearVersionApp, 5 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') chequearVersionApp();
+    });
     const restored = await restoreSession();
     if (!restored) {
         document.getElementById('login-screen').style.display = 'block';
